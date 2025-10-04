@@ -1,3 +1,4 @@
+# backend/tuchati_config/settings.py
 # ===========================================
 # Tuchati Django Settings
 # Environment-ready (dev / prod)

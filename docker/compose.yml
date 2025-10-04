@@ -1,4 +1,4 @@
-
+name: tuchati
 services:
   db:
     image: postgres:16-alpine
@@ -16,7 +16,7 @@ services:
     image: redis:7-alpine
     restart: always
     ports:
-      - "6391:6379"  # ✅ Non-conflicting port
+      - "6389:6379"
 
   web:
     build:
@@ -46,7 +46,7 @@ services:
     env_file:
       - ../.env
     ports:
-      - "${APP_PORT:-8092}:80"  # ✅ public port 8092 → nginx → web:8000
+      - "${APP_PORT:-8092}:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro
