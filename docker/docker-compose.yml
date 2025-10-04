@@ -2,44 +2,31 @@ name: tuchati
 
 services:
   db:
-    container_name: tuchati_db
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-tuchati}
-      POSTGRES_USER: ${POSTGRES_USER:-tuchati}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tuchati}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - tuchati_pg:/var/lib/postgresql/data
     ports:
       - "5436:5432"
 
   redis:
-    container_name: tuchati_redis
     image: redis:7-alpine
     ports:
       - "6381:6379"
 
   ongea_backend:
-    container_name: ongea_backend
     build:
       context: ..
       dockerfile: docker/Dockerfile
-
-    # use the entrypoint for all startup logic
     command: ["/entrypoint.sh"]
-
     env_file:
-      - ../.env.dev
-
-    # now pointing to Django project folder
+      - ../.env
     working_dir: /app/backend
-
     volumes:
       - ../backend:/app/backend
-
-    ports:
-      - "8010:8000"
-
     depends_on:
       - db
       - redis
