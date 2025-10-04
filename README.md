@@ -1,1 +1,1 @@
-TuChati monorepo scaffold. See .env.dev, Makefile, docker/docker-compose.yml for usage.
+This is a community open chat that allows users to communicate easly and freely
