@@ -1,0 +1,36 @@
+name: tuchati
+services:
+  db:
+    container_name: tuchati_db
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tuchati}
+      POSTGRES_USER: ${POSTGRES_USER:-tuchati}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tuchati}
+    volumes:
+      - tuchati_pg:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+  redis:
+    container_name: tuchati_redis
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"
+  ongea_backend:
+    container_name: ongea_backend
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["bash", "-lc", "DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE} daphne -b 0.0.0.0 -p 8000 tuchati_config.asgi:application"]
+    env_file:
+      - ../.env.dev
+    working_dir: /app
+    volumes:
+      - ../backend:/app/backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+volumes:
+  tuchati_pg:

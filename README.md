@@ -1,0 +1,1 @@
+TuChati monorepo scaffold. See .env.dev, Makefile, docker/docker-compose.yml for usage.

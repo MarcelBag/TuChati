@@ -1,0 +1,111 @@
+__pycache__/
+*.py[cod]
+*.pyc
+env/
+venv/
+.venv/
+node_modules/
+dist/
+build/
+.expo/
+.DS_Store
+.env*
+staticfiles/
+media/
+.vscode/
+.idea/
+
+
+# ── Python artifacts ─────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual envs
+venv/
+ENV/
+env/
+.venv/
+.env/
+
+# Byte-compiled / optimizations
+*.pyc
+
+# ── IDE & editor ─────────────────────────
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── Logs & runtime dumps ─────────────────
+*.log
+*.out
+*.err
+
+# ── OS files ─────────────────────────────
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# ── Node.js / frontend ───────────────────
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# ── Build artifacts ──────────────────────
+build/
+dist/
+*.egg-info
+
+# ── Django / deployment ──────────────────
+*.pid
+*.seed
+
+# static collected files
+staticfiles/
+media/           
+
+# ── Databases & dumps ────────────────────
+*.sqlite3
+*.db
+*.dump
+*.sql
+
+# ── PostgreSQL ───────────────────────────
+*.dump
+*.sql
+*.backup
+.pgpass          # if you use a .pgpass file
+.psql_history    # your local psql command history
+
+
+# ── Docker ───────────────────────────────
+*.tar
+*.img
+# (the "docker/" folder is your configs—don’t ignore it)
+
+# ── Env & secrets ────────────────────────
+.env
+.env.*
+.env.prod         # optional explicit if you name it that way
+config.py
+secrets.py
+credentials.json
+api_keys.txt
+*KEY*
+*SECRET*
+
+# ── Testing & typing ─────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ── Localization ─────────────────────────
+locale/**/LC_MESSAGES/*.mo
+
+# Always keep Django migrations
+!*/migrations/*.py
