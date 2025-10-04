@@ -1,23 +1,22 @@
-version: "3.9"
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     restart: always
     env_file:
       - ../.env
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1"]
+      interval: 10s
+      retries: 10
 
   redis:
     image: redis:7-alpine
     restart: always
     ports:
-      - "6381:6379"
+      - "6391:6379"  # ✅ Non-conflicting port
 
   web:
     build:
@@ -47,7 +46,7 @@ services:
     env_file:
       - ../.env
     ports:
-      - "${APP_PORT:-8092}:80"
+      - "${APP_PORT:-8092}:80"  # ✅ public port 8092 → nginx → web:8000
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro

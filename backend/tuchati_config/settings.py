@@ -101,7 +101,8 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB", "tuchati"),
         "USER": os.getenv("POSTGRES_USER", "tuchati"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "tuchati"),
-        "HOST": os.getenv("POSTGRES_HOST", "tuchati_db"),  # use db in prod compose
+       # "HOST": os.getenv("POSTGRES_HOST", "tuchati_db"),  # use db in prod compose
+        "HOST": os.getenv("POSTGRES_HOST", "db"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
