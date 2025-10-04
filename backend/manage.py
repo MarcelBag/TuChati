@@ -1,3 +1,4 @@
+#backend/manage.py
 #!/usr/bin/env python
 import os, sys
 os.environ.setdefault('DJANGO_SETTINGS_MODULE','tuchati_config.settings')
