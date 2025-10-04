@@ -1,8 +1,10 @@
+# docker/docker-compose.yml
 name: tuchati
 
 services:
   db:
     image: postgres:15-alpine
+    container_name: tuchati_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -14,10 +16,12 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: tuchati_redis
     ports:
       - "6381:6379"
 
   ongea_backend:
+    container_name: ongea_backend
     build:
       context: ..
       dockerfile: docker/Dockerfile

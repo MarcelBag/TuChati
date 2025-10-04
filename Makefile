@@ -12,12 +12,12 @@ EX := $(DC) exec -T $(SERVICE) bash -lc
 # Environments
 # ----------------------------
 dev:
-	cd $(DOCKER_DIR) && docker compose -f compose.yml -f compose.dev.yml down
-	cd $(DOCKER_DIR) && ln -sf ../.env.dev .env && docker compose -f compose.yml -f compose.dev.yml up -d --build
+	cd $(DOCKER_DIR) && docker compose -f docker-compose.yml -f compose.dev.yml down
+	cd $(DOCKER_DIR) && ln -sf ../.env.dev .env && docker compose -f docker-compose.yml -f compose.dev.yml up -d --build
 
 prod:
-	cd $(DOCKER_DIR) && docker compose -f compose.yml down
-	cd $(DOCKER_DIR) && ln -sf ../.env.prod .env && docker compose -f compose.yml -f compose.prod.yml up -d --build
+	cd $(DOCKER_DIR) && docker compose -f docker-compose.yml down
+	cd $(DOCKER_DIR) && ln -sf ../.env.prod .env && docker compose -f docker-compose.yml up -d --build
 
 # ----------------------------
 # Management helpers
