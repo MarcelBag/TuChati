@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    env_file:
+      - ../.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6381:6379"
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: always
+    env_file:
+      - ../.env
+    working_dir: /app/backend
+    command: ["/entrypoint.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - staticdata:/app/staticfiles
+      - mediadata:/app/media
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    depends_on:
+      - web
+    env_file:
+      - ../.env
+    ports:
+      - "${APP_PORT:-8092}:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - staticdata:/staticfiles:ro
+      - mediadata:/media:ro
+
+volumes:
+  db_data:
+  staticdata:
+  mediadata:

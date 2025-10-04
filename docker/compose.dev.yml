@@ -1,9 +1,23 @@
 # docker/compose.dev.yml
 services:
-  ongea_backend:
-    container_name: ongea_backend_dev
+  web:
+    env_file:
+      - ../.env.dev
+    volumes:
+      - ../backend:/app/backend
+      - ../frontend:/app/frontend
+      - ../locale:/app/locale
     ports:
       - "8010:8000"
-    environment:
-      - DEBUG=1
-      - DJANGO_SETTINGS_MODULE=tuchati_config.settings
+
+  db:
+    env_file:
+      - ../.env.dev
+
+  redis:
+    env_file:
+      - ../.env.dev
+
+  nginx:
+    env_file:
+      - ../.env.dev

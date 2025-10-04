@@ -191,6 +191,6 @@ JAZZMIN_SETTINGS = {
     "site_header": "TuChati Administration",
     "site_brand": "TuChati",
     "welcome_sign": "Welcome to TuChati Admin",
-    "copyright": "© 2025 TuChati Technologies",
+    "copyright": "© 2025 Tuunganes Technologies",
     "theme": "cyborg",  # later we will check "lux", "superhero", "flatly"
 }
