@@ -25,17 +25,13 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
 
-    #ensuring Django can find the settings correctly
-    command: >
-      bash -lc "
-      export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-tuchati_config.settings} &&
-      cd backend &&
-      daphne -b 0.0.0.0 -p 8000 tuchati_config.asgi:application
-      "
+    # use the entrypoint for all startup logic
+    command: ["/entrypoint.sh"]
 
     env_file:
       - ../.env.dev
-      #now pointing to Django project folder
+
+    # now pointing to Django project folder
     working_dir: /app/backend
 
     volumes:
