@@ -2,22 +2,11 @@
 services:
   web:
     env_file:
-      - ../.env.dev
+      - ../.env.dev  # Optional: Redundant with symlink, but keeps explicit
     volumes:
       - ../backend:/app/backend
       - ../frontend:/app/frontend
       - ../locale:/app/locale
     ports:
       - "8011:8000"
-
-  db:
-    env_file:
-      - ../.env.dev
-
-  redis:
-    env_file:
-      - ../.env.dev
-
-  nginx:
-    env_file:
-      - ../.env.dev
+    # Inherits depends_on/healthcheck from compose.yml

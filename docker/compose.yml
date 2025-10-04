@@ -1,10 +1,11 @@
+# docker/compose.yml
 name: tuchati
 services:
   db:
     image: postgres:16-alpine
     restart: always
     env_file:
-      - ../.env
+      - ./.env
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +25,7 @@ services:
       dockerfile: docker/Dockerfile
     restart: always
     env_file:
-      - ../.env
+      - ./.env
     working_dir: /app/backend
     command: ["/entrypoint.sh"]
     depends_on:
@@ -44,7 +45,7 @@ services:
     depends_on:
       - web
     env_file:
-      - ../.env
+      - ./.env
     ports:
       - "${APP_PORT:-8092}:80"
     volumes:
