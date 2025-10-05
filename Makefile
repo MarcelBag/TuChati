@@ -72,3 +72,17 @@ makemigrations:
 
 createsuperuser:
 	$(EX) "python manage.py createsuperuser"
+
+# --------------------------------------------
+# 🧠 BASH: Open an interactive bash shell (useful for debugging)
+# Example: make bash or make bash SERVICE=nginx
+# --------------------------------------------
+bash:
+	cd $(DOCKER_DIR) && docker compose exec $(SERVICE) bash
+
+# --------------------------------------------
+# 🐍 PY: Run a quick Django Python one-liner inside the container
+# Example: make py CMD="from django.conf import settings; print(settings.DEBUG)"
+# --------------------------------------------
+py:
+	cd $(DOCKER_DIR) && docker compose exec $(SERVICE) python manage.py shell -c "$(CMD)"
