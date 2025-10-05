@@ -50,7 +50,7 @@ TuChati aims to reduce digital isolation by offering communication services that
 ---
 
 ## ⚙️ Tech Architecture
-
+```
 tuchati/
 ├── backend/
 │ ├── tuchati_config/ # Django configuration
@@ -73,6 +73,7 @@ tuchati/
 │ ├── compose.dev.yml
 │ └── nginx.conf
 └── README.md
+```
 
 
 ---
