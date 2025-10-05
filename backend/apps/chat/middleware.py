@@ -1,4 +1,3 @@
-# backend/apps/chat/middleware.py
 # ===========================================================
 # Custom TokenAuthMiddleware for JWT-based WebSocket auth
 # ===========================================================
@@ -6,12 +5,15 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
+#from channels.middleware.base import BaseMiddleware
 from channels.middleware import BaseMiddleware
+
 from urllib.parse import parse_qs
-from rest_framework_simplejwt.tokens import AccessToken  # ✅ Use AccessToken for access tokens
-from rest_framework_simplejwt.exceptions import InvalidToken  # ✅ Correct: Use InvalidToken (not InvalidTokenError)
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import InvalidToken
 
 User = get_user_model()
+
 
 class TokenAuthMiddleware(BaseMiddleware):
     """
@@ -26,23 +28,24 @@ class TokenAuthMiddleware(BaseMiddleware):
         if token:
             user = await self.get_user(token)
             if user:
+                # ✅ Properly attach the user
                 scope["user"] = user
-                # Optional: Log success for debugging
-                print(f"[WS-MW] Auth success: user={user.username}")
+                print(f"[WS-MW] ✅ Authenticated user: {user.username}")
+            else:
+                print(f"[WS-MW] ❌ Invalid token or user not found")
+        else:
+            print("[WS-MW] ⚠️ No token in query string")
 
         return await super().__call__(scope, receive, send)
 
     @database_sync_to_async
     def get_user(self, token):
         try:
-            # ✅ Use AccessToken: Validates signature, exp, token_type='access'
             token_obj = AccessToken(token)
-            user_id = token_obj["user_id"]  # Guaranteed present in access tokens
+            payload = jwt.decode(str(token_obj), settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = payload.get("user_id")
             user = User.objects.get(id=user_id)
-            # Optional: Log for debugging
-            print(f"[WS-MW] Decoded user_id={user_id}")
             return user
-        except (InvalidToken, User.DoesNotExist):
-            # Optional: Log failure
-            print(f"[WS-MW] Auth failed: Invalid token or user not found")
+        except (InvalidToken, User.DoesNotExist, jwt.DecodeError) as e:
+            print(f"[WS-MW] Token validation failed: {e}")
             return None
