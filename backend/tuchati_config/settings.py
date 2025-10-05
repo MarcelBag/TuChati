@@ -44,6 +44,8 @@ INSTALLED_APPS = [
 
     # Local apps
     "apps.accounts",
+    # Chat System
+    "apps.chat",
 ]
 
 

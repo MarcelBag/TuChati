@@ -15,7 +15,8 @@ SERVICE ?= web
 
 # Shortcuts to make Docker Compose calls cleaner
 DC := cd $(DOCKER_DIR) && docker compose
-EX := $(DC) exec -T $(SERVICE) bash -lc
+EX := $(DC) exec $(SERVICE) bash -lc
+
 
 # Declare non-file targets
 .PHONY: dev prod down logs shell migrate createsuperuser makemigrations
