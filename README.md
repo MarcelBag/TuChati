@@ -73,3 +73,69 @@ tuchati/
 │ ├── compose.dev.yml
 │ └── nginx.conf
 └── README.md
+
+
+---
+
+## 🌐 Environments
+
+| Environment | URL | Purpose |
+|--------------|-----|----------|
+| **Production** | [https://tuchati.tuunganes.com](https://tuchati.tuunganes.com) | Live environment |
+| **Development** | Localhost / dev VPS | Ongoing development |
+
+---
+
+## 🔐 Security & Privacy
+
+TuChati respects your privacy.  
+All communications are encrypted in transit using **HTTPS and secure WebSockets (WSS)**.  
+Future releases will integrate **end-to-end encryption** and **temporary message storage policies** to ensure confidentiality and low storage usage.
+
+---
+
+## 📈 Roadmap
+
+| Phase | Objective | Timeline |
+|--------|------------|-----------|
+| **Phase 1 (Q4 2025)** | Core messaging, login system, Docker & VPS deployment | ✅ Done |
+| **Phase 2 (Q1 2026)** | Add voice/video calls via WebRTC | 🔧 In Progress |
+| **Phase 3 (Q2 2026)** | React Native Android app beta | 🚧 Planned |
+| **Phase 4 (Q3 2026)** | iOS app + offline sync + media optimization | 🚧 Planned |
+| **Phase 5 (Q4 2026)** | End-to-end encryption & community deployment | 🚧 Planned |
+
+---
+
+## 💪 Contributors
+
+| Role | Name | Description |
+|------|------|-------------|
+| 🧠 Founder & Architect | **Marcel Shabani (Tuunganes Initiative)** | Backend & System Architecture |
+| 💻 Lead Developer | **Himmel Bag** | Full-stack development |
+| 🌍 Community Partners | Coming soon | NGOs, Educational & Local Network Support |
+
+---
+
+## ❤️ Support Our Mission
+
+TuChati is a community-driven initiative.  
+If you believe in **digital inclusion for Africa**, you can help by:
+
+- ⭐ Starring this repo  
+- 🧩 Contributing code or translations  
+- 💬 Sharing TuChati with your community  
+- 💰 Supporting hosting and infrastructure costs  
+
+Contact us at **support@tuunganes.com** or visit [https://tuunganes.com](https://tuunganes.com)
+
+---
+
+## 📜 License
+
+MIT License — free to use, modify, and distribute for non-commercial or community projects.  
+For enterprise use or regional deployment partnerships, contact **tuunganes.com**.
+
+---
+
+> *“TuChati built in Africa, for Africa. Because connection should never depend on privilege.”*
+
