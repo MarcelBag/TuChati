@@ -10,7 +10,7 @@ until pg_isready -h "${POSTGRES_HOST:-db}" -p "${POSTGRES_PORT:-5432}" -U "${POS
   echo "⏳ Waiting for database at ${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}…"
   sleep 2
 done
-echo "✅ Database is up — proceeding"
+echo "✅ Database is up proceeding"
 
 # Django commands (manage.py auto-uses DJANGO_SETTINGS_MODULE)
 cd /app/backend  # Ensure in project root
