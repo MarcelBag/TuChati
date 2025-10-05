@@ -51,3 +51,25 @@ TuChati aims to reduce digital isolation by offering communication services that
 
 ## ⚙️ Tech Architecture
 
+tuchati/
+├── backend/
+│ ├── tuchati_config/ # Django configuration
+│ ├── apps/
+│ │ ├── accounts/ # Auth & profiles
+│ │ ├── chat/ # Messaging & WebSockets
+│ │ ├── calls/ # Voice/video integration
+│ └── ...
+├── frontend/
+│ ├── src/
+│ │ ├── components/ # React UI components
+│ │ ├── pages/
+│ │ ├── services/
+│ │ └── sockets/
+│ └── ...
+├── mobile/ (planned)
+│ └── React Native project
+├── docker/
+│ ├── compose.yml
+│ ├── compose.dev.yml
+│ └── nginx.conf
+└── README.md
