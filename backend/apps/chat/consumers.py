@@ -1,12 +1,11 @@
 # ================================================================
 # backend/apps/chat/consumers.py
-# Chat WebSocket consumer for real-time messaging + presence
+# Real-time WebSocket consumer with read/delivery indicators
 # ================================================================
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
 from apps.chat.models import ChatRoom, Message
-from django.utils import timezone
 import json
 
 User = get_user_model()
@@ -16,16 +15,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.user = self.scope.get("user")
-        is_auth = getattr(self.user, "is_authenticated", False)
 
-        print(f"[WS] connect user={getattr(self.user, 'username', None)} auth={is_auth} room_id={self.room_id}")
-
-        if not is_auth:
+        if not getattr(self.user, "is_authenticated", False):
             await self.close(code=4003)
             return
 
         if not await self._is_participant(self.user.id, self.room_id):
-            print("[WS] user not a participant -> closing")
             await self.close(code=4003)
             return
 
@@ -33,56 +28,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        # Mark user online
-        await self._set_user_online(self.user.id, True)
-
-        # Send recent messages
-        last_messages = await self._get_last_messages(self.room_id)
+        # Send message history
+        messages = await self._get_last_messages(self.room_id)
         await self.send(text_data=json.dumps({
             "type": "history",
-            "messages": last_messages
+            "messages": messages
         }))
 
-        # Notify all clients user joined / online
+        # Notify presence
         await self.channel_layer.group_send(
             self.group_name,
-            {
-                "type": "user.status",
-                "user": self.user.username,
-                "is_online": True,
-            },
+            {"type": "user.joined", "user": self.user.username},
         )
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, code):
         if hasattr(self, "group_name"):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-        # Mark user offline and set last_seen
-        if getattr(self, "user", None) and getattr(self.user, "is_authenticated", False):
-            await self._set_user_online(self.user.id, False)
-            await self._update_last_seen(self.user.id)
-
-            # Broadcast offline status
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "user.status",
-                    "user": self.user.username,
-                    "is_online": False,
-                },
-            )
-
     async def receive(self, text_data=None, bytes_data=None):
-        try:
-            data = json.loads(text_data or "{}")
-        except Exception:
-            data = {"type": "message", "content": text_data}
+        # Safely parse JSON or fallback to plain message
+        data = {}
+        if text_data:
+            try:
+                data = json.loads(text_data)
+            except json.JSONDecodeError:
+                data = {"type": "message", "content": text_data.strip()}
+        else:
+            data = {"type": "message", "content": ""}
 
         msg_type = data.get("type", "message")
 
         if not getattr(self.user, "is_authenticated", False):
             return
 
+        # Handle typing indicator
         if msg_type == "typing":
             await self.channel_layer.group_send(
                 self.group_name,
@@ -94,6 +73,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             return
 
+        # Handle normal chat messages
         content = data.get("content", "").strip()
         if not content:
             return
@@ -114,32 +94,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
             },
         )
 
-    # --- Event handlers ---
+    # --- WebSocket Event Handlers ---
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event["payload"]))
 
-    async def user_status(self, event):
+    async def user_joined(self, event):
         await self.send(text_data=json.dumps({
-            "type": "status",
-            "user": event["user"],
-            "is_online": event["is_online"],
+            "type": "join",
+            "user": event["user"]
         }))
 
     async def user_typing(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def message_delivery(self, event):
         await self.send(text_data=json.dumps({
-            "type": "typing",
+            "type": "delivery",
+            "status": event["status"],
             "user": event["user"],
-            "typing": event["typing"],
+            "ids": event["ids"]
         }))
 
-    # --- DB helpers ---
+    # --- Database helpers ---
     @database_sync_to_async
     def _is_participant(self, user_id, room_id):
         try:
             room = ChatRoom.objects.get(id=room_id)
+            return room.participants.filter(id=user_id).exists()
         except ChatRoom.DoesNotExist:
             return False
-        return room.participants.filter(id=user_id).exists()
 
     @database_sync_to_async
     def _save_message(self, room_id, user_id, content):
@@ -160,14 +143,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "sender": m.sender.username,
                 "content": m.content,
                 "created_at": m.created_at.isoformat(),
-            }
-            for m in reversed(msgs)
+            } for m in reversed(msgs)
         ]
 
     @database_sync_to_async
-    def _set_user_online(self, user_id, is_online):
-        User.objects.filter(id=user_id).update(is_online=is_online)
-
-    @database_sync_to_async
-    def _update_last_seen(self, user_id):
-        User.objects.filter(id=user_id).update(last_seen=timezone.now())
+    def _mark_read(self, message_ids, user_id):
+        Message.objects.filter(id__in=message_ids).update(is_read=True)
+        for msg in Message.objects.filter(id__in=message_ids):
+            msg.read_by.add(user_id)

@@ -1,10 +1,12 @@
 # ================================================================
 # backend/apps/chat/models.py
-# TuChati Chat models: ChatRoom & Message
+# Extended Chat models with delivery + read receipts
 # ================================================================
 import uuid
 from django.conf import settings
 from django.db import models
+
+
 # ================================================================
 # ChatRoom model
 # ================================================================
@@ -29,6 +31,7 @@ class ChatRoom(models.Model):
         base = self.name or "Room"
         return f"{base} ({'Group' if self.is_group else 'Direct'})"
 
+
 # ================================================================
 # Message model
 # ================================================================
@@ -38,34 +41,19 @@ class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="messages")
 
-    # Main message content
+    # Message content & attachments
     content = models.TextField(blank=True)
+    attachment = models.FileField(upload_to="chat_attachments/", blank=True, null=True)
+    voice_note = models.FileField(upload_to="chat_voice_notes/", blank=True, null=True)
 
-    # Optional file-based content
-    attachment = models.FileField(
-        upload_to="chat_attachments/",
-        blank=True,
-        null=True,
-        help_text=" file (image, document, etc.) attached to this message."
-    )
-
-    voice_note = models.FileField(
-        upload_to="chat_voice_notes/",
-        blank=True,
-        null=True,
-        help_text="audio file (voice message)."
-    )
-
-    # Message metadata
+    # Message state
     is_read = models.BooleanField(default=False)
     is_edited = models.BooleanField(default=False)
-    deleted_for = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="deleted_messages",
-        blank=True,
-        help_text="Users who have deleted this message from their view."
-    )
+    deleted_for = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="deleted_messages", blank=True)
+    delivered_to = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="delivered_messages", blank=True)
+    read_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="read_messages", blank=True)
 
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,7 +74,6 @@ class MessageReaction(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reactions")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     emoji = models.CharField(max_length=16)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
