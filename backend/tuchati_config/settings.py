@@ -162,6 +162,12 @@ REST_FRAMEWORK = {
     ),
 }
 
+# -------------------------------------------
+# AUTHENTICATION BACKENDS
+# -------------------------------------------
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # -------------------------------------------
 # JWT TOKEN LIFETIMES
