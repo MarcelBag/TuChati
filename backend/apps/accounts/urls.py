@@ -1,12 +1,11 @@
+# backend/apps/accounts/urls.py
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView
-from .views import RegisterView, LoginView, TwoFASetupView, TwoFAEnableView, TwoFAVerifyView, MeView
-urlpatterns=[
- path('register/',RegisterView.as_view()),
- path('login/',LoginView.as_view()),
- path('me/',MeView.as_view()),
- path('token/refresh/',TokenRefreshView.as_view()),
- path('2fa/setup/',TwoFASetupView.as_view()),
- path('2fa/enable/',TwoFAEnableView.as_view()),
- path('2fa/verify/',TwoFAVerifyView.as_view()),
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import RegisterView, MeView
+
+urlpatterns = [
+    path("register/", RegisterView.as_view(), name="register"),
+    path("me/", MeView.as_view(), name="me"),
+    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
