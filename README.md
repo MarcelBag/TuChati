@@ -138,5 +138,9 @@ For enterprise use or regional deployment partnerships, contact **tuunganes.com*
 
 ---
 
+![alt text](image.png)
+
+![alt text](image-1.png)
+
 > *“TuChati built in Africa, for Africa. Because connection should never depend on privilege.”*
 
