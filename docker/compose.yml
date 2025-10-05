@@ -48,6 +48,8 @@ services:
       - ./.env
     expose:
       - "80"
+    ports:
+      - "8092:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro
