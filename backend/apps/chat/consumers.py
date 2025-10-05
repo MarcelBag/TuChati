@@ -1,3 +1,6 @@
+# ================================================================
+# backend/apps/chat/consumers.py
+# Chat WebSocket consumer for real-time messaging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
@@ -6,7 +9,9 @@ import json
 from datetime import datetime
 
 User = get_user_model()
-
+# =====================
+# ChatConsumer
+# =====================
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):

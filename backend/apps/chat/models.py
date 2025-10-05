@@ -5,8 +5,6 @@
 import uuid
 from django.conf import settings
 from django.db import models
-
-
 # ================================================================
 # ChatRoom model
 # ================================================================
@@ -30,7 +28,6 @@ class ChatRoom(models.Model):
     def __str__(self):
         base = self.name or "Room"
         return f"{base} ({'Group' if self.is_group else 'Direct'})"
-
 
 # ================================================================
 # Message model
