@@ -1,77 +1,73 @@
 # backend/apps/chat/consumers.py
-import json
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
-from .models import ChatRoom, Message
+from channels.db import database_sync_to_async
+from apps.chat.models import ChatRoom
+import json
 
 User = get_user_model()
 
-
-class ChatConsumer(AsyncJsonWebsocketConsumer):
-    """
-    WebSocket consumer for real-time chat.
-    Path: ws://.../ws/chat/<room_uuid>/
-    """
-
+class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        # MUST match kwarg name in routing.py
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
-        self.group_name = f"chat_{self.room_id}"
 
-        user = self.scope.get("user", AnonymousUser())
-        has_access = await self.user_has_access(user, self.room_id)
-        if not user.is_authenticated or not has_access:
-            await self.close(code=4403)  # forbidden
+        user = self.scope.get("user")
+        is_auth = getattr(user, "is_authenticated", False)
+
+        # Debug: leave while you test
+        print(f"[WS] connect user={getattr(user, 'username', None)} "
+              f"auth={is_auth} room_id={self.room_id}")
+
+        if not is_auth:
+            await self.close(code=4003)  # 403 equivalent for WS
             return
 
+        # OPTIONAL: enforce membership
+        if not await self._is_participant(user_id=user.id, room_id=self.room_id):
+            print("[WS] user not a participant -> closing")
+            await self.close(code=4003)
+            return
+
+        self.group_name = f"room_{self.room_id}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-    async def disconnect(self, code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+    async def disconnect(self, close_code):
+        if hasattr(self, "group_name"):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def receive_json(self, content, **kwargs):
-        """
-        Expected messages:
-        {
-          "type": "message",
-          "content": "Hello world"
-        }
-        """
-        user = self.scope.get("user", AnonymousUser())
-        if not user.is_authenticated:
+    async def receive(self, text_data=None, bytes_data=None):
+        try:
+            data = json.loads(text_data or "{}")
+        except Exception:
+            data = {"type": "message", "content": text_data}
+
+        content = data.get("content", "")
+        sender = self.scope.get("user")
+        if not content or not getattr(sender, "is_authenticated", False):
             return
 
-        msg_type = content.get("type")
-        if msg_type == "message":
-            text = content.get("content", "").strip()
-            if not text:
-                return
-            message = await self.create_message(self.room_id, user.id, text)
-            payload = {
-                "type": "broadcast.message",
-                "message": {
-                    "id": str(message.id),
-                    "room": str(message.room_id),
-                    "sender": {"id": user.id, "email": user.email, "username": user.username},
-                    "content": message.content,
-                    "is_read": message.is_read,
-                    "created_at": message.created_at.isoformat(),
+        # (optional) persist message to DB, then broadcast
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "chat.message",
+                "payload": {
+                    "sender": sender.username,
+                    "content": content,
                 },
-            }
-            await self.channel_layer.group_send(self.group_name, payload)
+            },
+        )
 
-    async def broadcast_message(self, event):
-        await self.send_json(event["message"])
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps(event["payload"]))
 
-    # ---- helpers ----
+    # ---------- helpers ----------
     @database_sync_to_async
-    def user_has_access(self, user, room_id):
-        if not user or not user.is_authenticated:
+    def _is_participant(self, user_id, room_id):
+        try:
+            room = ChatRoom.objects.get(id=room_id)
+        except ChatRoom.DoesNotExist:
             return False
-        return ChatRoom.objects.filter(id=room_id, participants=user).exists()
-
-    @database_sync_to_async
-    def create_message(self, room_id, user_id, content):
-        return Message.objects.create(room_id=room_id, sender_id=user_id, content=content)
+        return room.participants.filter(id=user_id).exists()
