@@ -46,8 +46,8 @@ services:
       - web
     env_file:
       - ./.env
-    ports:
-      - "${APP_PORT:-8092}:80"
+    expose:
+      - "80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro

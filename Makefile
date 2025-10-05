@@ -24,8 +24,9 @@ EX := $(DC) exec -T $(SERVICE) bash -lc
 # Uses compose.yml + compose.dev.yml
 # --------------------------------------------
 dev:
-	cd $(DOCKER_DIR) && docker compose -f compose.yml -f compose.dev.yml down
-	cd $(DOCKER_DIR) && ln -sf ../.env.dev .env && docker compose -f compose.yml -f compose.dev.yml up -d --build
+	cd docker && ln -sf ../.env.dev .env && \
+	docker compose -f compose.yml -f compose.dev.yml up -d --build
+
 
 # --------------------------------------------
 # 🚀 PROD — Run production stack
