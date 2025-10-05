@@ -83,7 +83,7 @@ tuchati/
 | Environment | URL | Purpose |
 |--------------|-----|----------|
 | **Production** | [https://tuchati.tuunganes.com](https://tuchati.tuunganes.com) | Live environment |
-| **Development** | Localhost / dev VPS | Ongoing development |
+| **Development** | Localhost / dev | Ongoing development |
 
 ---
 
