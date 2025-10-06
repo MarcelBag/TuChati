@@ -88,7 +88,7 @@ py:
 	cd $(DOCKER_DIR) && docker compose exec $(SERVICE) python manage.py shell -c "$(CMD)"
 
 # --------------------------------------------
-# GIT PULL (Safe on VPS)
+# GIT PULL
 # Pull latest code from main branch while ignoring local images in root
 # --------------------------------------------
 pull:
