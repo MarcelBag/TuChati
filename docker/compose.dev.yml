@@ -5,34 +5,31 @@
 # Adds live-reloading frontend (Vite) + backend mounts
 # =============================================================
 
+  # --------------------------------------------
+  # Django Backend (Development)
+  # --------------------------------------------
 services:
-  # --------------------------------------------
-  # 🌍 Django Backend (Development)
-  # --------------------------------------------
   web:
-    env_file:
-      - ../.env.dev  # Optional: redundant with symlink, but explicit
+    env_file: [ ../.env.dev ]
     volumes:
       - ../backend:/app/backend
-      - ../frontend:/app/frontend
       - ../locale:/app/locale
     ports:
       - "8011:8000"
-    # Inherits depends_on and healthcheck from compose.yml
-    # Enables live reload via volume mounts
 
   # --------------------------------------------
   # 💻 Frontend (React + Vite)
   # --------------------------------------------
+  # Vite dev server in dev only
   frontend:
     image: node:20-alpine
     working_dir: /app/frontend/web
     volumes:
       - ../frontend/web:/app/frontend/web
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -lc "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "5173:5173"
     environment:
-      - CHOKIDAR_USEPOLLING=true  # enables live reload in Docker
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - web
