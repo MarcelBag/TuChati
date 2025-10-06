@@ -23,40 +23,21 @@ export default function Home() {
         <div className="brand">
           <span className="logo">TuChati</span>
         </div>
+        
         <nav className="nav-right" aria-label="Primary">
-          <Link className="nav-link" to="/chat">{t('nav.chat')}</Link>
-          <Link className="nav-link" to="/profile">{t('nav.profile')}</Link>
-          <button
-            className="link-btn"
-            type="button"
-            onClick={() => setAuthOpen(true)}
-            aria-haspopup="dialog"
-          >
-            {t('nav.login')}
-          </button>
-          <DownloadMenu />
-          {/* Language Switcher */}
-          <div className="lang-switch">
-            <button onClick={() => changeLanguage('en')}>🇬🇧</button>
-            <button onClick={() => changeLanguage('fr')}>🇫🇷</button>
-            <button onClick={() => changeLanguage('sw')}>🇰🇪</button>
-            <button onClick={() => changeLanguage('de')}>🇩🇪</button>
-          </div>
-        </nav>
-        <nav className="nav-right" aria-label="Primary">
-          <Link className="nav-link" to="/chat">{t('nav.chat')}</Link>
-          <Link className="nav-link" to="/profile">{t('nav.profile')}</Link>
-          <button
-            className="link-btn"
-            type="button"
-            onClick={() => setAuthOpen(true)}
-            aria-haspopup="dialog"
-          >
-            {t('nav.login')}
-          </button>
-          <DownloadMenu />
-          <LanguageSwitcher />
-        </nav>
+        <Link className="nav-link" to="/chat">{t('nav.chat')}</Link>
+        <Link className="nav-link" to="/profile">{t('nav.profile')}</Link>
+        <button
+          className="link-btn"
+          type="button"
+          onClick={() => setAuthOpen(true)}
+          aria-haspopup="dialog"
+        >
+          {t('nav.login')}
+        </button>
+        <DownloadMenu />
+        <LanguageSwitcher />
+      </nav>
 
       </header>
 

@@ -15,6 +15,7 @@ export default function LanguageSwitcher() {
   const [open, setOpen] = useState(false)
   const [currentLang, setCurrentLang] = useState(i18n.language || 'en')
 
+  // Load saved language on mount
   useEffect(() => {
     const savedLang = localStorage.getItem('lang')
     if (savedLang && savedLang !== currentLang) {
@@ -23,11 +24,13 @@ export default function LanguageSwitcher() {
     }
   }, [])
 
+  // Handle change
   const changeLang = (lng: string) => {
-    i18n.changeLanguage(lng)
-    setCurrentLang(lng)
-    localStorage.setItem('lang', lng)
-    setOpen(false)
+    i18n.changeLanguage(lng).then(() => {
+      setCurrentLang(lng)
+      localStorage.setItem('lang', lng)
+      setOpen(false)
+    })
   }
 
   const current = LANGS.find((l) => l.code === currentLang) || LANGS[0]
