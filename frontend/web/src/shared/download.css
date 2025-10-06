@@ -1,0 +1,5 @@
+/* frontend/web/src/shared/download.css */
+.download{position:relative}
+.menu{position:absolute;right:0;top:120%;background:#0f1318;border:1px solid #1b222b;border-radius:12px;min-width:220px;padding:6px;z-index:20}
+.menu a{display:block;padding:10px 12px;color:#e9f1fb;text-decoration:none;border-radius:8px}
+.menu a:hover{background:#12161b}

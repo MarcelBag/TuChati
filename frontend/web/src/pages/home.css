@@ -1,0 +1,46 @@
+/* frontend/web/src/pages/home.css */
+:root{
+  --bg:#0b0d10; --card:#12161b; --muted:#9fb0c3; --text:#e9f1fb; --brand:#6bcf8a;
+  --ring:#2a3340; --border:#1b222b;
+}
+
+.home{min-height:100svh;background:linear-gradient(180deg,#0b0d10, #0f1318);}
+.nav{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);backdrop-filter:blur(6px);background:#0b0d10bf;}
+.brand .logo{font-weight:800;color:var(--text);letter-spacing:.3px}
+.nav-right{display:flex;gap:16px;align-items:center}
+.nav-link{color:var(--muted);text-decoration:none}
+.link-btn{background:none;border:none;color:var(--text);cursor:pointer}
+.btn{border:1px solid var(--ring);background:#161b21;color:var(--text);padding:8px 14px;border-radius:10px;cursor:pointer}
+.btn:hover{border-color:var(--brand)}
+.caret{margin-left:6px;opacity:.7}
+
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:center;padding:48px 22px;max-width:1100px;margin:0 auto}
+.hero-copy h1{font-size:42px;line-height:1.1;color:var(--text);margin:0 0 10px}
+.lead{color:var(--muted);max-width:52ch}
+.cta{display:flex;gap:12px;margin:20px 0}
+.cta-primary{background:var(--brand);color:#0b0d10;border:none;padding:10px 16px;border-radius:12px;font-weight:700;cursor:pointer}
+.bullets{margin:18px 0 0 0;padding-left:18px;color:var(--muted)}
+
+.hero-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+.stat{display:flex;align-items:baseline;gap:12px}
+.stat-num{font-size:40px;font-weight:800;color:var(--brand)}
+.stat-label{color:var(--muted)}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.fine{color:#7f90a3;font-size:12px}
+
+.panel{border-top:1px solid var(--border);margin-top:24px}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1100px;margin:0 auto;padding:28px 22px}
+.panel h2{color:var(--text);margin:0 0 6px}
+.panel p{color:var(--muted);margin:0 0 8px}
+.checks{color:var(--muted);padding-left:18px}
+
+.cta-footer{text-align:center;padding:36px 22px;border-top:1px solid var(--border)}
+.cta-footer h3{color:var(--text);margin:0 0 8px}
+
+.footer{padding:26px;text-align:center;color:#7a8aa0;border-top:1px solid var(--border)}
+
+@media (max-width: 900px){
+  .hero{grid-template-columns:1fr}
+  .panel-grid{grid-template-columns:1fr}
+}
