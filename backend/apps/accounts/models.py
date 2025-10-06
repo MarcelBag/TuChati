@@ -8,7 +8,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 
-
 def generate_uuid():
     return uuid.uuid4()
 
@@ -87,9 +86,35 @@ class DeviceSession(models.Model):
     device_name = models.CharField(max_length=100, blank=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     token = models.CharField(max_length=255, unique=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     last_active = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
+    # ➕ New fields
+    app_version = models.CharField(max_length=50, blank=True)
+    last_seen = models.DateTimeField(default=timezone.now)
+    connection_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("online", "Online"),
+            ("idle", "Idle"),
+            ("offline", "Offline"),
+        ],
+        default="offline",
+    )
+
+    def touch(self):
+        """Refresh session heartbeat."""
+        self.last_active = timezone.now()
+        self.last_seen = timezone.now()
+        self.connection_status = "online"
+        self.save(update_fields=["last_active", "last_seen", "connection_status"])
+
+    def mark_offline(self):
+        self.connection_status = "offline"
+        self.last_seen = timezone.now()
+        self.save(update_fields=["connection_status", "last_seen"])
+
     def __str__(self):
-        return f"{self.user.username} [{self.device_type}]"
+        return f"{self.user.username} [{self.device_type}] ({self.connection_status})"

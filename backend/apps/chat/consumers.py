@@ -1,11 +1,11 @@
 # ================================================================
 # backend/apps/chat/consumers.py
 # Full-featured WebSocket chat consumer:
-# ✅ Real-time messaging
-# ✅ Delivery + Read receipts
-# ✅ Typing indicators
-# ✅ Presence & Last Seen
-# ✅ Auto-presence heartbeat (every 30s)
+# Real-time messaging
+# Delivery + Read receipts
+# Typing indicators
+# Presence & Last Seen
+# Auto-presence heartbeat (every 30s)
 # ================================================================
 import json
 import asyncio
@@ -14,6 +14,8 @@ from channels.db import database_sync_to_async
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from apps.chat.models import ChatRoom, Message
+from apps.accounts.models import DeviceSession
+
 
 User = get_user_model()
 
@@ -46,16 +48,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         messages = await self._get_last_messages(self.room_id)
         await self.send(text_data=json.dumps({"type": "history", "messages": messages}))
 
-        # Notify others
+        # Notify others in the room
         await self.channel_layer.group_send(
             self.group_name,
             {
                 "type": "presence_update",
                 "user": self.user.username,
                 "status": "online",
+                "device": getattr(self.user, "device_type", "web"),
                 "last_seen": None,
             },
         )
+
 
         # Start background heartbeat task
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
@@ -196,6 +200,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "typing",
                 "from_user": event["from_user"],
                 "typing": event["typing"],
+                "timestamp": timezone.now().isoformat(),
             }))
 
     async def message_delivery(self, event):
@@ -211,6 +216,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "presence",
             "user": event["user"],
             "status": event["status"],
+            "device": event.get("device", "web"),
             "last_seen": event["last_seen"],
         }))
 
@@ -291,14 +297,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _update_presence(self, user_id, is_online):
-        """Update presence and return formatted last_seen if offline."""
+        """Update presence for user and their active device session."""
         try:
             user = User.objects.get(id=user_id)
+            # Update general presence
             if is_online:
                 user.mark_online()
-                return None
             else:
                 user.mark_offline()
-                return user.last_seen.isoformat()
+
+            # Update specific device session
+            DeviceSession.objects.filter(
+                user_id=user_id, is_active=True
+            ).update(
+                last_active=timezone.now(),
+                connection_status="online" if is_online else "offline",
+            )
+
+            return user.last_seen.isoformat() if not is_online else None
         except User.DoesNotExist:
             return None
+
