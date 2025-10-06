@@ -39,6 +39,8 @@ services:
       - mediadata:/app/media
     expose:
       - "8000"
+    ports:
+      - "8092:80" 
 
   nginx:
     image: nginx:1.27-alpine
