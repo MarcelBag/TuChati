@@ -1,0 +1,39 @@
+{
+  "nav": { "chat": "Chat", "profile": "Profile", "login": "Login" },
+  "hero": {
+    "title": "Messaging that works where internet doesn’t",
+    "description": "TuChati is built for communities with limited or patchy connectivity.",
+    "saving": "smaller data use vs. images-first apps*",
+    "note": "*Optimized requests and deferred media keep usage low."
+  },
+  "features": {
+    "retry": "Auto-retry delivery on poor connections",
+    "light": "Small payloads & text-first by default",
+    "offline": "Works even when connectivity drops",
+    "security": "End-to-end secured and efficient"
+  },
+  "section": {
+    "remote": {
+      "title": "Built for remote areas",
+      "desc": "Most apps assume stable 4G/5G. TuChati doesn’t.",
+      "item1": "Messages queue offline and send when signal returns",
+      "item2": "Typing, delivery & read states optimized for low overhead",
+      "item3": "Media sending is optional and bandwidth-aware"
+    },
+    "org": {
+      "title": "Simple for organizations",
+      "desc": "Coordinate field teams, health workers, and classrooms easily.",
+      "item1": "Clean, focused channels",
+      "item2": "Admin tooling via Django",
+      "item3": "Friendly APIs for integrations"
+    }
+  },
+  "cta": {
+    "title": "Ready to try TuChati?",
+    "login": "Login / Sign up",
+    "signup": "Create an account"
+  },
+  "footer": {
+    "madeFor": "Made for low-bandwidth communities"
+  }
+}

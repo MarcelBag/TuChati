@@ -1,0 +1,39 @@
+{
+  "nav": { "chat": "Discussions", "profile": "Profil", "login": "Connexion" },
+  "hero": {
+    "title": "Une messagerie qui fonctionne même sans Internet",
+    "description": "TuChati est conçu pour les communautés dont la connexion est limitée ou instable. Léger, résilient et optimisé pour transmettre vos messages sur des réseaux à faible bande passante sans épuiser les données ni la batterie.",
+    "saving": "consomme 70 % moins de données que les applications centrées sur l’image*",
+    "note": "*La taille des requêtes est optimisée, les médias différés et les tentatives automatiques réduisent la consommation."
+  },
+  "features": {
+    "retry": "Renvoi automatique en cas de mauvaise connexion",
+    "light": "Messages légers et texte prioritaire par défaut",
+    "offline": "Fonctionne même lorsque la connexion est coupée",
+    "security": "Sécurisé de bout en bout et économe"
+  },
+  "section": {
+    "remote": {
+      "title": "Conçu pour les zones éloignées",
+      "desc": "La plupart des applications supposent une connexion 4G/5G stable. TuChati non. Nous privilégions la fiabilité et la clarté plutôt que les médias lourds et le bavardage inutile.",
+      "item1": "Les messages sont mis en file et envoyés dès que le signal revient",
+      "item2": "Les indicateurs de saisie, de livraison et de lecture sont allégés",
+      "item3": "L’envoi de médias est optionnel et respecte la bande passante"
+    },
+    "org": {
+      "title": "Simple pour les organisations",
+      "desc": "Coordonnez facilement vos équipes de terrain, agents de santé ou enseignants. TuChati assure la continuité de la communication avec un minimum de données.",
+      "item1": "Canaux clairs et ciblés",
+      "item2": "Outils d’administration via Django",
+      "item3": "API simples et conviviales pour vos intégrations"
+    }
+  },
+  "cta": {
+    "title": "Prêt à essayer TuChati ?",
+    "login": "Connexion / Inscription",
+    "signup": "Créer un compte"
+  },
+  "footer": {
+    "madeFor": "Conçu pour les communautés à faible connectivité"
+  }
+}

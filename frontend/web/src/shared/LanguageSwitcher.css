@@ -1,0 +1,64 @@
+.lang-switcher {
+  position: relative;
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+.lang-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.lang-btn:hover {
+  border-color: #0077ff;
+}
+
+.flag {
+  font-size: 1.1rem;
+}
+
+.caret {
+  font-size: 0.7rem;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+
+.lang-menu {
+  position: absolute;
+  top: 110%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 4px 0;
+  margin: 4px 0 0;
+  z-index: 10;
+}
+
+.lang-item {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.lang-item:hover {
+  background: #f5f5f5;
+}

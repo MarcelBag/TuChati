@@ -1,0 +1,39 @@
+{
+  "nav": { "chat": "Chat", "profile": "Profil", "login": "Anmelden" },
+  "hero": {
+    "title": "Nachrichten, die auch ohne Internet funktionieren",
+    "description": "TuChati wurde für Gemeinschaften mit eingeschränktem oder instabilem Internet entwickelt. Leicht, robust und optimiert für den Datenaustausch bei geringer Bandbreite.",
+    "saving": "70 % weniger Datenverbrauch als bildbasierte Apps*",
+    "note": "*Optimierte Anfragen, verzögerte Medien und intelligente Wiederholungen halten den Verbrauch niedrig."
+  },
+  "features": {
+    "retry": "Automatische erneute Übertragung bei schlechter Verbindung",
+    "light": "Kleine Datenpakete, Text zuerst",
+    "offline": "Funktioniert auch ohne stabile Verbindung",
+    "security": "Ende-zu-Ende sicher und effizient"
+  },
+  "section": {
+    "remote": {
+      "title": "Entwickelt für abgelegene Gebiete",
+      "desc": "Die meisten Apps setzen eine stabile 4G/5G-Verbindung voraus. TuChati nicht. Wir legen Wert auf Zuverlässigkeit und Klarheit statt auf schwere Medien.",
+      "item1": "Nachrichten werden offline gespeichert und bei Signal gesendet",
+      "item2": "Statusmeldungen sind für geringe Datenlast optimiert",
+      "item3": "Medienversand ist optional und datenschonend"
+    },
+    "org": {
+      "title": "Einfach für Organisationen",
+      "desc": "Koordinieren Sie Außenteams, Gesundheitshelfer oder Lehrkräfte mit minimalem Datenverbrauch.",
+      "item1": "Übersichtliche, fokussierte Kanäle",
+      "item2": "Admin-Tools über Django",
+      "item3": "Benutzerfreundliche APIs für Integrationen"
+    }
+  },
+  "cta": {
+    "title": "Bereit, TuChati zu testen?",
+    "login": "Anmelden / Registrieren",
+    "signup": "Konto erstellen"
+  },
+  "footer": {
+    "madeFor": "Entwickelt für Gemeinschaften mit niedriger Bandbreite"
+  }
+}
