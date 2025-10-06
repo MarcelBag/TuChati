@@ -38,22 +38,19 @@ services:
       - staticdata:/app/staticfiles
       - mediadata:/app/media
     expose:
-      - "8000"  # backend internal port (no host mapping)
+      - "8000"
 
   nginx:
     image: nginx:1.27-alpine
     restart: always
     depends_on:
       - web
-    env_file:
-      - ./.env
     ports:
-      - "8092:80"  # ✅ use 8092 externally (CloudPanel can reverse proxy to it)
+      - "80:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro
       - mediadata:/media:ro
-      - ../frontend/web/build:/usr/share/nginx/html:ro  # ✅ serve built frontend
 
 volumes:
   db_data:
