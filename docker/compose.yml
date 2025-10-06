@@ -51,7 +51,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - staticdata:/staticfiles:ro
       - mediadata:/media:ro
-      - ../frontend/web/build:/usr/share/nginx/html:ro
+     # - ../frontend/web/build:/usr/share/nginx/html:ro
 
 volumes:
   db_data:

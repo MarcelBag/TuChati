@@ -1,0 +1,14 @@
+# ---- Building the React app
+FROM node:20-alpine AS build
+WORKDIR /app/frontend/web
+COPY frontend/web/package*.json ./
+RUN npm ci
+COPY frontend/web ./
+RUN npm run build
+
+# ---- Nginx to serve the built app
+FROM nginx:1.27-alpine
+# Our nginx conf for SPA + API proxy
+COPY docker/nginx/conf.d /etc/nginx/conf.d
+# Copy built static files into the image
+COPY --from=build /app/frontend/web/build /usr/share/nginx/html
