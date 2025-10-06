@@ -86,3 +86,19 @@ bash:
 # --------------------------------------------
 py:
 	cd $(DOCKER_DIR) && docker compose exec $(SERVICE) python manage.py shell -c "$(CMD)"
+
+# --------------------------------------------
+# GIT PULL (Safe on VPS)
+# Pull latest code from main branch while ignoring local images in root
+# --------------------------------------------
+pull:
+	@echo "⚙️  Pulling latest changes from main (ignoring local root images)..."
+	# Temporarily stash only tracked changes excluding root images
+	git stash push -m "temp-stash" -- $(filter-out ./, $(wildcard ./*)) || true
+	# Remove large image files from root before pulling
+	find . -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.gif' \) -exec rm -f {} \;
+	# Pull latest changes
+	git pull origin main
+	# Restore stashed files (if any)
+	git stash pop || true
+	@echo "✅ Pull completed successfully."

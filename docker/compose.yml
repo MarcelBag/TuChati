@@ -26,7 +26,7 @@ services:
     env_file: [ ./.env ]
     working_dir: /app/backend
     command: ["/entrypoint.sh"]
-    depends_on:                     # ✅ mapping (because we use conditions)
+    depends_on:
       db:
         condition: service_healthy
       redis:

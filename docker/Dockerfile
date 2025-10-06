@@ -1,3 +1,4 @@
+#Dockerfile
 # ===========================================
 # TuChati Dockerfile (final stable version)
 # Multi-stage build for backend + frontend

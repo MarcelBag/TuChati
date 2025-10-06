@@ -1,3 +1,4 @@
+// frontend/web/src/api/axiosConfig.ts
 // =============================================================
 //TuChati Axios Configuration
 // Handles API calls to Django backend (REST endpoints)
