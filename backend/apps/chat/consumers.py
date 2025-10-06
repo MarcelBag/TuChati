@@ -21,6 +21,7 @@ User = get_user_model()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    # wait for 30 seconds before sending next heartbeat
     HEARTBEAT_INTERVAL = 30  # seconds
 
     async def connect(self):
@@ -153,6 +154,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content = data.get("content", "").strip()
             if not content:
                 return
+            # await tells Python: “I’ll wait for this I/O operation to complete,
             message = await self._save_message(self.room_id, self.user.id, content)
             await self.channel_layer.group_send(
                 self.group_name,
@@ -196,6 +198,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def user_typing_to_you(self, event):
         if event["from_user"] != self.user.username:
+            # Send typing indicator
             await self.send(text_data=json.dumps({
                 "type": "typing",
                 "from_user": event["from_user"],
@@ -204,6 +207,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     async def message_delivery(self, event):
+        # Broadcast delivery/read receipts
         await self.send(text_data=json.dumps({
             "type": "delivery",
             "status": event["status"],
@@ -212,6 +216,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     async def presence_update(self, event):
+        # Broadcast presence updates
         await self.send(text_data=json.dumps({
             "type": "presence",
             "user": event["user"],
