@@ -1,44 +1,45 @@
 {
   "nav": {
     "home": "Nyumbani",
-    "chat": "Gumzo",
-    "profile": "Wasifu",
-    "login": "Ingia"
+    "chat": "Mazungumzo",
+    "profile": "Profaili",
+    "login": "Ingia",
+    "demo": "Onyesho la Chat"
   },
 
   "hero": {
     "title": "Karibu TuChati",
-    "description": "Ujumbe wa haraka, salama na unaotumia data kidogo  popote, hata mtandao ukiyumba.",
-    "saving": "Data iliyookolewa",
-    "note": "Ufikishaji ulioboreshwa, kubana midia, na majaribio ya tena ya kiakili."
+    "description": "Huduma ya ujumbe ya haraka, salama na yenye kutumia data kidogo  inafanya kazi hata kama mtandao ni dhaifu.",
+    "saving": "Data imeokolewa",
+    "note": "Uwasilishaji umeboreshwa, ukandamizaji wa picha, na kurudia kwa akili."
   },
 
   "features": {
-    "retry": "Jaribio upya la kiakili kwenye mtandao hafifu",
-    "light": "Mwanga kwa muundo",
-    "offline": "Hufanya kazi hata upatikanaji ukiwa wa vipindi",
-    "security": "Mazingira bora ya usalama mwisho-kwa-mwisho"
+    "retry": "Kurudia kiotomatiki wakati wa mtandao hafifu",
+    "light": "Imetengenezwa kuwa nyepesi",
+    "offline": "Inafanya kazi hata bila intaneti ya kudumu",
+    "security": "Usalama wa hali ya juu kutoka mwanzo hadi mwisho"
   },
 
   "section": {
     "remote": {
-      "title": "Imetengenezwa kwa mazingira ya mbali",
-      "desc": "TuChati huendeleza mazungumzo wakati bendi ni finyu.",
-      "item1": "Usafirishaji unaobadilika",
-      "item2": "Ujazo mdogo wa data",
-      "item3": "Ufikishaji thabiti"
+      "title": "Iliyoundwa kwa mazingira ya mbali",
+      "desc": "TuChati inaendelea kufanya mazungumzo hata kama intaneti ni ya shida.",
+      "item1": "Mifumo inayobadilika kulingana na hali",
+      "item2": "Kutumia data kidogo sana",
+      "item3": "Ujumbe unafika bila kupotea"
     },
     "org": {
-      "title": "Rafiki kwa taasisi",
-      "desc": "Vikundi, njia na kumbukumbu za ukaguzi.",
+      "title": "Inafaa kwa mashirika",
+      "desc": "Makundi, njia za mawasiliano na kumbukumbu zinazoeleweka vizuri.",
       "item1": "Ruhusa kulingana na majukumu",
-      "item2": "Chaguo-msingi sahihi",
-      "item3": "Muunganisho rahisi wa SSO"
+      "item2": "Mipangilio rahisi na salama",
+      "item3": "Uunganishaji rahisi wa akaunti (SSO)"
     }
   },
 
   "cta": {
-    "title": "Tayari kuzungumza kwa ubunifu?",
+    "title": "Uko tayari kuzungumza kwa akili zaidi?",
     "login": "Ingia",
     "signup": "Anza sasa"
   },
@@ -55,13 +56,29 @@
   "auth": {
     "title": "Karibu tena",
     "login": "Ingia",
-    "register": "Fungua akaunti",
+    "register": "Tengeneza akaunti",
     "email": "Barua pepe",
     "password": "Nenosiri",
     "close": "Funga"
   },
 
   "footer": {
-    "madeFor": "Imetengenezwa kwa uangalifu kwa kila mtu"
+    "madeFor": "Imetengenezwa kwa upendo kwa kila mtu"
+  },
+
+  "chat": {
+    "title": "Maongezi ya TuChati",
+    "msg1": "Habari 👋 Karibu TuChati!",
+    "msg2": "Mambo! Unaendeleaje?",
+    "msg3": "Mimi ni TuChati, nimeundwa na Tuungane kusaidia jamii kuwasiliana vizuri zaidi  hasa pale ambapo intaneti bado ni changamoto.",
+    "msg4": "Vizuri sana! Nini kinakufanya uwe bora kuliko mitandao mingine ya kijamii?",
+    "msg5": "Nimejengwa kwa misingi ya maadili ya Kiafrika, kusaidia jamii zenye changamoto, na kuhakikisha kila mtu anapata nafasi sawa.",
+    "msg6": "Lengo lako ni nini hasa?",
+    "msg7": "Tunataka kusaidia watu na jamii kubadilisha jinsi wakulima, walimu, madaktari, wanafunzi, wafanyabiashara, na hata wanasiasa wanavyowasiliana.",
+    "msg8": "Tunapanga kuongeza huduma nyingi za kuvutia  tungependa uwe sehemu yetu.",
+    "msg9": "Uko tayari kushirikisha jamii yako kuhusu TuChati?",
+    "msg10": "Ndiyo kabisa! 😊",
+    "msg11": "Asante kwa msaada wako 💚 Timu yako ya TuChati.",
+    "end": "Mazungumzo yameisha. Tukutane tena hivi karibuni 💬"
   }
 }

@@ -8,6 +8,7 @@ const LANGS = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ln', label: 'Lingala', flag: '🇨🇩' }
 ]
 
 export default function LanguageSwitcher() {

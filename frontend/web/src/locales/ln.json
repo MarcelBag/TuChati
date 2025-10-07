@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "home": "Ndako",
+    "chat": "Lisolo",
+    "profile": "Profíli",
+    "login": "Kota",
+    "demo": "Lisolo ya ndakisa"
+  },
+
+  "hero": {
+    "title": "Boyei malamu na TuChati",
+    "description": "Sango ya mbangu, ya kobombama mpe ya kofungola te data mingi  esalaka ata soki internet ezali moke.",
+    "saving": "Ba-donnée ebombami",
+    "note": "Kokamba malamu, kokitisa ba-foto mpe ba-video, mpe kosalela mbangu na boyebi."
+  },
+
+  "features": {
+    "retry": "Ezongaka sango soki internet ebungi",
+    "light": "Ezwami na ndenge ya pete",
+    "offline": "Esalaka ata soki internet ezali te ya malamu",
+    "security": "Ezali na bokengi ya sécurité nyonso nyonso"
+  },
+
+  "section": {
+    "remote": {
+      "title": "Ezaleli mpo na bisika ya mosika",
+      "desc": "TuChati esalisaka bato bákoba kosolola ata soki réseau ezali moke.",
+      "item1": "Kokamba kolanda ndenge ya réseau",
+      "item2": "Kosalela data moke",
+      "item3": "Sango efandaka te na nzela"
+    },
+    "org": {
+      "title": "Ezaleli mpe mpo na mabongisi",
+      "desc": "Ba-groupe, ba-canal mpe bongo ya kokangisa makambo na bosolo.",
+      "item1": "Ba-droits kolanda mosala ya moto",
+      "item2": "Ba-paramètre ya pete mpe ya komonana",
+      "item3": "Kokangisa na compte moko (SSO) pete"
+    }
+  },
+
+  "cta": {
+    "title": "Olingi kobanda lisolo ya mayele?",
+    "login": "Kota",
+    "signup": "Bandela sik’oyo"
+  },
+
+  "download": {
+    "label": "Télécharger",
+    "ios": "iOS",
+    "android": "Android",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+
+  "auth": {
+    "title": "Boyei lisusu malamu",
+    "login": "Kota",
+    "register": "Bongisa compte",
+    "email": "Email",
+    "password": "Mot de passe",
+    "close": "Kokanga"
+  },
+
+  "footer": {
+    "madeFor": "Esalemi na bolingo mpo na bato nyonso"
+  },
+
+  "chat": {
+    "title": "Lisolo ya TuChati",
+    "msg1": "Mbote 👋 Boyei malamu na TuChati!",
+    "msg2": "Mbote! Ozali malamu?",
+    "msg3": "Nazali TuChati, nasalemi na Tuungane mpo na kosalisa bato mpe mabongisi báboya malamu  ata soki internet ezali pasi.",
+    "msg4": "Malamu mpenza! Eloko nini esalaka ete ozala malamu koleka ba-réseau social mosusu?",
+    "msg5": "Nazali moto ya misisa ya Afrika, mpo na kosalisa bato ya pasi mpe ya bituka nyonso, na boboto mpe na esika nyonso.",
+    "msg6": "Makambo nini olingi kokokisa?",
+    "msg7": "Tosali mpo na kosalisa bato mpe basanga mpo na kobongola ndenge bakulima, balakisi, minganga, bayekoli, mpe bakonzi basalelaka lisanga.",
+    "msg8": "Tosali kobongisa makambo ebele ya sika mpe ya kitoko  tolingi ozala na kati na biso.",
+    "msg9": "Okoki kolakisa TuChati epai ya lisanga na yo?",
+    "msg10": "Ee, mpenza! 😊",
+    "msg11": "Matondo mingi mpo na lisungi na yo 💚 Ekipi ya TuChati.",
+    "end": "Lisolo esili. Tokomonana lisusu mbala mosusu 💬"
+  }
+}

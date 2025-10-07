@@ -25,7 +25,7 @@ export default function App() {
 
         <nav className="nav-right" aria-label="Primary">
           <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
-          <NavLink to="/Chatshow" className="nav-link"> {t('nav.chatshow')}</NavLink>
+          <NavLink to="/chatshow" className="nav-link">{t('nav.demo')}</NavLink>
           <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
           <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
 
