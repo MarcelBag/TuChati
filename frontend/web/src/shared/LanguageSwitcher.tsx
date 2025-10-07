@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import './LanguageSwitcher.css'
 
 const LANGS = [
+ { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
 ]

@@ -10,6 +10,7 @@ import LanguageSwitcher from './shared/LanguageSwitcher'
 import AuthModal from './shared/AuthModal'
 import './app.css'
 import ThemeSwitcher from './shared/ThemeSwitcher'
+import ChatShow from './pages/Chatshow'
 
 export default function App() {
   const { t } = useTranslation()
@@ -24,6 +25,7 @@ export default function App() {
 
         <nav className="nav-right" aria-label="Primary">
           <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
+          <NavLink to="/Chatshow" className="nav-link"> {t('nav.chatshow')}</NavLink>
           <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
           <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
 
@@ -38,12 +40,14 @@ export default function App() {
           <DownloadMenu />
           <LanguageSwitcher />
           <ThemeSwitcher />
+          
         </nav>
       </header>
 
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/chatshow" element={<ChatShow />} /> 
           <Route path="/chat" element={<ChatRoom />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>

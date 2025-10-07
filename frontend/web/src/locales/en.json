@@ -3,7 +3,8 @@
     "home": "Home",
     "chat": "Chat",
     "profile": "Profile",
-    "login": "Log in"
+    "login": "Log in",
+    "demo": "Demo Chat"
   },
 
   "hero": {
