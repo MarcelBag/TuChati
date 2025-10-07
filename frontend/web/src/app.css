@@ -1,106 +1,7 @@
-/* frontend/web/src/App.tsx */
-:root {
-  --bg:#0b0d10; 
-  --card:#12161b; 
-  --muted:#9fb0c3; 
-  --text:#e9f1fb; 
-  --brand:#6bcf8a;
-  --ring:#2a3340; 
-  --border:#1b222b;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
-  color: var(--text);
-  background: linear-gradient(180deg,#0b0d10,#0f1318);
-  min-height: 100vh;
-}
-
-/* === Top nav === */
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(6px);
-  background: #0b0d10bf;
-}
-
-.brand .logo {
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: .3px;
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.nav-link {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: .95rem;
-}
-.nav-link.active, .nav-link:hover {
-  color: var(--text);
-}
-
-.link-btn {
-  background: none;
-  border: none;
-  color: var(--text);
-  cursor: pointer;
-  font-size: .95rem;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: background .15s ease;
-}
-.link-btn:hover {
-  background: rgba(255,255,255,.05);
-}
-
-.btn {
-  border: 1px solid var(--ring);
-  background: #161b21;
-  color: var(--text);
-  padding: 8px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.btn:hover {
-  border-color: var(--brand);
-}
-.caret {
-  margin-left: 6px;
-  opacity: .7;
-}
-
-/* === Main content === */
-main {
-  padding: 40px 22px;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* === Footer === */
-.footer {
-  margin-top: 40px;
-  padding: 26px 20px;
-  text-align: center;
-  color: #7a8aa0;
-  border-top: 1px solid var(--border);
-  background: #0b0d10bf;
-  backdrop-filter: blur(6px);
-}
-
-/* ========= DEFAULT: Dark Mode ========= */
+/* ============================================================
+   TuChati App Global Styles Dark & Light Theme Support
+   ============================================================ */
+/* ========= DARK MODE ========= */
 :root {
   color-scheme: dark;
   --bg: #0b0d10;
@@ -116,7 +17,7 @@ main {
   --shadow: 0 14px 38px rgba(0, 0, 0, 0.25);
 }
 
-/* ========= Light Mode ========= */
+/* ========= LIGHT MODE ========= */
 :root.light {
   color-scheme: light;
   --bg: #f7f9fc;
@@ -131,13 +32,131 @@ main {
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Base page styling */
+
+/* ============================================================
+    BASE PAGE STRUCTURE
+   ============================================================ */
+
 body {
-  background: var(--bg);
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial;
   color: var(--text);
+  background: var(--bg);
+  background-image: linear-gradient(180deg, var(--bg), var(--panel));
+  min-height: 100vh;
   transition: background 0.3s ease, color 0.3s ease;
 }
-/* Toggle */
+
+/* Global smooth transitions for all elements */
+* {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+/* ============================================================
+ TOP NAVIGATION BAR
+   ============================================================ */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+}
+
+.brand .logo {
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  color: var(--text);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.link-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+
+/* ============================================================
+GENERIC BUTTONS
+   ============================================================ */
+
+.btn {
+  border: 1px solid var(--ring);
+  background: #161b21;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--brand);
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, var(--brand), var(--brand-2));
+  border: none;
+  color: white;
+}
+
+.caret {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+ MAIN CONTENT AREA
+   ============================================================ */
+
+main {
+  padding: 40px 22px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+
+/* ============================================================
+ THEME TOGGLE BUTTON
+   ============================================================ */
+
 .theme-toggle {
   background: none;
   border: 1px solid var(--border);
@@ -155,4 +174,65 @@ body {
 .theme-toggle:hover {
   border-color: var(--brand);
   transform: rotate(10deg);
+}
+
+
+/* ============================================================
+HERO / PANEL SECTIONS
+   ============================================================ */
+
+.hero,
+.panel-card,
+.join {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+}
+
+
+/* ============================================================
+ FOOTER
+   ============================================================ */
+
+.footer {
+  margin-top: 40px;
+  padding: 26px 20px;
+  text-align: center;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+
+/* ============================================================
+ LIGHT MODE ENHANCEMENTS
+   ============================================================ */
+
+:root.light .hero-visual img {
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ============================================================
+RESPONSIVE ADJUSTMENTS
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .nav {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  main {
+    padding: 24px 16px;
+  }
+
+  .theme-toggle {
+    width: 30px;
+    height: 30px;
+  }
 }
