@@ -1,6 +1,6 @@
 # ============================================================
 # backend/apps/chat/urls.py
-# TuChati - Chat API Routes
+# TuChati  Chat API Routes
 # ============================================================
 # This module defines REST API endpoints for the chat system.
 #

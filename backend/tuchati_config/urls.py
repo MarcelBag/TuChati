@@ -1,6 +1,6 @@
 # ============================================================
 # backend/tuchati_config/urls.py
-# TuChati - Global URL Configuration
+# TuChati  Global URL Configuration
 # ============================================================
 # This file connects all app routes together.
 # REST API base prefix: /api/

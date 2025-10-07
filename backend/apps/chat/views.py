@@ -4,8 +4,8 @@
 # TuChati - Chat API Views
 # ============================================================
 # This module exposes REST endpoints for:
-#   - Managing chat rooms (list, create, retrieve, update, delete)
-#   - Listing and creating messages per room
+#    Managing chat rooms (list, create, retrieve, update, delete)
+#    Listing and creating messages per room
 #
 # Endpoints overview:
 #   GET    /api/chat/rooms/       List user's rooms
@@ -17,8 +17,8 @@
 #   POST   /api/chat/rooms/<uuid>/messages/   Send a new message
 #
 # Permissions:
-#   - All endpoints require JWT-authenticated users
-#   - Users can only interact with rooms where they are participants
+#    All endpoints require JWT-authenticated users
+#    Users can only interact with rooms where they are participants
 # ============================================================
 
 from rest_framework import generics, permissions

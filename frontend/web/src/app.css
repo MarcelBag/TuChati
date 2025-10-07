@@ -1,3 +1,4 @@
+/* frontend/web/src/App.tsx */
 :root {
   --bg: #0b0f17;
   --panel: #101826;
@@ -47,4 +48,27 @@ body {
 .site-footer {
   max-width: 1100px; margin: 3rem auto 2rem; padding: 0 1rem; color: var(--muted);
   text-align: center;
+}
+.shell-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: .75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nav { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+/* Add this */
+.global-tools {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+/* optional subtle separation */
+.global-tools > * {
+  flex-shrink: 0;
 }
