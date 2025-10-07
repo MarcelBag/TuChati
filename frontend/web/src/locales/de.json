@@ -1,39 +1,67 @@
 {
-  "nav": { "chat": "Chat", "profile": "Profil", "login": "Anmelden" },
+  "nav": {
+    "home": "Start",
+    "chat": "Chat",
+    "profile": "Profil",
+    "login": "Anmelden"
+  },
+
   "hero": {
-    "title": "Nachrichten, die auch ohne Internet funktionieren",
-    "description": "TuChati wurde für Gemeinschaften mit eingeschränktem oder instabilem Internet entwickelt. Leicht, robust und optimiert für den Datenaustausch bei geringer Bandbreite.",
-    "saving": "70 % weniger Datenverbrauch als bildbasierte Apps*",
-    "note": "*Optimierte Anfragen, verzögerte Medien und intelligente Wiederholungen halten den Verbrauch niedrig."
+    "title": "Willkommen bei TuChati",
+    "description": "Schneller, sicherer Chat mit geringem Datenverbrauch — überall, auch bei instabilen Netzen.",
+    "saving": "Gesparte Daten",
+    "note": "Optimierte Auslieferung, Medien-Komprimierung und intelligente Wiederholungen."
   },
+
   "features": {
-    "retry": "Automatische erneute Übertragung bei schlechter Verbindung",
-    "light": "Kleine Datenpakete, Text zuerst",
-    "offline": "Funktioniert auch ohne stabile Verbindung",
-    "security": "Ende-zu-Ende sicher und effizient"
+    "retry": "Intelligente Wiederholungen bei schlechter Verbindung",
+    "light": "Leichtgewichtig von Haus aus",
+    "offline": "Funktioniert bei unterbrochener Verbindung",
+    "security": "Ende-zu-Ende Sicherheits-Best Practices"
   },
+
   "section": {
     "remote": {
-      "title": "Entwickelt für abgelegene Gebiete",
-      "desc": "Die meisten Apps setzen eine stabile 4G/5G-Verbindung voraus. TuChati nicht. Wir legen Wert auf Zuverlässigkeit und Klarheit statt auf schwere Medien.",
-      "item1": "Nachrichten werden offline gespeichert und bei Signal gesendet",
-      "item2": "Statusmeldungen sind für geringe Datenlast optimiert",
-      "item3": "Medienversand ist optional und datenschonend"
+      "title": "Für entfernte Kontexte gebaut",
+      "desc": "TuChati hält Gespräche am Laufen, wenn Bandbreite knapp ist.",
+      "item1": "Adaptive Transports",
+      "item2": "Sehr kleine Nutzlasten",
+      "item3": "Robuste Zustellung"
     },
     "org": {
-      "title": "Einfach für Organisationen",
-      "desc": "Koordinieren Sie Außenteams, Gesundheitshelfer oder Lehrkräfte mit minimalem Datenverbrauch.",
-      "item1": "Übersichtliche, fokussierte Kanäle",
-      "item2": "Admin-Tools über Django",
-      "item3": "Benutzerfreundliche APIs für Integrationen"
+      "title": "Unternehmensfreundlich",
+      "desc": "Gruppen, Kanäle und revisionsfreundliche Protokolle.",
+      "item1": "Rollenbasierte Berechtigungen",
+      "item2": "Sinnvolle Standardwerte",
+      "item3": "Einfache SSO-Anbindung"
     }
   },
+
   "cta": {
-    "title": "Bereit, TuChati zu testen?",
-    "login": "Anmelden / Registrieren",
-    "signup": "Konto erstellen"
+    "title": "Bereit, smarter zu chatten?",
+    "login": "Anmelden",
+    "signup": "Loslegen"
   },
+
+  "download": {
+    "label": "Download",
+    "ios": "iOS",
+    "android": "Android",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+
+  "auth": {
+    "title": "Willkommen zurück",
+    "login": "Anmelden",
+    "register": "Konto erstellen",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "close": "Schließen"
+  },
+
   "footer": {
-    "madeFor": "Entwickelt für Gemeinschaften mit niedriger Bandbreite"
+    "madeFor": "Mit Sorgfalt für alle gemacht"
   }
 }

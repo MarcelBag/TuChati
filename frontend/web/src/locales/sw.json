@@ -1,39 +1,67 @@
 {
-  "nav": { "chat": "Mazungumzo", "profile": "Profaili", "login": "Ingia" },
+  "nav": {
+    "home": "Nyumbani",
+    "chat": "Gumzo",
+    "profile": "Wasifu",
+    "login": "Ingia"
+  },
+
   "hero": {
-    "title": "Ujumbe unaofanya kazi hata mtandao ukiwa hafifu",
-    "description": "TuChati imeundwa kwa ajili ya jamii zenye mtandao dhaifu au wa vipindi. Ni nyepesi, imara na imeundwa kupeleka ujumbe bila kutumia data nyingi au kuchosha betri.",
-    "saving": "inatumia data kidogo kwa 70% kuliko programu zenye picha nyingi*",
-    "note": "*Inaboresha ukubwa wa maombi na kuchelewesha media ili kupunguza matumizi ya data."
+    "title": "Karibu TuChati",
+    "description": "Ujumbe wa haraka, salama na unaotumia data kidogo — popote, hata mtandao ukiyumba.",
+    "saving": "Data iliyookolewa",
+    "note": "Ufikishaji ulioboreshwa, kubana midia, na majaribio ya tena ya kiakili."
   },
+
   "features": {
-    "retry": "Kutuma upya kiotomatiki unapopoteza mtandao",
-    "light": "Ujumbe mdogo na maandishi ndiyo msingi",
-    "offline": "Inafanya kazi hata bila muunganisho wa mtandao",
-    "security": "Imehifadhiwa kwa usalama kamili kutoka mwanzo hadi mwisho"
+    "retry": "Jaribio upya la kiakili kwenye mtandao hafifu",
+    "light": "Mwanga kwa muundo",
+    "offline": "Hufanya kazi hata upatikanaji ukiwa wa vipindi",
+    "security": "Mazingira bora ya usalama mwisho-kwa-mwisho"
   },
+
   "section": {
     "remote": {
-      "title": "Imebuniwa kwa maeneo ya mbali",
-      "desc": "Programu nyingi zinahitaji mtandao thabiti wa 4G/5G. TuChati haitegemei hilo. Inazingatia uaminifu na urahisi zaidi kuliko picha nzito.",
-      "item1": "Ujumbe huwekwa kwenye foleni na kutumwa mara ishara inapopatikana",
-      "item2": "Ishara za kuandika, kutuma na kusoma ni nyepesi",
-      "item3": "Kutuma media ni hiari na kunazingatia matumizi ya data"
+      "title": "Imetengenezwa kwa mazingira ya mbali",
+      "desc": "TuChati huendeleza mazungumzo wakati bendi ni finyu.",
+      "item1": "Usafirishaji unaobadilika",
+      "item2": "Ujazo mdogo wa data",
+      "item3": "Ufikishaji thabiti"
     },
     "org": {
-      "title": "Rahisi kwa mashirika",
-      "desc": "Ratibu timu za uwanjani, wahudumu wa afya au madarasa kwa urahisi. TuChati inaendelea kufanya kazi kwa matumizi madogo ya data.",
-      "item1": "Mikondo ya mawasiliano iliyopangwa vizuri",
-      "item2": "Zana za usimamizi kupitia Django",
-      "item3": "API rahisi za ujumuishaji"
+      "title": "Rafiki kwa taasisi",
+      "desc": "Vikundi, njia na kumbukumbu za ukaguzi.",
+      "item1": "Ruhusa kulingana na majukumu",
+      "item2": "Chaguo-msingi sahihi",
+      "item3": "Muunganisho rahisi wa SSO"
     }
   },
+
   "cta": {
-    "title": "Jaribu TuChati leo!",
-    "login": "Ingia / Jisajili",
-    "signup": "Fungua akaunti"
+    "title": "Tayari kuzungumza kwa ubunifu?",
+    "login": "Ingia",
+    "signup": "Anza sasa"
   },
+
+  "download": {
+    "label": "Pakua",
+    "ios": "iOS",
+    "android": "Android",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+
+  "auth": {
+    "title": "Karibu tena",
+    "login": "Ingia",
+    "register": "Fungua akaunti",
+    "email": "Barua pepe",
+    "password": "Nenosiri",
+    "close": "Funga"
+  },
+
   "footer": {
-    "madeFor": "Imeundwa kwa jamii zenye mtandao mdogo"
+    "madeFor": "Imetengenezwa kwa uangalifu kwa kila mtu"
   }
 }

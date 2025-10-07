@@ -2,7 +2,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
-// Import translation JSONs
 import en from './locales/en.json'
 import fr from './locales/fr.json'
 import sw from './locales/sw.json'
@@ -20,6 +19,7 @@ i18n
     lng: localStorage.getItem('lang') || 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
+    // optional but fine to leave defaults
   })
 
 export default i18n

@@ -1,17 +1,25 @@
 {
-  "nav": { "home": "Home", "chat": "Chat", "profile": "Profile", "login": "Log in" },
+  "nav": {
+    "home": "Home",
+    "chat": "Chat",
+    "profile": "Profile",
+    "login": "Log in"
+  },
+
   "hero": {
     "title": "Welcome to TuChati",
     "description": "Fast, secure, low-data chat that works everywhere — even on flaky networks.",
     "saving": "Data saved",
     "note": "Optimized delivery, media compression, and smart retries."
   },
+
   "features": {
     "retry": "Smart retries on poor connections",
     "light": "Lightweight by design",
     "offline": "Works with intermittent access",
     "security": "End-to-end security best practices"
   },
+
   "section": {
     "remote": {
       "title": "Built for remote contexts",
@@ -28,6 +36,32 @@
       "item3": "Easy SSO hooks"
     }
   },
-  "cta": { "title": "Ready to chat smarter?", "login": "Log in", "signup": "Get started" },
-  "footer": { "madeFor": "Made with care for everyone" }
+
+  "cta": {
+    "title": "Ready to chat smarter?",
+    "login": "Log in",
+    "signup": "Get started"
+  },
+
+  "download": {
+    "label": "Download",
+    "ios": "iOS",
+    "android": "Android",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+
+  "auth": {
+    "title": "Welcome back",
+    "login": "Log in",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "close": "Close"
+  },
+
+  "footer": {
+    "madeFor": "Made with care for everyone"
+  }
 }

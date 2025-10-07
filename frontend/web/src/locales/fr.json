@@ -1,39 +1,67 @@
 {
-  "nav": { "chat": "Discussions", "profile": "Profil", "login": "Connexion" },
+  "nav": {
+    "home": "Accueil",
+    "chat": "Discussion",
+    "profile": "Profil",
+    "login": "Connexion"
+  },
+
   "hero": {
-    "title": "Une messagerie qui fonctionne même sans Internet",
-    "description": "TuChati est conçu pour les communautés dont la connexion est limitée ou instable. Léger, résilient et optimisé pour transmettre vos messages sur des réseaux à faible bande passante sans épuiser les données ni la batterie.",
-    "saving": "consomme 70 % moins de données que les applications centrées sur l’image*",
-    "note": "*La taille des requêtes est optimisée, les médias différés et les tentatives automatiques réduisent la consommation."
+    "title": "Bienvenue sur TuChati",
+    "description": "Messagerie rapide, sécurisée et économe en données — partout, même avec un réseau instable.",
+    "saving": "Données économisées",
+    "note": "Livraison optimisée, compression des médias et reprises intelligentes."
   },
+
   "features": {
-    "retry": "Renvoi automatique en cas de mauvaise connexion",
-    "light": "Messages légers et texte prioritaire par défaut",
-    "offline": "Fonctionne même lorsque la connexion est coupée",
-    "security": "Sécurisé de bout en bout et économe"
+    "retry": "Reprises intelligentes sur mauvaise connexion",
+    "light": "Léger par conception",
+    "offline": "Fonctionne avec un accès intermittent",
+    "security": "Bonnes pratiques de sécurité de bout en bout"
   },
+
   "section": {
     "remote": {
-      "title": "Conçu pour les zones éloignées",
-      "desc": "La plupart des applications supposent une connexion 4G/5G stable. TuChati non. Nous privilégions la fiabilité et la clarté plutôt que les médias lourds et le bavardage inutile.",
-      "item1": "Les messages sont mis en file et envoyés dès que le signal revient",
-      "item2": "Les indicateurs de saisie, de livraison et de lecture sont allégés",
-      "item3": "L’envoi de médias est optionnel et respecte la bande passante"
+      "title": "Conçu pour les contextes à distance",
+      "desc": "TuChati fait avancer les conversations quand la bande passante manque.",
+      "item1": "Transports adaptatifs",
+      "item2": "Charges utiles minimales",
+      "item3": "Livraison résiliente"
     },
     "org": {
-      "title": "Simple pour les organisations",
-      "desc": "Coordonnez facilement vos équipes de terrain, agents de santé ou enseignants. TuChati assure la continuité de la communication avec un minimum de données.",
-      "item1": "Canaux clairs et ciblés",
-      "item2": "Outils d’administration via Django",
-      "item3": "API simples et conviviales pour vos intégrations"
+      "title": "Adapté aux organisations",
+      "desc": "Groupes, canaux et journaux auditables.",
+      "item1": "Autorisations basées sur les rôles",
+      "item2": "Paramètres par défaut pertinents",
+      "item3": "Intégration SSO facilitée"
     }
   },
+
   "cta": {
-    "title": "Prêt à essayer TuChati ?",
-    "login": "Connexion / Inscription",
-    "signup": "Créer un compte"
+    "title": "Prêt à discuter plus intelligemment ?",
+    "login": "Se connecter",
+    "signup": "Commencer"
   },
+
+  "download": {
+    "label": "Télécharger",
+    "ios": "iOS",
+    "android": "Android",
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux"
+  },
+
+  "auth": {
+    "title": "Bon retour",
+    "login": "Se connecter",
+    "register": "Créer un compte",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "close": "Fermer"
+  },
+
   "footer": {
-    "madeFor": "Conçu pour les communautés à faible connectivité"
+    "madeFor": "Conçu avec soin pour tous"
   }
 }
