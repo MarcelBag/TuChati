@@ -99,3 +99,60 @@ main {
   background: #0b0d10bf;
   backdrop-filter: blur(6px);
 }
+
+/* ========= DEFAULT: Dark Mode ========= */
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --panel: #101826;
+  --card: #0f1724;
+  --text: #e8eefc;
+  --muted: #9fb0d0;
+  --brand: #0b6bff;
+  --brand-2: #5aa1ff;
+  --ring: #21304a;
+  --border: #172234;
+  --radius: 16px;
+  --shadow: 0 14px 38px rgba(0, 0, 0, 0.25);
+}
+
+/* ========= Light Mode ========= */
+:root.light {
+  color-scheme: light;
+  --bg: #f7f9fc;
+  --panel: #ffffff;
+  --card: #f1f5fa;
+  --text: #1a1f29;
+  --muted: #54657e;
+  --brand: #0b6bff;
+  --brand-2: #3d8fff;
+  --ring: #c8d4e6;
+  --border: #d7dee9;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Base page styling */
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+/* Toggle */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--brand);
+  transform: rotate(10deg);
+}

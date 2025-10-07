@@ -9,6 +9,7 @@ import DownloadMenu from './shared/DownloadMenu'
 import LanguageSwitcher from './shared/LanguageSwitcher'
 import AuthModal from './shared/AuthModal'
 import './app.css'
+import ThemeSwitcher from './shared/ThemeSwitcher'
 
 export default function App() {
   const { t } = useTranslation()
@@ -36,6 +37,7 @@ export default function App() {
 
           <DownloadMenu />
           <LanguageSwitcher />
+          <ThemeSwitcher />
         </nav>
       </header>
 
