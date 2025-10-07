@@ -1,8 +1,7 @@
-// frontend/web/src/pages/ChatRoom.tsx
-// frontend/web/src/pages/Chat.tsx
-import React, { useEffect, useState } from 'react'
+// frontend/web/src/pages/Chatshow.tsx
+import React, { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import './chat.css'
+import './Chatshow.css'
 
 interface Message {
   id: number
@@ -11,12 +10,12 @@ interface Message {
 }
 
 export default function ChatShowcase() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
   const [index, setIndex] = useState(0)
 
-  // Build conversation dynamically from i18n keys
-  const conversation: Message[] = [
+  // 🧩 Build the conversation fresh every time the language changes
+  const conversation = useMemo<Message[]>(() => [
     { id: 1, sender: 'tuchati', text: t('chat.msg1') },
     { id: 2, sender: 'user', text: t('chat.msg2') },
     { id: 3, sender: 'tuchati', text: t('chat.msg3') },
@@ -28,9 +27,9 @@ export default function ChatShowcase() {
     { id: 9, sender: 'tuchati', text: t('chat.msg9') },
     { id: 10, sender: 'user', text: t('chat.msg10') },
     { id: 11, sender: 'tuchati', text: t('chat.msg11') },
-  ]
+  ], [t, i18n.language])
 
-  // Animate the conversation
+  // 🕑 Animate conversation playback
   useEffect(() => {
     if (index < conversation.length) {
       const timer = setTimeout(() => {
@@ -39,8 +38,14 @@ export default function ChatShowcase() {
       }, 1400)
       return () => clearTimeout(timer)
     }
-    // passing in the array to re-run if language changes
-  }, [index, t])
+  }, [index, conversation])
+
+  // 🧹 Reset when language changes
+  useEffect(() => {
+    setMessages([])
+    setIndex(0)
+  }, [i18n.language])
+
   return (
     <div className="chat-page">
       <div className="chat-container">

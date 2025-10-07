@@ -6,8 +6,7 @@ import DownloadMenu from '../shared/DownloadMenu'
 import LanguageSwitcher from '../shared/LanguageSwitcher'
 import './home.css'
 
-// hero image stored at: frontend/media/images/TuChati.png
-// path from web/src/pages -> ../.. (=web) -> ../ (=frontend) -> media/images
+// hero image stored at: /media/images/TuChati.png
 import heroImg from '/images/TuChati.png'
 
 export default function Home() {

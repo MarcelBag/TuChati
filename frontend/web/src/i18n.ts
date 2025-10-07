@@ -21,7 +21,7 @@ i18n
     lng: localStorage.getItem('lang') || 'fr',
     fallbackLng: 'fr',
     interpolation: { escapeValue: false },
-    // optional but fine to leave defaults
+    // but fine to leave defaults
   })
 
 export default i18n
