@@ -9,7 +9,7 @@
 
   "hero": {
     "title": "Welcome to TuChati",
-    "description": "Fast, secure, low-data chat that works everywhere  even on flaky networks.",
+    "description": "Fast, secure, low-data chat that works everywhere even on flaky networks.",
     "saving": "Data saved",
     "note": "Optimized delivery, media compression, and smart retries."
   },
@@ -64,5 +64,21 @@
 
   "footer": {
     "madeFor": "Made with care for everyone"
+  },
+
+  "chat": {
+    "title": "TuChati Showcase",
+    "msg1": "Hey there 👋 Welcome to TuChati!",
+    "msg2": "Hello! How are you?",
+    "msg3": "I am TuChati, built by Tuungane to help communities better communicate, especially where internet access is still a luxury.",
+    "msg4": "That's awesome! What makes you better than other social media apps?",
+    "msg5": "I am deeply integrated with African values, designed for underprivileged communities, and built to assist everyone with respect and accessibility.",
+    "msg6": "What do you aim to achieve?",
+    "msg7": "We aim to assist people and communities, revolutionizing how farmers, educators, scholars, doctors, bankers, and even politicians connect and collaborate.",
+    "msg8": "We're planning many exciting features, and we'd love to have you join us.",
+    "msg9": "Are you willing to share TuChati with your community?",
+    "msg10": "Yes, of course! 😊",
+    "msg11": "Thank you for your support 💚 Your TuChati Community Team.",
+    "end": "Conversation ended. Join us soon 💬"
   }
 }

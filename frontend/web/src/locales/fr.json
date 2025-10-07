@@ -3,43 +3,44 @@
     "home": "Accueil",
     "chat": "Discussion",
     "profile": "Profil",
-    "login": "Connexion"
+    "login": "Connexion",
+    "demo": "Chat Démo"
   },
 
   "hero": {
     "title": "Bienvenue sur TuChati",
-    "description": "Messagerie rapide, sécurisée et économe en données  partout, même avec un réseau instable.",
+    "description": "Messagerie rapide, sécurisée et économe en données, qui fonctionne partout — même avec une connexion instable.",
     "saving": "Données économisées",
     "note": "Livraison optimisée, compression des médias et reprises intelligentes."
   },
 
   "features": {
-    "retry": "Reprises intelligentes sur mauvaise connexion",
+    "retry": "Reprises automatiques sur mauvaise connexion",
     "light": "Léger par conception",
-    "offline": "Fonctionne avec un accès intermittent",
-    "security": "Bonnes pratiques de sécurité de bout en bout"
+    "offline": "Fonctionne même avec un accès intermittent",
+    "security": "Meilleures pratiques de sécurité de bout en bout"
   },
 
   "section": {
     "remote": {
       "title": "Conçu pour les contextes à distance",
-      "desc": "TuChati fait avancer les conversations quand la bande passante manque.",
+      "desc": "TuChati garde vos conversations actives même quand la bande passante est limitée.",
       "item1": "Transports adaptatifs",
       "item2": "Charges utiles minimales",
       "item3": "Livraison résiliente"
     },
     "org": {
       "title": "Adapté aux organisations",
-      "desc": "Groupes, canaux et journaux auditables.",
-      "item1": "Autorisations basées sur les rôles",
-      "item2": "Paramètres par défaut pertinents",
-      "item3": "Intégration SSO facilitée"
+      "desc": "Groupes, canaux et journaux d’audit faciles à suivre.",
+      "item1": "Permissions basées sur les rôles",
+      "item2": "Paramètres simples et logiques",
+      "item3": "Intégration SSO facile"
     }
   },
 
   "cta": {
     "title": "Prêt à discuter plus intelligemment ?",
-    "login": "Se connecter",
+    "login": "Connexion",
     "signup": "Commencer"
   },
 
@@ -53,15 +54,31 @@
   },
 
   "auth": {
-    "title": "Bon retour",
-    "login": "Se connecter",
+    "title": "Heureux de vous revoir",
+    "login": "Connexion",
     "register": "Créer un compte",
-    "email": "E-mail",
+    "email": "Email",
     "password": "Mot de passe",
     "close": "Fermer"
   },
 
   "footer": {
-    "madeFor": "Conçu avec soin pour tous"
+    "madeFor": "Créé avec soin pour tous"
+  },
+
+  "chat": {
+    "title": "Présentation de TuChati",
+    "msg1": "Salut 👋 Bienvenue sur TuChati !",
+    "msg2": "Bonjour ! Comment vas-tu ?",
+    "msg3": "Je suis TuChati, créé par Tuungane pour aider les communautés à mieux communiquer, surtout là où l’accès à Internet reste un luxe.",
+    "msg4": "Génial ! Qu’est-ce qui te rend meilleur que les autres applications sociales ?",
+    "msg5": "Je suis enraciné dans les valeurs africaines, conçu pour les communautés défavorisées et pour accompagner chacun avec respect et accessibilité.",
+    "msg6": "Quel est ton objectif ?",
+    "msg7": "Nous voulons aider les personnes et les communautés — révolutionner la manière dont les agriculteurs, enseignants, chercheurs, médecins, banquiers et politiciens échangent et collaborent.",
+    "msg8": "Nous préparons plusieurs fonctionnalités passionnantes et serions heureux que tu nous rejoignes.",
+    "msg9": "Souhaites-tu partager TuChati avec ta communauté ?",
+    "msg10": "Oui, bien sûr ! 😊",
+    "msg11": "Merci pour ton soutien 💚 Ton équipe TuChati.",
+    "end": "Conversation terminée. Rejoins-nous bientôt 💬"
   }
 }
