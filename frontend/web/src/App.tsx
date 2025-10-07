@@ -1,5 +1,5 @@
 // frontend/web/src/App.tsx
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import Home from './pages/Home'
 import ChatRoom from './pages/ChatRoom'
@@ -7,46 +7,51 @@ import Profile from './pages/Profile'
 import { useTranslation } from 'react-i18next'
 import DownloadMenu from './shared/DownloadMenu'
 import LanguageSwitcher from './shared/LanguageSwitcher'
+import AuthModal from './shared/AuthModal'
 import './app.css'
 
 export default function App() {
   const { t } = useTranslation()
+  const [authOpen, setAuthOpen] = useState(false)
 
   return (
     <Router>
-      {/* ========= HEADER ========= */}
-      <header className="shell">
-        <div className="shell-inner">
-          <div className="brand">
-            <img src="/images/TuChati.png" alt="TuChati" className="brand-logo" />
-            <span className="brand-name">TuChati</span>
-          </div>
-
-          <nav className="nav" aria-label="Primary">
-            <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
-            <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
-            <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
-          </nav>
-
-          {/* ---- Global tools (Download + Language) ---- */}
-          <div className="global-tools">
-            <DownloadMenu />
-            <LanguageSwitcher />
-          </div>
+      <header className="nav">
+        <div className="brand">
+          <span className="logo">TuChati</span>
         </div>
+
+        <nav className="nav-right" aria-label="Primary">
+          <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
+          <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
+          <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
+
+          <button
+            className="link-btn"
+            type="button"
+            onClick={() => setAuthOpen(true)}
+          >
+            {t('nav.login')}
+          </button>
+
+          <DownloadMenu />
+          <LanguageSwitcher />
+        </nav>
       </header>
 
-      {/* ========= MAIN ROUTES ========= */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/chat" element={<ChatRoom />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/chat" element={<ChatRoom />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </main>
 
-      {/* ========= FOOTER ========= */}
-      <footer className="site-footer">
-        <p>© {new Date().getFullYear()} TuChati — {t('footer.madeFor')}</p>
+      <footer className="footer">
+        <small>© {new Date().getFullYear()} TuChati • {t('footer.madeFor')}</small>
       </footer>
+
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </Router>
   )
 }
