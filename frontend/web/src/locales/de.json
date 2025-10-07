@@ -1,50 +1,51 @@
 {
   "nav": {
-    "home": "Start",
+    "home": "Startseite",
     "chat": "Chat",
     "profile": "Profil",
-    "login": "Anmelden"
+    "login": "Anmelden",
+    "demo": "Demo-Chat"
   },
 
   "hero": {
     "title": "Willkommen bei TuChati",
-    "description": "Schneller, sicherer Chat mit geringem Datenverbrauch  überall, auch bei instabilen Netzen.",
+    "description": "Schneller, sicherer und datensparender Chat, der überall funktioniert — selbst bei schlechter Verbindung.",
     "saving": "Gesparte Daten",
-    "note": "Optimierte Auslieferung, Medien-Komprimierung und intelligente Wiederholungen."
+    "note": "Optimierte Übertragung, Medienkompression und intelligente Wiederholungen."
   },
 
   "features": {
-    "retry": "Intelligente Wiederholungen bei schlechter Verbindung",
-    "light": "Leichtgewichtig von Haus aus",
-    "offline": "Funktioniert bei unterbrochener Verbindung",
-    "security": "Ende-zu-Ende Sicherheits-Best Practices"
+    "retry": "Automatische Wiederholungen bei schlechter Verbindung",
+    "light": "Leichtgewichtiges Design",
+    "offline": "Funktioniert auch bei instabiler Verbindung",
+    "security": "Ende-zu-Ende-Sicherheitspraktiken"
   },
 
   "section": {
     "remote": {
-      "title": "Für entfernte Kontexte gebaut",
-      "desc": "TuChati hält Gespräche am Laufen, wenn Bandbreite knapp ist.",
-      "item1": "Adaptive Transports",
-      "item2": "Sehr kleine Nutzlasten",
-      "item3": "Robuste Zustellung"
+      "title": "Für abgelegene Gebiete entwickelt",
+      "desc": "TuChati hält Gespräche am Laufen, auch wenn die Bandbreite gering ist.",
+      "item1": "Anpassungsfähige Übertragungen",
+      "item2": "Kleine Datenpakete",
+      "item3": "Zuverlässige Zustellung"
     },
     "org": {
-      "title": "Unternehmensfreundlich",
-      "desc": "Gruppen, Kanäle und revisionsfreundliche Protokolle.",
+      "title": "Ideal für Organisationen",
+      "desc": "Gruppen, Kanäle und prüffreundliche Protokolle.",
       "item1": "Rollenbasierte Berechtigungen",
       "item2": "Sinnvolle Standardwerte",
-      "item3": "Einfache SSO-Anbindung"
+      "item3": "Einfache SSO-Integration"
     }
   },
 
   "cta": {
-    "title": "Bereit, smarter zu chatten?",
+    "title": "Bereit, intelligenter zu chatten?",
     "login": "Anmelden",
     "signup": "Loslegen"
   },
 
   "download": {
-    "label": "Download",
+    "label": "Herunterladen",
     "ios": "iOS",
     "android": "Android",
     "windows": "Windows",
@@ -62,6 +63,22 @@
   },
 
   "footer": {
-    "madeFor": "Mit Sorgfalt für alle gemacht"
+    "madeFor": "Mit Sorgfalt für alle entwickelt"
+  },
+
+  "chat": {
+    "title": "TuChati Vorstellung",
+    "msg1": "Hey 👋 Willkommen bei TuChati!",
+    "msg2": "Hallo! Wie geht’s dir?",
+    "msg3": "Ich bin TuChati, entwickelt von Tuungane, um Gemeinschaften zu helfen, besser zu kommunizieren — besonders dort, wo Internetzugang noch ein Luxus ist.",
+    "msg4": "Das ist großartig! Was macht dich besser als andere soziale Apps?",
+    "msg5": "Ich bin tief in afrikanischen Werten verwurzelt, für benachteiligte Gemeinschaften konzipiert und darauf ausgelegt, jedem mit Respekt und Zugänglichkeit zu helfen.",
+    "msg6": "Was willst du erreichen?",
+    "msg7": "Wir möchten Menschen und Gemeinschaften unterstützen — und die Art, wie Bauern, Lehrer, Wissenschaftler, Ärzte, Banker und Politiker zusammenarbeiten, verändern.",
+    "msg8": "Wir planen viele spannende Funktionen und freuen uns, wenn du dabei bist.",
+    "msg9": "Möchtest du TuChati mit deiner Gemeinschaft teilen?",
+    "msg10": "Ja, natürlich! 😊",
+    "msg11": "Danke für deine Unterstützung 💚 Dein TuChati-Team.",
+    "end": "Konversation beendet. Bis bald 💬"
   }
 }
