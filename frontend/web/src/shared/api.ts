@@ -7,4 +7,6 @@ export async function apiFetch(
 ) {
   const res = await fetch(`${API_BASE}${path}`, options);
   return res;
+
+  
 }
