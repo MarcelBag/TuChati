@@ -146,9 +146,24 @@ MEDIA_ROOT = BASE_DIR / "media"  # uploaded files
 # -------------------------------------------
 # CORS & CSRF
 # -------------------------------------------
-CORS_ALLOW_ALL = bool(int(os.getenv("CORS_ALLOW_ALL", "0")))
-CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+CORS_ALLOW_ALL_ORIGINS = bool(int(os.getenv("CORS_ALLOW_ALL_ORIGINS", "0")))
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://web.tuchati.tuunganes.com",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://tuchati.tuunganes.com",
+    "https://web.tuchati.tuunganes.com",
+]
 
 # -------------------------------------------
 # DJANGO REST FRAMEWORK CONFIG

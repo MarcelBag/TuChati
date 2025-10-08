@@ -7,6 +7,7 @@ import { apiFetch } from './api'
 
 export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -22,14 +23,13 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
     try {
       if (mode === 'signup') {
-        // Create account using backend our in house backend point 
-        //const res = await fetch('/api/accounts/register/', {
+        // --- Registration ---
         const res = await apiFetch('/api/accounts/register/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            username,
             email,
-            username: email.split('@')[0],
             password,
             password2: confirmPassword || password,
           }),
@@ -37,15 +37,19 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          if (data.password) throw new Error('Passwords did not match.')
-          if (data.detail) throw new Error(data.detail)
-          if (data.email) throw new Error('Email already exists.')
-          throw new Error('Registration failed.')
+          const msg =
+            data?.password2?.[0] ||
+            data?.email?.[0] ||
+            data?.username?.[0] ||
+            data?.detail ||
+            'Registration failed.'
+          throw new Error(msg)
         }
       }
 
-      // Then log in automatically
-      await login(email, password)
+      // --- Login (JWT) ---
+      // backend expects username/password, but allow user to enter either username or email
+      await login(username || email, password)
 
       onClose()
       navigate('/chat')
@@ -72,16 +76,47 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@tuunganes.com"
-            />
-          </label>
+          {mode === 'signup' && (
+            <>
+              <label>
+                Username
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="choose a username"
+                />
+              </label>
+
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@tuunganes.com"
+                />
+              </label>
+            </>
+          )}
+
+          {mode === 'login' && (
+            <label>
+              Username or Email
+              <input
+                type="text"
+                value={username || email}
+                onChange={(e) => {
+                  setUsername(e.target.value)
+                  setEmail(e.target.value)
+                }}
+                required
+                placeholder="your username or email"
+              />
+            </label>
+          )}
 
           <label>
             Password
