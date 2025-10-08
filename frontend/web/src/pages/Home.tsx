@@ -46,7 +46,7 @@ export default function Home() {
 
         <div className="hero-visual">
           <img
-            src={heroImg}
+           src={heroImg}
             alt="People chatting with TuChati"
             loading="lazy"
             width={640}
