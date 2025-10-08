@@ -21,11 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'))
 
+  // Keeping the token in sync & fetch current user when token changes
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token)
-      fetch('/api/auth/me/', { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => res.ok ? res.json() : null)
+      fetch('/api/accounts/me/', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => (res.ok ? res.json() : null))
         .then(data => setUser(data))
         .catch(() => setUser(null))
     } else {
@@ -34,17 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token])
 
+  // Login using SimpleJWT endpoint
   async function login(email: string, password: string) {
-    const res = await fetch('/api/token/', {
+    const res = await fetch('/api/accounts/token/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
+
     if (!res.ok) throw new Error('Invalid credentials')
+
     const data = await res.json()
     setToken(data.access)
   }
 
+  // Loging out clears token + user
   function logout() {
     setToken(null)
     setUser(null)

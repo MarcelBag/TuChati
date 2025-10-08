@@ -1,3 +1,4 @@
+#backend/apps/accounts/serializers.py
 # ===============================================================
 # Custom JWT Serializer: login with username OR email
 # ===============================================================

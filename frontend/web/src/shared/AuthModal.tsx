@@ -10,61 +10,50 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const { login } = useAuth()
+// src/shared/AuthModal.tsx
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
+  setError('')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    try {
-      if (mode === 'signup') {
-        await fetch('/api/users/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
-        })
+  try {
+    if (mode === 'signup') {
+      // ✅ Use the correct backend endpoint
+      const res = await fetch('/api/accounts/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          username: email.split('@')[0], // derive username from email for now
+          password,
+          password2: password, // match backend serializer requirement
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(JSON.stringify(data))
       }
-      await login(email, password)
-      onClose()
-    } catch {
-      setError('Authentication failed')
     }
+
+    // ✅ Login (token obtain)
+    const loginRes = await fetch('/api/accounts/token/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+
+    if (!loginRes.ok) {
+      const data = await loginRes.json()
+      throw new Error(data.detail || 'Invalid credentials')
+    }
+
+    const tokenData = await loginRes.json()
+    localStorage.setItem('token', tokenData.access)
+    window.location.href = '/chat' // optional redirect
+    onClose()
+  } catch (err: any) {
+    setError('Authentication failed: ' + (err.message || 'Unknown error'))
   }
+}
 
-  return (
-    <div className="auth-backdrop" onClick={onClose}>
-      <div className="auth-modal" onClick={e => e.stopPropagation()}>
-        <div className="auth-header">
-          <h3>{mode === 'login' ? 'Login' : 'Create account'}</h3>
-          <button className="icon-btn" onClick={onClose}>✕</button>
-        </div>
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <label>
-              Full name
-              <input value={name} onChange={e => setName(e.target.value)} required />
-            </label>
-          )}
-          <label>
-            Email
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-          </label>
-          <label>
-            Password
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-          </label>
-          {error && <p style={{ color: 'red', fontSize: '0.9em' }}>{error}</p>}
-          <button className="btn primary" type="submit">
-            {mode === 'login' ? 'Login' : 'Create account'}
-          </button>
-        </form>
-
-        <div className="auth-switch">
-          {mode === 'login' ? (
-            <button className="link-btn" onClick={() => setMode('signup')}>Need an account? Sign up</button>
-          ) : (
-            <button className="link-btn" onClick={() => setMode('login')}>Have an account? Login</button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
 }
