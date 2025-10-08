@@ -1,37 +1,45 @@
 // src/pages/ChatRoom.tsx
 // ============================================================
-// src/pages/ChatRoom.tsx
-// Beautiful TuChati chat room UI
+// TuChati Chat Room - full-featured, modern design
 // ============================================================
 
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
+import { apiFetch } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
-//import { useChatSocket } from '../api/chat'
 import { useChatSocket } from '../hooks/useChatSocket'
 import MessageList from '../api/MessageList'
 import MessageInput from '../api/MessageInput'
 import TypingIndicator from '../api/TypingIndicator'
-
 import './ChatRoom.css'
 
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { user, token, logout } = useAuth()
+  const [room, setRoom] = useState<any | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [typingUser, setTypingUser] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // Handle incoming websocket messages
+  // 🧩 Fetch room details when page loads
+  useEffect(() => {
+    if (roomId && token) {
+      apiFetch(`/api/chat/rooms/${roomId}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => (res.ok ? res.json() : null))
+        .then(setRoom)
+        .catch(console.error)
+    }
+  }, [roomId, token])
+
+  // 🧠 WebSocket connection for live chat
   const handleIncoming = (data: any) => {
-    if (data.type === 'history') setMessages(data.messages)
-    else if (data.type === 'typing') {
-      if (data.typing) setTypingUser(data.from_user)
-      else setTypingUser(null)
-    } else if (data.type === 'presence') {
-      console.log(`[Presence] ${data.user} is ${data.status}`)
+    if (data.type === 'history') {
+      setMessages(data.messages)
+    } else if (data.type === 'typing') {
+      setTypingUser(data.typing ? data.from_user : null)
     } else if (data.sender && data.content) {
-      // normal message
       setMessages(prev => [...prev, data])
     }
   }
@@ -39,28 +47,41 @@ export default function ChatRoom() {
   const { sendMessage } = useChatSocket(roomId || '', token || '', handleIncoming)
 
   useEffect(() => {
-    // scroll to bottom on new message
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+    listRef.current?.scrollTo({
+      top: listRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
   }, [messages])
 
-  if (!token) return <div className="chat-unauth">Please login to join the chat.</div>
+  if (!token) {
+    return <div className="chat-unauth">Please log in to join the chat.</div>
+  }
+
   if (!roomId) {
-  return <div className="chat-unauth">Invalid room. Please select a chat room.</div>
-}
+    return <div className="chat-unauth">Invalid room. Please select a chat room.</div>
+  }
+
+  if (!room) {
+    return <div className="chat-unauth">Loading chat room...</div>
+  }
+
   return (
     <div className="chat-room-container">
       {/* Header */}
       <header className="chat-header">
         <div>
-          <h2 className="room-name">Room {roomId?.slice(0, 6)}</h2>
+          <h2 className="room-name">{room.name || 'Unnamed Room'}</h2>
           {typingUser ? (
             <span className="typing-status">{typingUser} is typing...</span>
           ) : (
-            <span className="online-status">Online</span>
+            <span className="online-status">
+              {room.is_group ? 'Group chat' : 'Direct chat'}
+            </span>
           )}
         </div>
-
-        <button className="logout-btn" onClick={logout}>Logout</button>
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
       </header>
 
       {/* Message list */}
@@ -71,8 +92,10 @@ export default function ChatRoom() {
       {/* Typing indicator */}
       <TypingIndicator typingUser={typingUser} />
 
-      {/* Message input */}
-      <MessageInput onSend={sendMessage} />
+      {/* Input */}
+      <div className="message-input-container">
+        <MessageInput onSend={sendMessage} />
+      </div>
     </div>
   )
 }

@@ -26,9 +26,13 @@ from rest_framework.exceptions import PermissionDenied
 from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
 
+from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework.decorators import action
+
 
 # ============================================================
-# 🏠 Chat Room Endpoints
+# Chat Room Endpoints
 # ============================================================
 
 class RoomListCreateView(generics.ListCreateAPIView):
@@ -98,3 +102,36 @@ class MessageListCreateView(generics.ListCreateAPIView):
         if not room:
             raise PermissionDenied("You are not a participant of this room.")
         serializer.save(room=room, sender=self.request.user)
+
+#===============
+# Create a room
+#===============
+
+
+class ChatRoomViewSet(viewsets.ModelViewSet):
+    queryset = ChatRoom.objects.all()
+    serializer_class = ChatRoomSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return ChatRoom.objects.filter(participants=self.request.user)
+
+    def perform_create(self, serializer):
+        room = serializer.save()
+        room.participants.add(self.request.user)
+        room.admins.add(self.request.user)
+        return room
+
+    @action(detail=False, methods=["post"])
+    def create_room(self, request):
+        """Custom create group or direct chat"""
+        name = request.data.get("name")
+        is_group = request.data.get("is_group", False)
+        if not name:
+            return Response({"error": "Room name required"}, status=400)
+
+        room = ChatRoom.objects.create(name=name, is_group=is_group)
+        room.participants.add(request.user)
+        room.admins.add(request.user)
+        serializer = self.get_serializer(room)
+        return Response(serializer.data, status=201)
