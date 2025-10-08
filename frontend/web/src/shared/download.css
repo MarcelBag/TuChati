@@ -1,126 +1,89 @@
 /* frontend/web/src/shared/download.css */
-/* ================================================
-    Download Menu Styles TuChati Unified Buttons
-   ============================================= */
-
-.download {
+/* Language Switcher Dropdown
+   ----------------------------------- */
+.lang-switcher {
   position: relative;
   display: inline-block;
+  z-index: 50; /* ensures it appears above nav */
 }
 
-/* ======= Button Style Sync ====== */
-.download .btn,
-.download .link-btn {
-  border-radius: 10px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-/* Variant: main hero button */
-.download .btn {
-  background: linear-gradient(180deg, var(--brand), var(--brand-2));
-  color: #fff;
-  border: none;
-  padding: 9px 16px;
-  font-size: 0.95rem;
-}
-
-.download .btn:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-/*  nav link button*/
-.download .link-btn {
-  background: none;
+/* Button visible on navbar */
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--panel);
   color: var(--text);
-  border: 1px solid var(--ring);
-  padding: 7px 12px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.download .link-btn:hover {
-  border-color: var(--brand);
-  color: var(--brand-2);
-  background: color-mix(in srgb, var(--panel) 85%, transparent);
+.lang-btn:hover {
+  background: var(--hover);
 }
 
-/* Small caret icon */
+.flag {
+  font-size: 1.1rem;
+}
+
 .caret {
-  margin-left: 6px;
-  opacity: 0.7;
+  font-size: 0.8rem;
+  opacity: 0.6;
 }
 
-/* ========== Dropdown Container ========== */
-.menu {
+/* 📋 Dropdown menu */
+.lang-menu {
   position: absolute;
   right: 0;
-  top: 115%;
-  min-width: 220px;
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 95%, transparent);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(8px);
-  z-index: 20;
-  opacity: 0;
-  transform: translateY(-6px);
-  animation: dropdownFade 0.18s ease-out forwards;
-}
-
-/* ========== Link Items ========== */
-.menu a {
-  display: block;
-  padding: 10px 12px;
+  top: 110%;
+  min-width: 180px;
+  background: var(--panel);
   color: var(--text);
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  margin: 4px 0 0;
+  animation: fadeIn 0.15s ease-out;
 }
 
-.menu a:hover {
-  background: color-mix(in srgb, var(--panel) 90%, transparent);
-  color: var(--brand-2);
+.lang-menu li {
+  list-style: none;
 }
 
-/* ========== Dropdown Animation ========== */
-@keyframes dropdownFade {
+.lang-item {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-item:hover {
+  background: var(--hover);
+  color: var(--accent);
+}
+
+/* ✨ Small fade animation */
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ========== Light Mode Enhancements ========== */
-:root.light .menu {
-  background: color-mix(in srgb, var(--card) 96%, white);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-}
-
-:root.light .menu a:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--brand);
-}
-
-:root.light .download .btn {
-  background: linear-gradient(180deg, var(--brand), var(--brand-2));
-  color: #fff;
-}
-
-:root.light .download .link-btn {
-  background: #fff;
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-:root.light .download .link-btn:hover {
-  background: var(--card);
-  border-color: var(--brand);
-  color: var(--brand);
 }

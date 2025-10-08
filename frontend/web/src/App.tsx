@@ -18,6 +18,7 @@ export default function App() {
 
   return (
     <Router>
+       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
       <header className="nav">
         <div className="brand">
           <span className="logo">TuChati</span>
@@ -56,8 +57,6 @@ export default function App() {
       <footer className="footer">
         <small>© {new Date().getFullYear()} TuChati • {t('footer.madeFor')}</small>
       </footer>
-
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </Router>
   )
 }
