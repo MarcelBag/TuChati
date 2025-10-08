@@ -49,6 +49,7 @@ HERO SECTION
 .hero {
   width: 100%;
   display: grid;
+  max-width: 1200px;
   grid-template-columns: 1.1fr 0.9fr;
   gap: 40px;
   align-items: center;

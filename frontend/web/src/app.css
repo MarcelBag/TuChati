@@ -65,6 +65,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -83,6 +84,7 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;  
   gap: 16px;
 }
 
@@ -219,7 +221,6 @@ HERO / PANEL SECTIONS
 
 /* ============================================================
    📱 RESPONSIVE ADJUSTMENTS
-
    ============================================================ */
 
 @media (max-width: 900px) {
