@@ -11,52 +11,134 @@ import AuthModal from './shared/AuthModal'
 import './app.css'
 import ThemeSwitcher from './shared/ThemeSwitcher'
 import ChatShow from './pages/Chatshow'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import ProfileModal from './shared/ProfileModal'
 
-export default function App() {
+/* -------------------------
+   NAVBAR COMPONENT
+------------------------- */
+function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
   const { t } = useTranslation()
-  const [authOpen, setAuthOpen] = useState(false)
+  const { user, token, logout } = useAuth()
+  const [profileOpen, setProfileOpen] = useState(false)
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(' ')
+    return parts.map(p => p[0]?.toUpperCase()).slice(0, 2).join('')
+  }
 
   return (
-    <Router>
-       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+    <>
       <header className="nav">
         <div className="brand">
           <span className="logo">TuChati</span>
         </div>
 
         <nav className="nav-right" aria-label="Primary">
-          <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
-          <NavLink to="/chatshow" className="nav-link">{t('nav.demo')}</NavLink>
-          <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
-          <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
+          {/* Navigation Links */}
+          {!token && (
+            <>
+              <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
+              <NavLink to="/chatshow" className="nav-link">{t('nav.demo')}</NavLink>
+              <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
+              <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
+            </>
+          )}
 
-          <button
-            className="link-btn"
-            type="button"
-            onClick={() => setAuthOpen(true)}
-          >
-            {t('nav.login')}
-          </button>
+          {token && (
+            <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
+          )}
+
+          {/* Login or Logout button */}
+          {!token ? (
+            <button className="link-btn" type="button" onClick={onOpenAuth}>
+              {t('nav.login')}
+            </button>
+          ) : (
+            <button className="link-btn" type="button" onClick={logout}>
+              {t('nav.logout')}
+            </button>
+          )}
 
           <DownloadMenu />
           <LanguageSwitcher />
-          <ThemeSwitcher />
-          
+
+          {/* Avatar or Theme Switcher */}
+          {token ? (
+            user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name || 'User'}
+                className="avatar"
+                onClick={() => setProfileOpen(true)}
+              />
+            ) : (
+              <div
+                className="avatar-initials"
+                onClick={() => setProfileOpen(true)}
+                style={{
+                  background: '#4a90e2',
+                  color: 'white',
+                  fontWeight: '600',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                }}
+              >
+                {getInitials(user?.name || 'TU')}
+              </div>
+            )
+          ) : (
+            <ThemeSwitcher />
+          )}
         </nav>
       </header>
+
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
+    </>
+  )
+}
+
+/* -------------------------
+   MAIN APP CONTENT
+------------------------- */
+function AppContent() {
+  const [authOpen, setAuthOpen] = useState(false)
+
+  return (
+    <>
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      <NavBar onOpenAuth={() => setAuthOpen(true)} />
 
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/chatshow" element={<ChatShow />} /> 
+          <Route path="/chatshow" element={<ChatShow />} />
           <Route path="/chat" element={<ChatRoom />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>
 
       <footer className="footer">
-        <small>© {new Date().getFullYear()} TuChati • {t('footer.madeFor')}</small>
+        <small>© {new Date().getFullYear()} TuChati • Made for Africa</small>
       </footer>
-    </Router>
+    </>
+  )
+}
+
+/* -------------------------
+   ROOT APP EXPORT
+------------------------- */
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   )
 }
