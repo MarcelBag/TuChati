@@ -218,7 +218,8 @@ HERO / PANEL SECTIONS
 
 
 /* ============================================================
-RESPONSIVE ADJUSTMENTS
+   📱 RESPONSIVE ADJUSTMENTS
+
    ============================================================ */
 
 @media (max-width: 900px) {
@@ -228,7 +229,8 @@ RESPONSIVE ADJUSTMENTS
   }
 
   main {
-    padding: 24px 16px;
+    margin-left: 0 !important;
+    padding: 80px 16px 32px;
   }
 
   .theme-toggle {
