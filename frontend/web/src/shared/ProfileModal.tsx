@@ -1,5 +1,4 @@
-// src/shared/ProfileModal.tsx
-
+// frontend/web/src/shared/ProfileModal.tsx
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import './profileModal.css'
@@ -10,12 +9,12 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState(user?.email || '')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [closing, setClosing] = useState(false)
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      // Future: Replace with your actual API endpoint
       await fetch('/api/users/me/', {
         method: 'PATCH',
         headers: {
@@ -32,12 +31,20 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  function handleClose() {
+    setClosing(true)
+    setTimeout(onClose, 250)
+  }
+
   return (
-    <div className="profile-backdrop" onClick={onClose}>
-      <div className="profile-modal" onClick={e => e.stopPropagation()}>
+    <div className="profile-backdrop" onClick={handleClose}>
+      <div
+        className={`profile-modal ${closing ? 'closing' : ''}`}
+        onClick={e => e.stopPropagation()}
+      >
         <div className="profile-header">
           <h3>Profile Settings</h3>
-          <button className="icon-btn" onClick={onClose}>✕</button>
+          <button className="icon-btn" onClick={handleClose}>✕</button>
         </div>
 
         <form className="profile-form" onSubmit={handleSave}>
@@ -45,7 +52,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
             {user?.avatar ? (
               <img src={user.avatar} alt="avatar" className="avatar-large" />
             ) : (
-              <div className="avatar-large initials">
+              <div className="avatar-large">
                 {user?.name
                   ? user.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
                   : 'TU'}
@@ -58,6 +65,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
             Full Name
             <input value={name} onChange={e => setName(e.target.value)} />
           </label>
+
           <label>
             Email
             <input value={email} onChange={e => setEmail(e.target.value)} disabled />

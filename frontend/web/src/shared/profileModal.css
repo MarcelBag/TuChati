@@ -1,41 +1,58 @@
-/* frontend/web/src/shared/profileModal.css */
+/* profileModal.css */
+/* ============================================================
+   Profile Modal (Slide-in Style)
+   ============================================================ */
 .profile-backdrop {
   position: fixed;
   inset: 0;
-  background: #0008;
-  display: grid;
-  place-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: flex-end;
   z-index: 50;
+  animation: backdropFade 0.25s ease forwards;
 }
 
+@keyframes backdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide-in panel */
 .profile-modal {
-  width: min(92vw, 420px);
+  width: min(95vw, 380px);
+  height: 100vh;
   background: var(--panel);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 10px 40px #0008;
-  animation: fadeIn 0.25s ease;
+  border-left: 1px solid var(--border);
+  box-shadow: -6px 0 20px rgba(0, 0, 0, 0.4);
+  transform: translateX(100%);
+  animation: slideIn 0.3s ease forwards;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes slideIn {
+  to { transform: translateX(0); }
 }
 
+/* Header */
 .profile-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   font-weight: 600;
 }
 
+/* Form */
 .profile-form {
+  flex: 1;
+  overflow-y: auto;
   display: grid;
-  gap: 14px;
-  padding: 16px;
+  gap: 16px;
+  padding: 18px;
 }
 
 .profile-form label {
@@ -52,26 +69,24 @@
   color: var(--text);
 }
 
+/* Avatar section */
 .avatar-section {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .avatar-large {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  margin: 0 auto 8px;
+  margin: 0 auto 10px;
   border: 2px solid var(--border);
   display: grid;
   place-items: center;
   font-size: 1.5rem;
   font-weight: 700;
   color: #fff;
-}
-
-.avatar-large.initials {
   background: #4a90e2;
 }
 
@@ -87,6 +102,22 @@
 
 .upload-btn:hover {
   background: var(--hover);
+}
+
+/* Buttons & feedback */
+.btn.primary {
+  background: #6bcf8a;
+  color: #0b0d10;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn.primary:hover {
+  background: #58b576;
 }
 
 .info {
