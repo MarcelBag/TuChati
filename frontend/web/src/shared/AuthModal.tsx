@@ -17,12 +17,12 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           {mode === 'signup' && (
             <label>
               Full name
-              <input required placeholder="Jane Doe" />
+              <input required placeholder="Emmanuel Bahizire" />
             </label>
           )}
           <label>
             Email
-            <input type="email" required placeholder="you@example.com" />
+            <input type="email" required placeholder="you@tuunganes.com" />
           </label>
           <label>
             Password
