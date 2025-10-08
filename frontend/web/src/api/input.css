@@ -1,0 +1,26 @@
+/* frontend/web/src/api/input.css */
+.message-input-bar {
+  display: flex;
+  background: white;
+  padding: 0.6rem;
+  border-top: 1px solid #ddd;
+}
+
+.message-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.6rem;
+  font-size: 1rem;
+}
+
+.send-btn {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}

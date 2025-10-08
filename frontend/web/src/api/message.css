@@ -1,0 +1,42 @@
+/* frontend/web/src/api/message.tsx */
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.message-bubble.mine {
+  align-self: flex-end;
+  background: #4a90e2;
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.message-bubble.theirs {
+  align-self: flex-start;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-bottom-left-radius: 0;
+}
+
+.sender {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #4a90e2;
+}
+
+.time {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-left: 6px;
+}
+
