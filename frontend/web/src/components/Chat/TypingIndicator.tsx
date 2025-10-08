@@ -1,0 +1,1 @@
+//frontend/web/src/api/TypingIndicator.tsx
