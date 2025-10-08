@@ -6,7 +6,7 @@
 
 .lang-btn {
   background: transparent;
-  border: 1px solid #ccc;
+  border: 1px solid #cccccc;
   border-radius: 6px;
   padding: 4px 10px;
   cursor: pointer;
@@ -61,7 +61,7 @@
 }
 
 .lang-item:hover {
-  background: #f5f5f5;
+  background: #046ae6;
 }
 
 @keyframes fadeIn {
