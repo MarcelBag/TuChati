@@ -188,8 +188,10 @@ AUTHENTICATION_BACKENDS = [
 # JWT TOKEN LIFETIMES
 # -------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("ACCESS_LIFETIME", "5"))),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("REFRESH_LIFETIME", "1440"))),
+    #"ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("ACCESS_LIFETIME", "5"))),
+    #"REFRESH_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("REFRESH_LIFETIME", "1440"))),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7), 
 }
 
 

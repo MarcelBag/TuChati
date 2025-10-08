@@ -101,4 +101,11 @@ pull:
 	git pull origin main
 	# Restore stashed files (if any)
 	git stash pop || true
-	@echo "✅ Pull completed successfully."
+	@echo " Pull completed successfully."
+# --------------------------------------------
+# DB: Open a PostgreSQL interactive shell
+# Example: make dbshell or make dbshell SERVICE=db
+# --------------------------------------------
+dbshell:
+	cd $(DOCKER_DIR) && docker compose exec db psql -U $${POSTGRES_USER:-postgres} $${POSTGRES_DB:-tuchati}
+	

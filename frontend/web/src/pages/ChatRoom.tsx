@@ -7,11 +7,13 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useChatSocket } from '../api/chat'
+//import { useChatSocket } from '../api/chat'
+import { useChatSocket } from '../hooks/useChatSocket'
 import MessageList from '../api/MessageList'
 import MessageInput from '../api/MessageInput'
 import TypingIndicator from '../api/TypingIndicator'
-import './chatroom.css'
+
+import './ChatRoom.css'
 
 export default function ChatRoom() {
   const { roomId } = useParams()
@@ -42,7 +44,9 @@ export default function ChatRoom() {
   }, [messages])
 
   if (!token) return <div className="chat-unauth">Please login to join the chat.</div>
-
+  if (!roomId) {
+  return <div className="chat-unauth">Invalid room. Please select a chat room.</div>
+}
   return (
     <div className="chat-room-container">
       {/* Header */}

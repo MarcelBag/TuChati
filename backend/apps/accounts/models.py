@@ -15,7 +15,7 @@ class User(AbstractUser):
     """Custom user with presence, profile, and security extensions."""
 
     uuid = models.UUIDField(default=generate_uuid, editable=False, unique=True)
-
+    email = models.EmailField(unique=True)
     # Profile details
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
@@ -23,8 +23,7 @@ class User(AbstractUser):
     status_message = models.CharField(max_length=255, blank=True)
     status_updated_at = models.DateTimeField(auto_now_add=True)
     user_timezone = models.CharField(max_length=64, default="UTC")
-
-
+    
     # Presence & availability
     is_online = models.BooleanField(default=False)
     current_status = models.CharField(

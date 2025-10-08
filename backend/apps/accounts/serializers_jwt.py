@@ -45,7 +45,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if username_field == "username" and "@" in login:
             # They typed an email, but we auth by username: map email -> username
             try:
-                u = User.objects.get(email__iexact=login)
+                #u = User.objects.get(email__iexact=login)
+                u = User.objects.filter(email__iexact=login).first()
                 lookup_value = u.username
             except User.DoesNotExist:
                 pass
