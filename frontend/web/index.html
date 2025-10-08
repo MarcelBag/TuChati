@@ -18,7 +18,18 @@
     <meta property="og:description" content="Fast, secure, low-data chat that works anywhere." />
     <meta property="og:image" content="/images/TuChati.png" />
     <meta property="og:type" content="website" />
+
+    <!-- ✅ Ensure light theme before React renders -->
+    <script>
+      (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved !== 'dark') {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
