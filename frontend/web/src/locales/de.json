@@ -4,7 +4,8 @@
     "chat": "Chat",
     "profile": "Profil",
     "login": "Anmelden",
-    "demo": "Demo-Chat"
+    "demo": "Demo-Chat",
+    "logout": "Abmelden"
   },
 
   "hero": {

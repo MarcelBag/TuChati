@@ -13,7 +13,6 @@ import ThemeSwitcher from './shared/ThemeSwitcher'
 import ChatShow from './pages/Chatshow'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProfileModal from './shared/ProfileModal'
-
 /* -------------------------
    NAVBAR COMPONENT
 ------------------------- */
@@ -49,7 +48,7 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
             <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
           )}
 
-          {/* Login or Logout button */}
+          {/* Login / Logout */}
           {!token ? (
             <button className="link-btn" type="button" onClick={onOpenAuth}>
               {t('nav.login')}
@@ -60,7 +59,9 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
             </button>
           )}
 
-          <DownloadMenu />
+          {/* Show Download only if NOT logged in */}
+          {!token && <DownloadMenu />}
+
           <LanguageSwitcher />
 
           {/* Avatar or Theme Switcher */}
@@ -68,7 +69,7 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
             user?.avatar ? (
               <img
                 src={user.avatar}
-                alt={user.name || 'User'}
+                alt={user.username || 'User'}
                 className="avatar"
                 onClick={() => setProfileOpen(true)}
               />
@@ -89,7 +90,7 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
                   fontSize: '0.9rem',
                 }}
               >
-                {getInitials(user?.name || 'TU')}
+                {getInitials(user?.username || 'TU')}
               </div>
             )
           ) : (

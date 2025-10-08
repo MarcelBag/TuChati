@@ -2,9 +2,10 @@
   "nav": {
     "home": "Accueil",
     "chat": "Discussion",
-    "profile": "Profil",
-    "login": "Connexion",
-    "demo": "Chat Démo"
+    "profile": "Profile",
+    "login": "Se connecter",
+    "demo": "Chat Démo",
+    "logout": "Se deconnecter"
   },
 
   "hero": {
