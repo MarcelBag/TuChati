@@ -18,7 +18,7 @@ services:
       - "8011:8000"
 
   # --------------------------------------------
-  # 💻 Frontend (React + Vite)
+  # Frontend (React + Vite)
   # --------------------------------------------
   # Vite dev server in dev only
   frontend:

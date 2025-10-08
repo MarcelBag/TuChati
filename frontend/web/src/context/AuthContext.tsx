@@ -1,5 +1,6 @@
 // src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { apiFetch } from '../shared/api'
 
 interface User {
   id?: number
@@ -21,11 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'))
 
-  // Keeping the token in sync & fetch current user when token changes
+  // 🔄 Keep token in sync and load user when token changes
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token)
-      fetch('/api/accounts/me/', {
+
+      apiFetch('/api/accounts/me/', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => (res.ok ? res.json() : null))
@@ -37,21 +39,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token])
 
-  // Login using SimpleJWT endpoint
+  // 🔐 Login using SimpleJWT endpoint
   async function login(email: string, password: string) {
-    const res = await fetch('/api/accounts/token/', {
+    const res = await apiFetch('/api/accounts/token/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
 
-    if (!res.ok) throw new Error('Invalid credentials')
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.detail || 'Invalid credentials')
+    }
 
     const data = await res.json()
     setToken(data.access)
   }
 
-  // Loging out clears token + user
+  // 🚪 Logout clears token + user
   function logout() {
     setToken(null)
     setUser(null)

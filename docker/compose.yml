@@ -35,6 +35,7 @@ services:
       - staticdata:/app/staticfiles
       - mediadata:/app/media
     expose: ["8000"]
+ 
 
   nginx:
     build:
