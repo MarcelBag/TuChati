@@ -12,7 +12,6 @@ class UserMiniSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email"]
 
-
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserMiniSerializer(read_only=True)
 
