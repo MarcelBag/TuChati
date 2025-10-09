@@ -22,21 +22,19 @@ type SessionItem = {
 
 export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const { user, token, setUser, logout } = useAuth()
-
   const [tab, setTab] = React.useState<TabKey>('account')
   const [busy, setBusy] = React.useState(false)
   const [msg, setMsg] = React.useState<string | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
 
-  // account form
+  // form state
   const [firstName, setFirstName] = React.useState(user?.first_name || '')
   const [lastName, setLastName] = React.useState(user?.last_name || '')
-  const [username, setUsername] = React.useState(user?.username || '')
   const [email, setEmail] = React.useState(user?.email || '')
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(user?.avatar || null)
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
 
-  // password form
+  // password state
   const [currentPwd, setCurrentPwd] = React.useState('')
   const [newPwd, setNewPwd] = React.useState('')
   const [confirmPwd, setConfirmPwd] = React.useState('')
@@ -45,50 +43,17 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [sessions, setSessions] = React.useState<SessionItem[] | null>(null)
   const [sessionsLoading, setSessionsLoading] = React.useState(false)
 
-  // Auto-close when logged out
+  // close automatically if auth disappears
   React.useEffect(() => {
     if (!token) onClose()
   }, [token, onClose])
 
-  // Close on ESC
+  // close on ESC
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
-
-  // Load sessions when tab opens
-  React.useEffect(() => {
-    if (tab !== 'sessions' || !token) return
-    const controller = new AbortController()
-    ;(async () => {
-      try {
-        setSessionsLoading(true)
-        setErr(null)
-        const res = await apiFetch('/api/accounts/sessions/', {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        })
-        if (!res.ok) {
-          // Graceful 404 handling (backend not exposing sessions)
-          if (res.status === 404) {
-            setSessions([])
-            setErr('Sessions endpoint not available (404)')
-          } else {
-            throw await errorFromResponse(res, 'Failed to load sessions')
-          }
-        } else {
-          const data = await res.json()
-          setSessions(Array.isArray(data) ? data : (data?.results ?? []))
-        }
-      } catch (e: any) {
-        if (e.name !== 'AbortError') setErr(e.message || 'Failed to load sessions')
-      } finally {
-        setSessionsLoading(false)
-      }
-    })()
-    return () => controller.abort()
-  }, [tab, token])
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
 
@@ -103,25 +68,51 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setAvatarPreview(URL.createObjectURL(file))
   }
 
+  /** Save profile with PATCH→PUT→endpoint-fallback so 405/404 backends work */
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
     clearMessages()
     setBusy(true)
     try {
-      const res = await apiFetch('/api/accounts/me/', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          username,
-          email,
-        }),
+      const body = JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email,
       })
-      if (!res.ok) throw await errorFromResponse(res, 'Failed to update profile')
-      const updated = await res.json()
-      setUser?.(updated)
 
+      // Try PATCH then PUT on the same endpoint, then a couple common fallbacks
+      const endpoints = [
+        { url: '/api/accounts/me/', method: 'PATCH' as const },
+        { url: '/api/accounts/me/', method: 'PUT' as const },
+        { url: '/api/accounts/profile/', method: 'PATCH' as const },
+        { url: '/api/accounts/profile/', method: 'PUT' as const },
+        { url: '/api/accounts/me/update/', method: 'POST' as const },
+      ]
+
+      let updatedUser: any | null = null
+      let lastError: Error | null = null
+
+      for (const { url, method } of endpoints) {
+        try {
+          const res = await apiFetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body,
+          })
+          if (!res.ok) throw await errorFromResponse(res, `${method} ${url} failed`)
+          updatedUser = await res.json()
+          break
+        } catch (e: any) {
+          lastError = e
+          // continue to next fallback
+        }
+      }
+
+      if (!updatedUser) throw lastError || new Error('Profile update failed')
+
+      setUser?.(updatedUser)
+
+      // Upload avatar if present
       if (avatarFile) {
         const fd = new FormData()
         fd.append('avatar', avatarFile)
@@ -145,6 +136,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  /** Change password trying several common endpoints/payloads */
   async function changePassword(e: React.FormEvent) {
     e.preventDefault()
     clearMessages()
@@ -154,30 +146,44 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
     setBusy(true)
     try {
-      // Primary payload
-      let res = await apiFetch('/api/accounts/password/change/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          current_password: currentPwd,
-          new_password: newPwd,
-        }),
-      })
+      // Candidates (path + payload resolver)
+      const attempts: Array<{
+        url: string
+        payload: () => any
+      }> = [
+        {
+          url: '/api/accounts/password/change/',
+          payload: () => ({ current_password: currentPwd, new_password: newPwd }),
+        },
+        {
+          url: '/api/accounts/change-password/',
+          payload: () => ({ old_password: currentPwd, new_password1: newPwd, new_password2: confirmPwd }),
+        },
+        {
+          url: '/api/accounts/password/',
+          payload: () => ({ old_password: currentPwd, new_password: newPwd }),
+        },
+      ]
 
-      // Fallback common payload (Django allauth/rest-auth style)
-      if (!res.ok) {
-        res = await apiFetch('/api/accounts/password/change/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify({
-            old_password: currentPwd,
-            new_password1: newPwd,
-            new_password2: confirmPwd,
-          }),
-        })
+      let ok = false
+      let lastError: Error | null = null
+
+      for (const a of attempts) {
+        try {
+          const res = await apiFetch(a.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify(a.payload()),
+          })
+          if (!res.ok) throw await errorFromResponse(res, `POST ${a.url} failed`)
+          ok = true
+          break
+        } catch (e: any) {
+          lastError = e
+        }
       }
 
-      if (!res.ok) throw await errorFromResponse(res, 'Could not change password')
+      if (!ok) throw lastError || new Error('Could not change password')
 
       setMsg('Password changed ✅')
       setCurrentPwd('')
@@ -190,33 +196,74 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function logoutAllDevices() {
-    clearMessages()
-    setBusy(true)
-    try {
-      const res = await apiFetch('/api/accounts/logout-all/', {
-        method: 'POST',
-        headers: { ...authHeaders },
-      })
-      if (!res.ok) throw await errorFromResponse(res, 'Failed to log out from other devices')
-      setMsg('Logged out from all devices')
-      onClose() // close modal after global logout
-    } catch (e: any) {
-      setErr(e.message || 'Action failed')
-    } finally {
-      setBusy(false)
-    }
-  }
+  /** Load sessions on demand with flexible endpoints & shapes */
+  React.useEffect(() => {
+    if (tab !== 'sessions' || !token) return
+    const controller = new AbortController()
+    ;(async () => {
+      setSessionsLoading(true)
+      clearMessages()
+      try {
+        const paths = [
+          '/api/accounts/sessions/',
+          '/api/accounts/me/sessions/',
+          '/api/sessions/',
+        ]
+        let data: any = []
+        let success = false
+        let lastError: Error | null = null
+
+        for (const p of paths) {
+          try {
+            const r = await apiFetch(p, { headers: { ...authHeaders }, signal: controller.signal })
+            if (!r.ok) throw await errorFromResponse(r, `GET ${p} failed`)
+            const json = await r.json()
+            data = Array.isArray(json) ? json : (json?.results ?? json?.items ?? [])
+            success = true
+            break
+          } catch (e: any) {
+            lastError = e
+          }
+        }
+        if (!success) throw lastError || new Error('Failed to load sessions')
+
+        // normalize a bit
+        const normalized: SessionItem[] = (data || []).map((s: any) => ({
+          id: s.id ?? s.session_id ?? s.key ?? String(Math.random()),
+          ip: s.ip ?? s.ip_address ?? s.remote_addr,
+          user_agent: s.user_agent ?? s.ua,
+          created_at: s.created_at ?? s.created ?? s.start ?? s.started_at,
+          last_seen: s.last_seen ?? s.updated_at ?? s.last_activity,
+          current: !!(s.current ?? s.is_current ?? s.this_device),
+          device: s.device ?? guessDevice(s.user_agent),
+          location: s.location ?? s.geo,
+        }))
+        setSessions(normalized)
+      } catch (e: any) {
+        setErr(e.message || 'Could not load sessions')
+        setSessions([])
+      } finally {
+        setSessionsLoading(false)
+      }
+    })()
+    return () => controller.abort()
+  }, [tab, token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function revokeSession(id: string | number) {
     clearMessages()
     setBusy(true)
     try {
-      const res = await apiFetch(`/api/accounts/sessions/${id}/`, {
-        method: 'DELETE',
-        headers: { ...authHeaders },
-      })
-      if (!res.ok) throw await errorFromResponse(res, 'Failed to revoke session')
+      const paths = [
+        `/api/accounts/sessions/${id}/`,
+        `/api/sessions/${id}/`,
+        `/api/accounts/me/sessions/${id}/`,
+      ]
+      let ok = false
+      for (const p of paths) {
+        const res = await apiFetch(p, { method: 'DELETE', headers: { ...authHeaders } })
+        if (res.ok) { ok = true; break }
+      }
+      if (!ok) throw new Error('Failed to revoke session')
       setSessions(s => (s ? s.filter(x => String(x.id) !== String(id)) : s))
       setMsg('Session revoked')
     } catch (e: any) {
@@ -226,10 +273,30 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  async function logoutAllDevices() {
+    clearMessages()
+    setBusy(true)
+    try {
+      const paths = ['/api/accounts/logout-all/', '/api/accounts/sessions/logout-all/']
+      let ok = false
+      for (const p of paths) {
+        const res = await apiFetch(p, { method: 'POST', headers: { ...authHeaders } })
+        if (res.ok) { ok = true; break }
+      }
+      if (!ok) throw new Error('Failed to log out from other devices')
+      setMsg('Logged out from all devices')
+      onClose()
+    } catch (e: any) {
+      setErr(e.message || 'Action failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleLogout() {
     clearMessages()
     try {
-      await Promise.resolve(logout?.()) // support sync/async
+      await Promise.resolve(logout?.())
     } finally {
       onClose()
     }
@@ -255,10 +322,8 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           <button className={tab === 'sessions' ? 'active' : ''} onClick={() => setTab('sessions')}>Sessions</button>
         </nav>
 
-        {/* Alerts */}
         {(msg || err) && <div className={`pm-alert ${err ? 'error' : 'ok'}`}>{err || msg}</div>}
 
-        {/* Body */}
         <div className="pm-body">
           {tab === 'account' && (
             <form className="pm-form" onSubmit={saveProfile}>
@@ -292,10 +357,14 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                     <span>Last name</span>
                     <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </label>
+
+                  {/* Username is read-only for now */}
                   <label>
                     <span>Username</span>
-                    <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                    <input value={user?.username || ''} readOnly />
+                    <small className="pm-hint"> Changes allowed after 3 months.</small>
                   </label>
+
                   <label>
                     <span>Email</span>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -366,10 +435,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           {tab === 'sessions' && (
             <div className="pm-sessions">
               {sessionsLoading && <p>Loading sessions…</p>}
-
-              {!sessionsLoading && sessions && sessions.length === 0 && (
-                <p>No active sessions found.</p>
-              )}
+              {!sessionsLoading && (!sessions || sessions.length === 0) && <p>No active sessions.</p>}
 
               {!sessionsLoading && sessions && sessions.length > 0 && (
                 <ul className="pm-session-list">
@@ -383,7 +449,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                         {s.ip && <span>IP: {s.ip}</span>}
                         {s.location && <span> · {s.location}</span>}
                         {(s.last_seen || s.created_at) && (
-                          <span> · Last seen: {s.last_seen || s.created_at}</span>
+                          <span> · Last seen: {niceDate(s.last_seen || s.created_at)}</span>
                         )}
                       </div>
                       {!s.current && (
@@ -414,16 +480,34 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** Build a readable error from a fetch Response */
+/** Helpers */
+function guessDevice(ua?: string) {
+  if (!ua) return ''
+  const u = ua.toLowerCase()
+  if (u.includes('iphone') || u.includes('ios')) return 'iPhone'
+  if (u.includes('ipad')) return 'iPad'
+  if (u.includes('android')) return 'Android'
+  if (u.includes('mac os') || u.includes('macintosh')) return 'Mac'
+  if (u.includes('windows')) return 'Windows'
+  if (u.includes('linux')) return 'Linux'
+  return ''
+}
+
+function niceDate(d?: string) {
+  try {
+    return new Date(d as string).toLocaleString()
+  } catch {
+    return d || ''
+  }
+}
+
 async function errorFromResponse(res: Response, fallback: string) {
   try {
     const data = await res.clone().json()
     const msg =
       data?.detail ||
       (typeof data === 'string' ? data : null) ||
-      Object.values(data || {})
-        .flat()
-        .join(' ')
+      Object.values(data || {}).flat().join(' ')
     return new Error(msg || `${fallback} (${res.status})`)
   } catch {
     return new Error(`${fallback} (${res.status})`)
