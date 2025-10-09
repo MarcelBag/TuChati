@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './LanguageSwitcher.css'
 
-// 🌍 Available languages
+// Available languages
 const LANGS = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+  { code: 'sw', name: 'Kiswahili', flag: '🇹🇿' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'ln', name: 'Lingala', flag: '🇨🇩' }
 ]
