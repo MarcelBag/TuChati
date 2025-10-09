@@ -1,76 +1,76 @@
-/* src/pages/ChatPage.tsx */
 // src/pages/ChatPage.tsx
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import React, { useEffect, useState, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import { apiFetch } from '../shared/api'
-import ChatRoom from './ChatRoom'
-import RoomList from '../components/Chat/RoomList'
-import './ChatPage.css'
+import { useAuth } from '../context/AuthContext'
+import { useChatSocket } from '../hooks/useChatSocket'
+import MessageList from '../api/MessageList'
+import MessageInput from '../api/MessageInput'
+import TypingIndicator from '../api/TypingIndicator'
+import './ChatRoom.css'
 
-export default function ChatPage() {
-  const { token } = useAuth()
-  const [rooms, setRooms] = useState<any[]>([])
-  const [activeRoom, setActiveRoom] = useState<any | null>(null)
+interface ChatRoomProps {
+  room?: any
+}
 
+export default function ChatRoom({ room }: ChatRoomProps) {
+  const { roomId } = useParams()
+  const { user, token, logout } = useAuth()
+  const [messages, setMessages] = useState<any[]>([])
+  const [typingUser, setTypingUser] = useState<string | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const currentRoomId = room?.id || roomId
+
+  // Fetch room details if needed
   useEffect(() => {
-    if (token) {
-      apiFetch('/api/chat/rooms/', {
+    if (!room && currentRoomId && token) {
+      apiFetch(`/api/chat/rooms/${currentRoomId}/`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then(res => res.ok ? res.json() : [])
-        .then(setRooms)
+        .then(res => res.ok ? res.json() : null)
+        .then(console.log)
         .catch(console.error)
     }
-  }, [token])
+  }, [room, currentRoomId, token])
+
+  const handleIncoming = (data: any) => {
+    if (data.type === 'history') setMessages(data.messages)
+    else if (data.type === 'typing') setTypingUser(data.typing ? data.from_user : null)
+    else if (data.sender && data.content) setMessages(prev => [...prev, data])
+  }
+
+  const { sendMessage } = useChatSocket(currentRoomId || '', token || '', handleIncoming)
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages])
+
+  if (!token) return <div className="chat-unauth">Please login to join the chat.</div>
+  if (!currentRoomId) return <div className="chat-unauth">Invalid room. Please select a chat room.</div>
 
   return (
-    <div className="chat-page">
-      <aside className="room-list">
-        <RoomList
-          rooms={rooms}
-          activeRoom={activeRoom}
-          onSelect={setActiveRoom}
-        />
-      </aside>
+    <div className="chat-room-container">
+      <header className="chat-header">
+        <div>
+          <h2 className="room-name">{room?.name || 'Room'}</h2>
+          {typingUser ? (
+            <span className="typing-status">{typingUser} is typing...</span>
+          ) : (
+            <span className="online-status">{room?.is_group ? 'Group chat' : 'Direct chat'}</span>
+          )}
+        </div>
+        <button className="logout-btn" onClick={logout}>Logout</button>
+      </header>
 
-      <main className="chat-main">
-        {activeRoom ? (
-          <ChatRoom room={activeRoom} />
-        ) : (
-          <div className="empty-chat">
-            <p>Select or create a chat room to start chatting</p>
-          </div>
-        )}
-      </main>
+      <div className="chat-messages" ref={listRef}>
+        <MessageList messages={messages} currentUser={user} />
+      </div>
+
+      <TypingIndicator typingUser={typingUser} />
+      <div className="message-input-container">
+        <MessageInput onSend={sendMessage} />
+      </div>
     </div>
   )
-}
-
-.chat-page {
-  display: flex;
-  height: 100vh;
-  background: var(--bg-dark, #1c1f26);
-  color: #fff;
-}
-
-.room-list {
-  width: 280px;
-  background: #13161b;
-  border-right: 1px solid #2c2f36;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.empty-chat {
-  margin: auto;
-  color: #888;
-  text-align: center;
-  font-size: 1.1rem;
 }

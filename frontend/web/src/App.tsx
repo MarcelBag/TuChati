@@ -13,6 +13,9 @@ import ThemeSwitcher from './shared/ThemeSwitcher'
 import ChatShow from './pages/Chatshow'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProfileModal from './shared/ProfileModal'
+
+import ChatPage from './pages/ChatPage'
+
 /* -------------------------
    NAVBAR COMPONENT
 ------------------------- */
@@ -119,7 +122,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/chatshow" element={<ChatShow />} />
-          <Route path="/chat" element={<ChatRoom />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/chat/:roomId" element={<ChatRoom />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>

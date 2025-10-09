@@ -2,7 +2,22 @@
 import React from 'react'
 import './roomitem.css'
 
-export default function RoomItem({ room, active, onClick }) {
+interface Room {
+  id: string
+  name: string
+  is_group: boolean
+  last_message?: {
+    content?: string
+  }
+}
+
+interface RoomItemProps {
+  room: Room
+  active: boolean
+  onClick: () => void
+}
+
+export default function RoomItem({ room, active, onClick }: RoomItemProps) {
   return (
     <div
       className={`room-item ${active ? 'active' : ''}`}

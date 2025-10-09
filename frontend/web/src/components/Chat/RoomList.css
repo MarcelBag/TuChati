@@ -1,0 +1,45 @@
+/* src/components/Chat/roomlist.css */
+/* ===========================================
+   TuChati Room List Styling
+   =========================================== */
+
+.rooms-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #1e2128;
+  color: #fff;
+}
+
+.room-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid #2c2f36;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.room-item:hover {
+  background: #2a2e36;
+}
+
+.room-item.active {
+  background: #4a90e2;
+}
+
+.room-avatar {
+  font-size: 1.5rem;
+  margin-right: 10px;
+}
+
+.room-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.room-info .last-message {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #bbb;
+}

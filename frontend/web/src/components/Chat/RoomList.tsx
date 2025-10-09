@@ -1,9 +1,24 @@
 // src/components/Chat/RoomList.tsx
 import React from 'react'
 import RoomItem from './RoomItem'
-import './roomlist.css'
+import './RoomList.css'
 
-export default function RoomList({ rooms, activeRoom, onSelect }) {
+interface Room {
+  id: string
+  name: string
+  is_group: boolean
+  last_message?: {
+    content?: string
+  }
+}
+
+interface RoomListProps {
+  rooms: Room[]
+  activeRoom: Room | null
+  onSelect: (room: Room) => void
+}
+
+export default function RoomList({ rooms, activeRoom, onSelect }: RoomListProps) {
   return (
     <div className="rooms-container">
       <div className="room-list-header">
