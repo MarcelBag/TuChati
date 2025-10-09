@@ -1,27 +1,21 @@
 // src/types/chat.ts
 import { UserMini } from './user'
 
-/** A chat message sent in a room */
-export interface Message {
+export interface ChatMessage {
   id: string
   room: string
   sender: UserMini
   content: string
-  is_read: boolean
   created_at: string
+  is_read?: boolean
   attachment?: string | null
-  voice_note?: string | null
-  file_type?: string
 }
 
-/** A chat room (group or direct) */
-export interface Room {
+export interface ChatRoom {
   id: string
   name: string
   is_group: boolean
-  description?: string
-  icon?: string | null
-  participants?: UserMini[]
-  last_message?: Message | null
-  created_at?: string
+  participants: UserMini[]
+  created_at: string
+  last_message?: ChatMessage | null
 }

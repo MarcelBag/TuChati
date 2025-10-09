@@ -1,0 +1,84 @@
+/* frontend/web/src/pages/auth/auth-layout.css */
+.auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(120deg, #1e293b, #0f172a);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+}
+
+.auth-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2.5rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.auth-logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+}
+
+.auth-card h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.8;
+  margin-bottom: 1.5rem;
+}
+
+.auth-content {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.auth-card input,
+.auth-card button {
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  padding: 0.8rem;
+  font-size: 1rem;
+}
+
+.auth-card input {
+  border: none;
+  outline: none;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.auth-card button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.auth-card button:hover {
+  background: #3a7ad9;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 1.8rem;
+  }
+}

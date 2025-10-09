@@ -2,32 +2,31 @@
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import Home from './pages/Home'
+import ChatPage from './pages/ChatPage'
 import ChatRoom from './pages/ChatRoom'
 import Profile from './pages/Profile'
+import ChatShow from './pages/Chatshow'
+
 import { useTranslation } from 'react-i18next'
+import './app.css'
+
 import DownloadMenu from './shared/DownloadMenu'
 import LanguageSwitcher from './shared/LanguageSwitcher'
-import AuthModal from './shared/AuthModal'
-import './app.css'
 import ThemeSwitcher from './shared/ThemeSwitcher'
-import ChatShow from './pages/Chatshow'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import AuthModal from './shared/AuthModal'
 import ProfileModal from './shared/ProfileModal'
 
-import ChatPage from './pages/ChatPage'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import ProtectedRoute from './routes/ProtectedRoute'
+import { getInitials } from './shared/utils'
 
 /* -------------------------
-   NAVBAR COMPONENT
+   NAVBAR
 ------------------------- */
 function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
   const { t } = useTranslation()
-  const { user, token, logout } = useAuth()
+  const { user, token } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ')
-    return parts.map(p => p[0]?.toUpperCase()).slice(0, 2).join('')
-  }
 
   return (
     <>
@@ -37,67 +36,44 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
         </div>
 
         <nav className="nav-right" aria-label="Primary">
-          {/* Navigation Links */}
+          {/* Public links (not logged in) */}
           {!token && (
             <>
               <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
               <NavLink to="/chatshow" className="nav-link">{t('nav.demo')}</NavLink>
-              <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
-              <NavLink to="/profile" className="nav-link">{t('nav.profile')}</NavLink>
+              <button className="link-btn" type="button" onClick={onOpenAuth}>
+                {t('nav.login')}
+              </button>
+              <DownloadMenu />
+              <LanguageSwitcher />
+              <ThemeSwitcher />
             </>
           )}
 
+          {/* Private links (logged in) */}
           {token && (
-            <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
-          )}
-
-          {/* Login / Logout */}
-          {!token ? (
-            <button className="link-btn" type="button" onClick={onOpenAuth}>
-              {t('nav.login')}
-            </button>
-          ) : (
-            <button className="link-btn" type="button" onClick={logout}>
-              {t('nav.logout')}
-            </button>
-          )}
-
-          {/* Show Download only if NOT logged in */}
-          {!token && <DownloadMenu />}
-
-          <LanguageSwitcher />
-
-          {/* Avatar or Theme Switcher */}
-          {token ? (
-            user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.username || 'User'}
-                className="avatar"
-                onClick={() => setProfileOpen(true)}
-              />
-            ) : (
-              <div
-                className="avatar-initials"
-                onClick={() => setProfileOpen(true)}
-                style={{
-                  background: '#4a90e2',
-                  color: 'white',
-                  fontWeight: '600',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  display: 'grid',
-                  placeItems: 'center',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                }}
-              >
-                {getInitials(user?.username || 'TU')}
-              </div>
-            )
-          ) : (
-            <ThemeSwitcher />
+            <>
+              <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
+              <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
+              <LanguageSwitcher />
+              {/* Profile button (opens modal) */}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.username || 'User'}
+                  className="avatar"
+                  onClick={() => setProfileOpen(true)}
+                />
+              ) : (
+                <div
+                  className="avatar-initials"
+                  onClick={() => setProfileOpen(true)}
+                  title={user?.username || 'Profile'}
+                >
+                  {getInitials(user?.first_name, user?.last_name, user?.username)}
+                </div>
+              )}
+            </>
           )}
         </nav>
       </header>
@@ -120,11 +96,16 @@ function AppContent() {
 
       <main>
         <Routes>
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/chatshow" element={<ChatShow />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/chat/:roomId" element={<ChatRoom />} />
-          <Route path="/profile" element={<Profile />} />
+
+          {/* Private (gated) */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/chat/:roomId" element={<ChatRoom />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
         </Routes>
       </main>
 
@@ -136,7 +117,7 @@ function AppContent() {
 }
 
 /* -------------------------
-   ROOT APP EXPORT
+   ROOT APP
 ------------------------- */
 export default function App() {
   return (

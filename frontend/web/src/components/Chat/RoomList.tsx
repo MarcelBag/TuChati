@@ -2,30 +2,17 @@
 import React from 'react'
 import RoomItem from './RoomItem'
 import './RoomList.css'
+import { ChatRoom } from '../../types'
 
-interface Room {
-  id: string
-  name: string
-  is_group: boolean
-  last_message?: {
-    content?: string
-  }
+interface Props {
+  rooms: ChatRoom[]
+  activeRoom: ChatRoom | null
+  onSelect: (room: ChatRoom) => void
 }
 
-interface RoomListProps {
-  rooms: Room[]
-  activeRoom: Room | null
-  onSelect: (room: Room) => void
-}
-
-export default function RoomList({ rooms, activeRoom, onSelect }: RoomListProps) {
+export default function RoomList({ rooms, activeRoom, onSelect }: Props) {
   return (
     <div className="rooms-container">
-      <div className="room-list-header">
-        <h3>Chats</h3>
-        <button className="create-room-btn">＋</button>
-      </div>
-
       {rooms.map(room => (
         <RoomItem
           key={room.id}
