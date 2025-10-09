@@ -9,14 +9,26 @@ import './profileModal.css'
 
 type TabKey = 'account' | 'security' | 'preferences' | 'sessions'
 
+type SessionItem = {
+  id: string | number
+  ip?: string
+  user_agent?: string
+  created_at?: string
+  last_seen?: string
+  current?: boolean
+  device?: string
+  location?: string
+}
+
 export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const { user, token, setUser, logout } = useAuth()
+
   const [tab, setTab] = React.useState<TabKey>('account')
   const [busy, setBusy] = React.useState(false)
   const [msg, setMsg] = React.useState<string | null>(null)
   const [err, setErr] = React.useState<string | null>(null)
 
-  // form state
+  // account form
   const [firstName, setFirstName] = React.useState(user?.first_name || '')
   const [lastName, setLastName] = React.useState(user?.last_name || '')
   const [username, setUsername] = React.useState(user?.username || '')
@@ -24,17 +36,59 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(user?.avatar || null)
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
 
-  // password state
+  // password form
   const [currentPwd, setCurrentPwd] = React.useState('')
   const [newPwd, setNewPwd] = React.useState('')
   const [confirmPwd, setConfirmPwd] = React.useState('')
 
-  // accessibility: close on ESC
+  // sessions
+  const [sessions, setSessions] = React.useState<SessionItem[] | null>(null)
+  const [sessionsLoading, setSessionsLoading] = React.useState(false)
+
+  // Auto-close when logged out
+  React.useEffect(() => {
+    if (!token) onClose()
+  }, [token, onClose])
+
+  // Close on ESC
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Load sessions when tab opens
+  React.useEffect(() => {
+    if (tab !== 'sessions' || !token) return
+    const controller = new AbortController()
+    ;(async () => {
+      try {
+        setSessionsLoading(true)
+        setErr(null)
+        const res = await apiFetch('/api/accounts/sessions/', {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          // Graceful 404 handling (backend not exposing sessions)
+          if (res.status === 404) {
+            setSessions([])
+            setErr('Sessions endpoint not available (404)')
+          } else {
+            throw await errorFromResponse(res, 'Failed to load sessions')
+          }
+        } else {
+          const data = await res.json()
+          setSessions(Array.isArray(data) ? data : (data?.results ?? []))
+        }
+      } catch (e: any) {
+        if (e.name !== 'AbortError') setErr(e.message || 'Failed to load sessions')
+      } finally {
+        setSessionsLoading(false)
+      }
+    })()
+    return () => controller.abort()
+  }, [tab, token])
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
 
@@ -43,18 +97,20 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setErr(null)
   }
 
+  function onPickAvatar(file?: File) {
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
     clearMessages()
     setBusy(true)
     try {
-      // Update basic profile
       const res = await apiFetch('/api/accounts/me/', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           first_name: firstName,
           last_name: lastName,
@@ -62,20 +118,19 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           email,
         }),
       })
-      if (!res.ok) throw new Error('Failed to update profile')
+      if (!res.ok) throw await errorFromResponse(res, 'Failed to update profile')
       const updated = await res.json()
       setUser?.(updated)
 
-      // Upload avatar if present
       if (avatarFile) {
         const fd = new FormData()
         fd.append('avatar', avatarFile)
         const r2 = await apiFetch('/api/accounts/avatar/', {
           method: 'POST',
-          headers: { ...authHeaders }, // no content-type for FormData
+          headers: { ...authHeaders }, // let browser set boundary
           body: fd,
         })
-        if (!r2.ok) throw new Error('Failed to upload avatar')
+        if (!r2.ok) throw await errorFromResponse(r2, 'Failed to upload avatar')
         const updated2 = await r2.json()
         setUser?.(updated2)
         setAvatarFile(null)
@@ -99,18 +154,31 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
     setBusy(true)
     try {
-      const res = await apiFetch('/api/accounts/password/change/', {
+      // Primary payload
+      let res = await apiFetch('/api/accounts/password/change/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           current_password: currentPwd,
           new_password: newPwd,
         }),
       })
-      if (!res.ok) throw new Error('Could not change password')
+
+      // Fallback common payload (Django allauth/rest-auth style)
+      if (!res.ok) {
+        res = await apiFetch('/api/accounts/password/change/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            old_password: currentPwd,
+            new_password1: newPwd,
+            new_password2: confirmPwd,
+          }),
+        })
+      }
+
+      if (!res.ok) throw await errorFromResponse(res, 'Could not change password')
+
       setMsg('Password changed ✅')
       setCurrentPwd('')
       setNewPwd('')
@@ -130,8 +198,9 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         method: 'POST',
         headers: { ...authHeaders },
       })
-      if (!res.ok) throw new Error('Failed to log out from other devices')
+      if (!res.ok) throw await errorFromResponse(res, 'Failed to log out from other devices')
       setMsg('Logged out from all devices')
+      onClose() // close modal after global logout
     } catch (e: any) {
       setErr(e.message || 'Action failed')
     } finally {
@@ -139,17 +208,36 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  function onPickAvatar(file?: File) {
-    if (!file) return
-    setAvatarFile(file)
-    const url = URL.createObjectURL(file)
-    setAvatarPreview(url)
+  async function revokeSession(id: string | number) {
+    clearMessages()
+    setBusy(true)
+    try {
+      const res = await apiFetch(`/api/accounts/sessions/${id}/`, {
+        method: 'DELETE',
+        headers: { ...authHeaders },
+      })
+      if (!res.ok) throw await errorFromResponse(res, 'Failed to revoke session')
+      setSessions(s => (s ? s.filter(x => String(x.id) !== String(id)) : s))
+      setMsg('Session revoked')
+    } catch (e: any) {
+      setErr(e.message || 'Could not revoke session')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleLogout() {
+    clearMessages()
+    try {
+      await Promise.resolve(logout?.()) // support sync/async
+    } finally {
+      onClose()
+    }
   }
 
   return (
-    <div className="pm-backdrop" onClick={onClose} aria-modal="true" role="dialog">
-      <div className="pm-modal" onClick={(e) => e.stopPropagation()}>
-
+    <div className="pm-backdrop" onMouseDown={onClose} aria-modal="true" role="dialog">
+      <div className="pm-modal" onMouseDown={(e) => e.stopPropagation()} role="document">
         {/* Header */}
         <header className="pm-header">
           <div className="pm-title">
@@ -168,9 +256,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         </nav>
 
         {/* Alerts */}
-        {(msg || err) && (
-          <div className={`pm-alert ${err ? 'error' : 'ok'}`}>{err || msg}</div>
-        )}
+        {(msg || err) && <div className={`pm-alert ${err ? 'error' : 'ok'}`}>{err || msg}</div>}
 
         {/* Body */}
         <div className="pm-body">
@@ -264,7 +350,6 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <LanguageSwitcher />
               </div>
-              {/* Example placeholder toggle; store locally for now */}
               <div className="pref-row">
                 <div>
                   <h4>Notifications</h4>
@@ -280,9 +365,43 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
 
           {tab === 'sessions' && (
             <div className="pm-sessions">
-              <p>You’re signed in as <strong>{user?.username}</strong>.</p>
+              {sessionsLoading && <p>Loading sessions…</p>}
+
+              {!sessionsLoading && sessions && sessions.length === 0 && (
+                <p>No active sessions found.</p>
+              )}
+
+              {!sessionsLoading && sessions && sessions.length > 0 && (
+                <ul className="pm-session-list">
+                  {sessions.map(s => (
+                    <li key={String(s.id)} className={`pm-session ${s.current ? 'current' : ''}`}>
+                      <div className="pm-session-main">
+                        <strong>{s.device || s.user_agent || 'Unknown device'}</strong>
+                        {s.current && <span className="pm-tag">This device</span>}
+                      </div>
+                      <div className="pm-session-meta">
+                        {s.ip && <span>IP: {s.ip}</span>}
+                        {s.location && <span> · {s.location}</span>}
+                        {(s.last_seen || s.created_at) && (
+                          <span> · Last seen: {s.last_seen || s.created_at}</span>
+                        )}
+                      </div>
+                      {!s.current && (
+                        <button
+                          className="btn danger ghost"
+                          onClick={() => revokeSession(s.id)}
+                          disabled={busy}
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               <div className="pm-actions">
-                <button className="btn" onClick={logout} disabled={busy}>Log out</button>
+                <button className="btn" onClick={handleLogout} disabled={busy}>Log out</button>
                 <button className="btn danger" onClick={logoutAllDevices} disabled={busy}>
                   Log out all devices
                 </button>
@@ -293,4 +412,20 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   )
+}
+
+/** Build a readable error from a fetch Response */
+async function errorFromResponse(res: Response, fallback: string) {
+  try {
+    const data = await res.clone().json()
+    const msg =
+      data?.detail ||
+      (typeof data === 'string' ? data : null) ||
+      Object.values(data || {})
+        .flat()
+        .join(' ')
+    return new Error(msg || `${fallback} (${res.status})`)
+  } catch {
+    return new Error(`${fallback} (${res.status})`)
+  }
 }

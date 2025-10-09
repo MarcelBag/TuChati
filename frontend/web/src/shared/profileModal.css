@@ -3,6 +3,8 @@
    Profile Modal (Slide-in Style)
    ============================================================ */
    /* Backdrop & modal */
+.light .pm-modal { background:#fff; color:#0f172a; }
+.light .pm-tabs button.active { background:#eef2ff; color:#1e3a8a; }
 .pm-backdrop {
   position: fixed;
   inset: 0;

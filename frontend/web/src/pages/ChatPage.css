@@ -40,3 +40,128 @@
   padding: 12px 16px;
   border-bottom: 1px solid #2c2f36;
 }
+/* src/pages/chatlayout.css */
+
+:root{
+  --bg: #0b0f14;
+  --panel:#0f1520;
+  --elev:#0b1220;
+  --text:#e6edf3;
+  --muted:#8aa0b6;
+  --ring:#3b82f6;
+  --subtle:#10161f;
+  --bubble-me:#2563eb;
+  --bubble-me-text:#fff;
+  --bubble-other:#1f2937;
+  --bubble-other-text:#e5e7eb;
+  --border: rgba(148,163,184,.16);
+}
+
+.light :root, html.light {
+  --bg:#f6f8fb;
+  --panel:#ffffff;
+  --elev:#ffffff;
+  --text:#0b1220;
+  --muted:#516273;
+  --ring:#3b82f6;
+  --subtle:#f3f5f8;
+  --bubble-me:#3b82f6;
+  --bubble-me-text:#fff;
+  --bubble-other:#e9eef5;
+  --bubble-other-text:#0b1220;
+  --border: rgba(2,6,23,.1);
+}
+
+.chat-shell{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  height: calc(100vh - 64px);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.rooms{
+  border-right:1px solid var(--border);
+  background: var(--panel);
+  display:flex; flex-direction:column;
+}
+.rooms.rooms-compact{ width: 360px; }
+.rooms-hd{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid var(--border);
+}
+.rooms-search{ padding:10px 12px; }
+.rooms-search input{
+  width:100%; border:1px solid var(--border); background:var(--subtle);
+  border-radius:10px; padding:10px 12px; color:var(--text);
+}
+
+.rooms-list{ list-style:none; margin:0; padding:8px 0; overflow:auto; }
+.room-item{
+  display:flex; gap:12px; padding:10px 12px; cursor:pointer;
+}
+.room-item:hover{ background: var(--subtle); }
+.hint{ padding:12px; color:var(--muted); }
+
+.avatar-badge{
+  width:40px; height:40px; border-radius:50%;
+  background: linear-gradient(135deg,#3b82f6, #06b6d4);
+  display:grid; place-items:center; color:#fff; font-weight:700;
+}
+.avatar-badge.lg{ width:44px; height:44px; }
+.avatar-badge.sm{ width:28px; height:28px; font-size:12px; }
+
+.room-main{ flex:1; min-width:0; }
+.room-row{ display:flex; justify-content:space-between; align-items:center; }
+.room-row.dim{ color:var(--muted); gap:8px; }
+.room-name{ font-weight:600; }
+.badge{ background:#22c55e; color:#fff; border-radius:999px; font-size:12px; padding:2px 8px; }
+
+.chat-pane{ display:flex; flex-direction:column; background:var(--elev);}
+.chat-pane.empty{ place-items:center; display:grid;}
+.empty-inner{ text-align:center; color:var(--muted); }
+
+.chat-hd{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; border-bottom:1px solid var(--border); background:var(--panel);
+  position:sticky; top:0; z-index:2;
+}
+.chat-hd .title{ display:flex; align-items:center; gap:12px; }
+.chat-hd .name{ font-weight:700; }
+.chat-hd .sub{ color:var(--muted); font-size:13px; }
+
+.chat-scroll{
+  flex:1; overflow:auto; padding:16px; background:var(--subtle);
+}
+
+.bubble-row{ display:flex; gap:8px; margin:6px 0; max-width:80%; }
+.bubble-row.right{ margin-left:auto; justify-content:flex-end; }
+.bubble{
+  background: var(--bubble-other);
+  color: var(--bubble-other-text);
+  padding:10px 12px; border-radius:14px; position:relative;
+}
+.bubble.me{ background: var(--bubble-me); color: var(--bubble-me-text); }
+.bubble p{ margin:0; white-space:pre-wrap; word-break:break-word; }
+.bubble .attach{ color:inherit; text-decoration:underline; }
+.bubble .time{
+  position:absolute; right:10px; bottom:-18px; font-size:11px; color:var(--muted);
+}
+.bubble-row.right .time{ right:6px; }
+
+.composer{
+  display:flex; gap:8px; padding:12px; border-top:1px solid var(--border);
+  background:var(--panel); position:sticky; bottom:0;
+}
+.composer input{
+  flex:1; padding:12px 14px; border-radius:999px; border:1px solid var(--border);
+  background:var(--subtle); color:var(--text);
+}
+.composer .send{
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:var(--ring); color:#fff; font-size:16px; cursor:pointer;
+}
+
+.btn{ border:1px solid var(--border); background:transparent; color:var(--text); padding:8px 12px; border-radius:10px; }
+.btn.small{ padding:6px 10px; font-size:13px; }
+.btn.ghost{ border-color:transparent; }
