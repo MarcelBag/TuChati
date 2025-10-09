@@ -11,6 +11,8 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const [showPwd2, setShowPwd2] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -23,7 +25,6 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
 
     try {
       if (mode === 'signup') {
-        // --- Registration ---
         const res = await apiFetch('/api/accounts/register/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -47,10 +48,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         }
       }
 
-      // --- Login (JWT) ---
-      // backend expects username/password, but allow user to enter either username or email
       await login(username || email, password)
-
       onClose()
       navigate('/chat')
     } catch (err: any) {
@@ -86,6 +84,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="choose a username"
+                  autoComplete="username"
                 />
               </label>
 
@@ -97,6 +96,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@tuunganes.com"
+                  autoComplete="email"
                 />
               </label>
             </>
@@ -114,38 +114,61 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 }}
                 required
                 placeholder="your username or email"
+                autoComplete="username"
               />
             </label>
           )}
 
           <label>
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="pwd-wrap">
+              <input
+                type={showPwd ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              />
+              <button
+                type="button"
+                className="pwd-toggle"
+                onClick={() => setShowPwd(v => !v)}
+                aria-label={showPwd ? 'Hide password' : 'Show password'}
+                title={showPwd ? 'Hide password' : 'Show password'}
+              >
+                {showPwd ? '🙈' : '👁️'}
+              </button>
+            </div>
           </label>
 
           {mode === 'signup' && (
             <label>
               Confirm Password
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                placeholder="Repeat password"
-              />
+              <div className="pwd-wrap">
+                <input
+                  type={showPwd2 ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Repeat password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowPwd2(v => !v)}
+                  aria-label={showPwd2 ? 'Hide password' : 'Show password'}
+                  title={showPwd2 ? 'Hide password' : 'Show password'}
+                >
+                  {showPwd2 ? '🙈' : '👁️'}
+                </button>
+              </div>
             </label>
           )}
 
           {error && (
-            <p style={{ color: '#f66', fontSize: '0.9rem', textAlign: 'center' }}>
-              {error}
-            </p>
+            <p className="auth-error">{error}</p>
           )}
 
           <button className="btn primary" type="submit" disabled={loading}>

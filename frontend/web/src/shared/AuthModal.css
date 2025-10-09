@@ -1,10 +1,187 @@
 /* frontend/web/src/shared/auth.css */
-.auth-backdrop{position:fixed;inset:0;background:#0008;display:grid;place-items:center;z-index:40}
-.auth-modal{width:min(92vw,420px);background:#0f1318;border:1px solid #1b222b;border-radius:14px;box-shadow:0 10px 40px #0008}
-.auth-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1b222b;color:#e9f1fb}
-.icon-btn{background:none;border:none;color:#9fb0c3;font-size:18px;cursor:pointer}
-.auth-form{display:grid;gap:12px;padding:16px}
-.auth-form label{display:grid;gap:6px;color:#c9d6e2;font-size:14px}
-.auth-form input{background:#0b0f14;border:1px solid #1b222b;border-radius:10px;color:#e9f1fb;padding:10px}
-.btn.primary{background:#6bcf8a;color:#0b0d10;border:0;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
-.auth-switch{padding:12px 16px;border-top:1px solid #1b222b;text-align:center}
+/* =========================
+   Auth Modal – Theme aware
+   ========================= */
+
+/* Dark defaults (inherited unless .light is on <html>) */
+:root {
+  --am-bg: #0f1318;
+  --am-border: #1b222b;
+  --am-text: #e9f1fb;
+  --am-muted: #9fb0c3;
+
+  --am-input-bg: #0b0f14;
+  --am-input-border: #1b222b;
+
+  --am-btn: #6bcf8a;
+  --am-btn-fore: #0b0d10;
+
+  --am-shadow: 0 10px 40px #0008;
+}
+
+/* Light overrides via cascade */
+.light body .auth-modal,
+.light body .auth-header,
+.light body .auth-form input,
+.light body .auth-switch,
+.light body .pwd-toggle {
+  --am-bg: #ffffff;
+  --am-border: #e8edf3;
+  --am-text: #0e1726;
+  --am-muted: #516173;
+
+  --am-input-bg: #f7f9fc;
+  --am-input-border: #e8edf3;
+
+  --am-btn: #66d086;
+  --am-btn-fore: #0b0d10;
+
+  --am-shadow: 0 12px 40px rgba(15, 19, 24, 0.15);
+}
+
+/* Backdrop & card */
+.auth-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #0008;
+  display: grid;
+  place-items: center;
+  z-index: 40;
+}
+
+.auth-modal {
+  width: min(92vw, 420px);
+  background: var(--am-bg);
+  border: 1px solid var(--am-border);
+  border-radius: 14px;
+  box-shadow: var(--am-shadow);
+  overflow: hidden;
+}
+
+/* Header */
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  color: var(--am-text);
+  border-bottom: none;               /* no divider */
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--am-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* Form */
+.auth-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--am-muted);
+  font-size: 14px;
+  width: 100%;                      /* row spans full width */
+}
+
+.auth-form input {
+  background: var(--am-input-bg);
+  border: 1px solid var(--am-input-border);
+  border-radius: 10px;
+  color: var(--am-text);
+  height: 44px;                     /* uniform height */
+  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-form input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--am-btn) 30%, transparent);
+}
+
+/* Password eye (compact, aligned inside input) */
+.pwd-wrap {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+.pwd-wrap input {
+  padding-right: 44px;              /* reserve room for the eye */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pwd-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--am-bg);
+  border: 1px solid var(--am-border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--am-muted);
+  font-size: 14px;
+}
+
+.pwd-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--am-btn) 40%, transparent);
+}
+
+/* Buttons */
+.btn.primary {
+  background: var(--am-btn);
+  color: var(--am-btn-fore);
+  border: 0;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  width: calc(100% - 2px);
+  margin: 4px 1px 0;
+}
+
+.btn.primary:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* Footer switch */
+.auth-switch {
+  padding: 14px 18px;
+  text-align: center;
+  border-top: none;                 /* no divider */
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--am-text);
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.link-btn:hover { opacity: .85; }
+
+/* Error */
+.auth-error {
+  color: #f66;
+  font-size: .9rem;
+  text-align: center;
+  margin: 4px 0;
+}
