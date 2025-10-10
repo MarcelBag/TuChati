@@ -1,7 +1,6 @@
 // frontend/web/src/App.tsx
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
-
 import Home from './pages/Home'
 import ChatPage from './pages/ChatPage'
 import ChatRoom from './pages/ChatRoom'
@@ -20,7 +19,6 @@ import ProfileModal from './shared/ProfileModal'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { getInitials } from './shared/utils'
-import { ThemeProvider } from './context/ThemeContext'
 
 /* -------------------------
    NAVBAR
@@ -38,34 +36,24 @@ function NavBar({ onOpenAuth }: { onOpenAuth: () => void }) {
         </div>
 
         <nav className="nav-right" aria-label="Primary">
-          {/* Public links (not logged in) */}
           {!token && (
             <>
               <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
               <NavLink to="/chatshow" className="nav-link">{t('nav.demo')}</NavLink>
-
               <button className="link-btn" type="button" onClick={onOpenAuth}>
                 {t('nav.login')}
               </button>
-
               <DownloadMenu />
-              {/* Language always visible */}
               <LanguageSwitcher />
-              {/* Quick theme toggle for guests */}
               <ThemeSwitcher />
             </>
           )}
 
-          {/* Private links (logged in) */}
           {token && (
             <>
               <NavLink to="/" className="nav-link">{t('nav.home')}</NavLink>
               <NavLink to="/chat" className="nav-link">{t('nav.chat')}</NavLink>
-
-              {/* Language always visible */}
               <LanguageSwitcher />
-
-              {/* Avatar (or initials) opens Profile modal */}
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -111,8 +99,11 @@ function AppContent() {
 
           {/* Private (gated) */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/chat/:roomId" element={<ChatRoom />} />
+            {/* NEST the room route so the sidebar stays */}
+            <Route path="/chat" element={<ChatPage />}>
+              <Route path=":roomId" element={<ChatRoom />} />
+            </Route>
+
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
@@ -131,11 +122,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   )
 }
