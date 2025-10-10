@@ -1,4 +1,3 @@
-// src/pages/ChatRoom.tsx
 // ============================================================
 // TuChati Chat Room - fills all remaining width in ChatPage
 // ============================================================
@@ -48,7 +47,7 @@ export default function ChatRoom() {
   const onSend = () => {
     const text = draft.trim()
     if (!text) return
-    sendMessage({ content: text })
+    sendMessage({ content: text })       // emoji input works natively
     setDraft('')
   }
 
@@ -59,29 +58,19 @@ export default function ChatRoom() {
     !!(room as any)?.is_admin ||
     (Array.isArray((room as any)?.admin_ids) && (room as any).admin_ids.includes(user?.id))
 
-  // Toggle drawer with the title (only for groups)
-  const toggleInfo = () => {
-    if (isGroup) setShowInfo(s => !s)
-  }
-  const onTitleKey = (e: React.KeyboardEvent) => {
-    if (!isGroup) return
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      setShowInfo(s => !s)
-    }
-  }
-
   return (
     <>
       <header className="chat-hd">
         <div
-          className={`title ${isGroup ? 'is-group' : ''}`}
-          onClick={toggleInfo}
-          onKeyDown={onTitleKey}
+          className="title"
           role={isGroup ? 'button' : undefined}
-          aria-expanded={isGroup ? showInfo : undefined}
           tabIndex={isGroup ? 0 : -1}
-          aria-label={isGroup ? 'Toggle group info' : undefined}
+          onClick={() => isGroup && setShowInfo(s => !s)}
+          onKeyDown={(e) => {
+            if (!isGroup) return
+            if (e.key === 'Enter' || e.key === ' ') setShowInfo(s => !s)
+          }}
+          title={isGroup ? (showInfo ? 'Hide group info' : 'Show group info') : undefined}
         >
           <div className="avatar-badge lg">
             {(room?.name || 'R').slice(0, 1).toUpperCase()}
@@ -93,8 +82,7 @@ export default function ChatRoom() {
             </div>
           </div>
         </div>
-
-        {/* No “Close info” button anymore */}
+        {/* No separate “Close info” button anymore – title toggles the drawer */}
       </header>
 
       <div className="chat-scroll" ref={listRef}>
@@ -141,9 +129,7 @@ export default function ChatRoom() {
           }}
           placeholder="Type a message"
         />
-        <button className="send" onClick={onSend} aria-label="Send">
-          ➤
-        </button>
+        <button className="send" onClick={onSend} aria-label="Send">➤</button>
       </footer>
 
       {/* Right management drawer for group rooms */}
@@ -155,7 +141,7 @@ export default function ChatRoom() {
               <h4>{room?.name}</h4>
               <p>{(room as any)?.member_count ?? (room as any)?.members?.length ?? 0} members</p>
             </div>
-            {/* No X/close button—title toggles the drawer */}
+            <button className="ri-close" onClick={() => setShowInfo(false)} aria-label="Close info">✕</button>
           </div>
 
           <div className="ri-section">
@@ -254,7 +240,7 @@ export default function ChatRoom() {
               <button
                 className="btn small"
                 onClick={async () => {
-                  if (!confirm('Are you sure you want to leave this group?')) return
+                  if (!confirm('Leave this group?')) return
                   await apiFetch(`/api/chat/rooms/${roomId}/leave/`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token}` },
