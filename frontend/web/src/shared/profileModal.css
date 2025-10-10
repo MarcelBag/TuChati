@@ -218,3 +218,42 @@
 
 /* Sessions */
 .pm-sessions p { margin: 8px 0 16px; }
+
+/* ---------- Avatar initials: always readable ---------- */
+.avatar-initials {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  background: #2b6cb0; /* default bg */
+  color: #fff;         /* default fg */
+}
+
+/* Larger variant if you use one somewhere */
+.avatar-initials.lg { width: 40px; height: 40px; font-size: 14px; }
+
+/* Light theme: ensure contrast (your <html> gets .light on) */
+.light .avatar-initials {
+  background: #2b6cb0; /* keep strong color */
+  color: #fff;
+}
+
+/* Profile modal fallback circle */
+.pm-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  font-size: 38px;
+  font-weight: 800;
+  background: #2b6cb0;
+  color: #fff;
+}
+.light .pm-avatar-fallback {
+  background: #2b6cb0;
+  color: #fff;
+}
