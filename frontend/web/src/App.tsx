@@ -104,8 +104,9 @@ function AppContent() {
             <Route path="/chat" element={<ChatPage />}>
               <Route path=":roomId" element={<ChatRoom />} />
             </Route>
-
+            
             <Route path="/profile" element={<Profile />} />
+            {/* invite user to the room route*/}
             <Route path="/chat/:roomId/invite" element={<InviteUsersInRoom />} />
           </Route>
         </Routes>
