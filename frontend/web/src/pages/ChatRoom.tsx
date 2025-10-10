@@ -169,21 +169,8 @@ export default function ChatRoom() {
     (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
 
   // invite flow (simple dialog)
-  const invite = async () => {
-    const value = prompt('Invite by email or username')
-    if (!value) return
-    const body: any = /\S+@\S+\.\S+/.test(value) ? { email: value } : { username: value }
-    await apiFetch(`/api/chat/rooms/${roomId}/invite/`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    // optional: reload room members
-    try {
-      const r = await apiFetch(`/api/chat/rooms/${roomId}/`, { headers: { Authorization: `Bearer ${token}` }})
-      if (r.ok) setRoom(await r.json())
-    } catch {}
-  }
+  const goInvite = () => navigate(`/chat/${roomId}/invite`)
+
 
   return (
     <>
@@ -353,7 +340,8 @@ export default function ChatRoom() {
                 </li>
               ))}
             </ul>
-            <button className="btn small" onClick={invite}>+ Invite</button>
+            
+            <button className="btn small" onClick={goInvite}>+ Invite</button>
           </div>
 
           {isAdmin ? (

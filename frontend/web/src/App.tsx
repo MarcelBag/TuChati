@@ -20,6 +20,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { getInitials } from './shared/utils'
 
+import InviteUsersInRoom from './pages/InviteUsersInRoom'
 /* -------------------------
    NAVBAR
 ------------------------- */
@@ -105,6 +106,7 @@ function AppContent() {
             </Route>
 
             <Route path="/profile" element={<Profile />} />
+            <Route path="/chat/:roomId/invite" element={<InviteUsersInRoom />} />
           </Route>
         </Routes>
       </main>
