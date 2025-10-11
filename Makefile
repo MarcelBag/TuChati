@@ -108,4 +108,3 @@ pull:
 # --------------------------------------------
 dbshell:
 	cd $(DOCKER_DIR) && docker compose exec db psql -U $${POSTGRES_USER:-tuchati} $${POSTGRES_DB:-tuchati}
-	
