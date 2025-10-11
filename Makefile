@@ -107,5 +107,5 @@ pull:
 # Example: make dbshell or make dbshell SERVICE=db
 # --------------------------------------------
 dbshell:
-	cd $(DOCKER_DIR) && docker compose exec db psql -U $${POSTGRES_USER:-postgres} $${POSTGRES_DB:-tuchati}
+	cd $(DOCKER_DIR) && docker compose exec db psql -U $${POSTGRES_USER:-tuchati} $${POSTGRES_DB:-tuchati}
 	
