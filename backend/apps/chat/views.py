@@ -8,8 +8,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
+from django.contrib.auth import get_user_model
 
-
+User = get_user_model()
 # ============================================================
 # ChatRoom ViewSet (List, Create, Retrieve, Update, Delete)
 # ============================================================
@@ -48,7 +49,53 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(room)
         return Response(serializer.data, status=201)
 
+    # Inviting user to the chat room
+    @action(detail=True, methods=["post"], url_path="invite")
+    def invite(self, request, pk=None):
+        """
+        Invite one or more users to a chatroom by username or email.
+        When inviting we will fetch data as follow :
+          {
+            "usernames": ["nyenye", "mary"],
+            "emails": ["user@tuunganes.com"]
+          }
+        """
+        room = self.get_object()
 
+        # Only allow existing participants or admins to invite
+        if not room.participants.filter(id=request.user.id).exists():
+            raise PermissionDenied("You must be a participant to invite others.")
+
+        usernames = request.data.get("usernames", [])
+        emails = request.data.get("emails", [])
+        added_users = []
+
+        # Fetch by username or email
+        for username in usernames:
+            try:
+                user = User.objects.get(username=username)
+                room.participants.add(user)
+                added_users.append(user.username)
+            except User.DoesNotExist:
+                continue
+
+        for email in emails:
+            try:
+                user = User.objects.get(email=email)
+                room.participants.add(user)
+                added_users.append(user.username)
+            except User.DoesNotExist:
+                continue
+
+        room.save()
+        return Response(
+            {
+                "room": str(room.id),
+                "invited": added_users,
+                "message": f"Added {len(added_users)} user(s) to this room."
+            },
+            status=200,
+        )
 # ============================================================
 # Messages per room
 # ============================================================

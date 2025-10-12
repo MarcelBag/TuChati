@@ -41,11 +41,11 @@ class TokenAuthMiddleware(BaseMiddleware):
     @database_sync_to_async
     def get_user(self, token):
         try:
-            token_obj = AccessToken(token)
-            payload = jwt.decode(str(token_obj), settings.SECRET_KEY, algorithms=["HS256"])
-            user_id = payload.get("user_id")
-            user = User.objects.get(id=user_id)
-            return user
-        except (InvalidToken, User.DoesNotExist, jwt.DecodeError) as e:
-            print(f"[WS-MW] Token validation failed: {e}")
+            # AccessToken automatically verifies and decodes the JWT
+            access_token = AccessToken(token)
+            user_id = access_token["user_id"]
+            return User.objects.get(id=user_id)
+        except (InvalidToken, User.DoesNotExist) as e:
+            print(f"[WS-MW] ❌ Token validation failed: {e}")
             return None
+
