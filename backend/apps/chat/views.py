@@ -119,7 +119,20 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                     "invited_users": added_users,
                 },
             )
-
+        # ==================================================
+        # Sending personal invitation to each invited user
+        # ==================================================
+        for user in added_instances:
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user.id}",
+                {
+                    "type": "chat.invitation",
+                    "room_id": str(room.id),
+                    "room_name": room.name,
+                    "invited_by": request.user.username,
+                    "message": f"You’ve been added to the chat {room.name or room.id}",
+                },
+            )
         return Response(
             {
                 "room": str(room.id),

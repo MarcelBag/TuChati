@@ -4,62 +4,87 @@
 // Auto-detects production vs. local environments
 // =============================================================
 // src/hooks/useChatSocket.ts
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
-type IncomingHandler = (data: any) => void
+type Handler = (data: any) => void
+
+const WS_TEMPLATE =
+  import.meta.env.VITE_WS_URL || '' // e.g. ws://localhost:8011/ws/chat/:roomId/
+  
+function buildWsUrl(roomId: string, token: string) {
+  if (WS_TEMPLATE && WS_TEMPLATE.includes(':roomId')) {
+    return WS_TEMPLATE.replace(':roomId', roomId) + `?token=${encodeURIComponent(token)}`
+  }
+  // Fallback: same host, guessed port/protocol
+  const isHttps = window.location.protocol === 'https:'
+  const proto = isHttps ? 'wss' : 'ws'
+  const host = window.location.host // includes port if any
+  return `${proto}://${host.replace(/:\d+$/, '')}:8011/ws/chat/${roomId}/?token=${encodeURIComponent(token)}`
+}
 
 export function useChatSocket(
-  roomId?: string,
-  token?: string,
-  onMessage?: IncomingHandler
+  roomId: string,
+  token: string,
+  onMessage: Handler,
 ) {
   const wsRef = useRef<WebSocket | null>(null)
-
-  const sendMessage = useMemo(
-    () =>
-      (payload: { content?: string; type?: string; attachment?: any }) => {
-        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
-        wsRef.current.send(JSON.stringify(payload))
-      },
-    []
-  )
+  const timerRef = useRef<number | null>(null)
 
   useEffect(() => {
-    // SAFETY GUARD: do not connect without both pieces
-    if (!roomId || !token) {
-      // optional: console.warn('WS not opened: missing roomId or token', { roomId, hasToken: !!token })
-      return
+    if (!roomId || !token) return
+
+    let closedByUs = false
+    const url = buildWsUrl(roomId, token)
+
+    const open = () => {
+      const ws = new WebSocket(url)
+      wsRef.current = ws
+
+      ws.onopen = () => {
+        // socket ready
+      }
+
+      ws.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data)
+          onMessage(data)
+        } catch {
+          // server sometimes sends plain payload (already JSON-string)
+          onMessage(ev.data)
+        }
+      }
+
+      ws.onclose = () => {
+        if (!closedByUs) {
+          // retry with backoff
+          timerRef.current = window.setTimeout(open, 1000) as unknown as number
+        }
+      }
+
+      ws.onerror = () => {
+        // let onclose handle the retry
+      }
     }
 
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const url = `${wsScheme}://${window.location.host}/ws/chat/${roomId}/?token=${encodeURIComponent(
-      token
-    )}`
-
-    const ws = new WebSocket(url)
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      // console.log('WS open', url)
-    }
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        onMessage?.(data)
-      } catch {}
-    }
-    ws.onerror = () => {
-      // console.error('WS error', url, e)
-    }
-    ws.onclose = () => {
-      // console.log('WS closed', url)
-    }
+    open()
 
     return () => {
-      ws.close()
-      wsRef.current = null
+      closedByUs = true
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+      wsRef.current?.close()
     }
   }, [roomId, token, onMessage])
 
-  return { sendMessage }
+  function sendMessage(payload: any) {
+    const s = wsRef.current
+    if (s && s.readyState === WebSocket.OPEN) {
+      s.send(JSON.stringify(payload))
+    }
+  }
+
+  return {
+    sendMessage,
+    sendTyping: (typing: boolean) => sendMessage({ type: typing ? 'typing' : 'stopped_typing' }),
+    sendFocus: () => sendMessage({ type: 'focus' }),
+  }
 }

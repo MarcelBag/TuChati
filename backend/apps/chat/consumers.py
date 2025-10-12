@@ -32,6 +32,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not getattr(self.user, "is_authenticated", False):
             await self.close(code=4003)
             return
+        # joining personal notification group
+        await self.channel_layer.group_add(f"user_{self.user.id}", self.channel_name)
 
         if not await self._is_participant(self.user.id, self.room_id):
             await self.close(code=4003)
@@ -237,6 +239,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "timestamp": str(timezone.now()),
         }))
 
+    # personnal invitation
+    async def chat_invitation(self, event):
+        """Personal invitation notification to a user."""
+        await self.send(text_data=json.dumps({
+            "type": "invitation",
+            "room_id": event.get("room_id"),
+            "room_name": event.get("room_name"),
+            "invited_by": event.get("invited_by"),
+            "message": event.get("message"),
+            "timestamp": str(timezone.now()),
+        }))
+
     # ================================================================
     # Database helper methods
     # ================================================================
@@ -260,19 +274,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _get_last_messages(self, room_id, limit=25):
+        from apps.chat.models import SystemMessage
+
         msgs = Message.objects.filter(room_id=room_id).order_by("-created_at")[:limit]
-        return [
+        system_msgs = SystemMessage.objects.filter(room_id=room_id).order_by("-created_at")[:limit]
+
+        all_msgs = [
             {
                 "id": str(m.id),
                 "sender": m.sender.username,
                 "content": m.content,
                 "created_at": m.created_at.isoformat(),
-                "is_read": m.is_read,
-                "read_by": [u.username for u in m.read_by.all()],
-                "delivered_to": [u.username for u in m.delivered_to.all()],
+                "type": "message",
             }
-            for m in reversed(msgs)
+            for m in msgs
+        ] + [
+            {
+                "id": str(s.id),
+                "sender": "system",
+                "content": s.content,
+                "created_at": s.created_at.isoformat(),
+                "type": "system_message",
+            }
+            for s in system_msgs
         ]
+        # sorting all chronologically
+        all_msgs = sorted(all_msgs, key=lambda x: x["created_at"])
+        return all_msgs[-limit:]
+
 
     @database_sync_to_async
     def _mark_delivered(self, message_ids, user_id):
