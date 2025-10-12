@@ -1,3 +1,4 @@
+#backend/apps/chat/middleware.py
 # ===========================================================
 # Custom TokenAuthMiddleware for JWT-based WebSocket auth
 # ===========================================================

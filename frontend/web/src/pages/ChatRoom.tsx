@@ -22,7 +22,6 @@ export default function ChatRoom() {
   const [showAttach, setShowAttach] = React.useState(false)
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
-
   const listRef = React.useRef<HTMLDivElement>(null)
 
   // file inputs
@@ -47,11 +46,33 @@ export default function ChatRoom() {
     })()
   }, [roomId, token, navigate])
 
+  // Handle all WebSocket events (messages, system, invites)
   const handleIncoming = (data: any) => {
-    if (data.type === 'history') setMessages(data.messages || [])
-    else if (data.type === 'typing') setTypingUser(data.typing ? data.from_user : null)
-    else if (data.sender && (data.content || data.attachment || data.audio)) {
-      setMessages(prev => [...prev, data])
+    switch (data.type) {
+      case 'history':
+        setMessages(data.messages || [])
+        break
+      case 'typing':
+        setTypingUser(data.typing ? data.from_user : null)
+        break
+      case 'system_message':
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now(),
+            sender: 'system',
+            content: data.message,
+            created_at: data.timestamp,
+          },
+        ])
+        break
+      case 'invitation':
+        alert(`${data.invited_by} added you to ${data.room_name}`)
+        break
+      default:
+        if (data.sender && (data.content || data.attachment || data.audio)) {
+          setMessages(prev => [...prev, data])
+        }
     }
   }
 
@@ -61,6 +82,15 @@ export default function ChatRoom() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
   }, [messages])
 
+  // Send new message
+  const onSend = () => {
+    const text = draft.trim()
+    if (!text) return
+    sendMessage({ content: text })
+    setDraft('')
+  }
+
+  // Upload file helper
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
     setUploading(true)
@@ -71,52 +101,35 @@ export default function ChatRoom() {
         body: fd,
       })
       if (r.ok) {
-        // server usually broadcasts, but add optimistic append if it returned the message
-        try {
-          const m = await r.json()
-          if (m && (m.content || m.attachment || m.audio)) {
-            setMessages(prev => [...prev, m])
-          }
-        } catch {}
+        const m = await r.json()
+        if (m && (m.content || m.attachment || m.audio)) {
+          setMessages(prev => [...prev, m])
+        }
       }
     } finally {
       setUploading(false)
     }
   }
 
-  const onSend = () => {
-    const text = draft.trim()
-    if (!text) return
-    sendMessage({ content: text })
-    setDraft('')
+  // Input + attachment handlers
+  const onDocPicked = async (e: any) => {
+    const f = e.target.files?.[0]; if (!f) return
+    const fd = new FormData(); fd.append('attachment', f)
+    await postFD(fd); e.target.value = ''
   }
 
-  // ---- attach handlers
-  const onDocPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onMediaPicked = async (e: any) => {
     const f = e.target.files?.[0]; if (!f) return
     const fd = new FormData(); fd.append('attachment', f)
     await postFD(fd); e.target.value = ''
   }
-  const onMediaPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f)
-    await postFD(fd); e.target.value = ''
-  }
-  const onCamPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f)
-    await postFD(fd); e.target.value = ''
-  }
-  const onAudioPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const onAudioPicked = async (e: any) => {
     const f = e.target.files?.[0]; if (!f) return
     const fd = new FormData(); fd.append('audio', f)
     await postFD(fd); e.target.value = ''
   }
-  const onVcardPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('contact', f)
-    await postFD(fd); e.target.value = ''
-  }
+
   const pickContact = async () => {
     // @ts-ignore
     if (navigator?.contacts?.select) {
@@ -134,7 +147,7 @@ export default function ChatRoom() {
     vcardRef.current?.click()
   }
 
-  // ---- voice note recording
+  // Voice recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -155,6 +168,7 @@ export default function ChatRoom() {
       setIsRecording(false)
     }
   }
+
   const stopRecording = () => {
     mediaRecorderRef.current?.stop()
     mediaRecorderRef.current = null
@@ -170,7 +184,6 @@ export default function ChatRoom() {
 
   // invite flow (simple dialog)
   const goInvite = () => navigate(`/chat/${roomId}/invite`)
-
 
   return (
     <>
@@ -188,6 +201,7 @@ export default function ChatRoom() {
         </div>
       </header>
 
+      {/* Messages list */}
       <div className="chat-scroll" ref={listRef}>
         {messages.map((m, idx) => {
           const mine = (m as any).sender?.id === user?.id || (m as any).sender === user?.id
@@ -215,61 +229,22 @@ export default function ChatRoom() {
 
       {/* Composer */}
       <footer className="composer">
-        {/* left: + */}
         <div className="composer-left">
-          <button
-            className="icon-btn"
-            onClick={() => setShowAttach(s => !s)}
-            aria-label="Add"
-            title="Add"
-          >＋</button>
-
+          <button className="icon-btn" onClick={() => setShowAttach(s => !s)}>＋</button>
           {showAttach && (
-            <div className="attach-menu" onMouseLeave={() => setShowAttach(false)}>
-              <button className="attach-item" onClick={() => docRef.current?.click()}>
-                <span className="ico">📄</span><span>Document</span>
-              </button>
-              <button className="attach-item" onClick={() => mediaRef.current?.click()}>
-                <span className="ico">🖼️</span><span>Photos & Videos</span>
-              </button>
-              <button className="attach-item" onClick={() => camRef.current?.click()}>
-                <span className="ico">📷</span><span>Camera</span>
-              </button>
-              <button className="attach-item" onClick={() => audioRef.current?.click()}>
-                <span className="ico">🎧</span><span>Audio</span>
-              </button>
-              <button className="attach-item" onClick={pickContact}>
-                <span className="ico">👤</span><span>Contact</span>
-              </button>
-
-              {/* future routes */}
-              <button className="attach-item" onClick={() => navigate(`/chat/${roomId}/poll/new`)}>
-                <span className="ico">📊</span><span>Poll</span>
-              </button>
-              <button className="attach-item" onClick={() => navigate(`/chat/${roomId}/event/new`)}>
-                <span className="ico">🗓️</span><span>Event</span>
-              </button>
-              <button className="attach-item" onClick={() => navigate(`/chat/${roomId}/sticker/new`)}>
-                <span className="ico">🧩</span><span>New Sticker</span>
-              </button>
-              <button className="attach-item" onClick={() => navigate(`/chat/${roomId}/catalog`)}>
-                <span className="ico">🗂️</span><span>Catalog</span>
-              </button>
-              <button className="attach-item" onClick={() => navigate(`/chat/${roomId}/quick-replies`)}>
-                <span className="ico">⚡</span><span>Quick replies</span>
-              </button>
+            <div className="attach-menu">
+              <button className="attach-item" onClick={() => docRef.current?.click()}>📄 Document</button>
+              <button className="attach-item" onClick={() => mediaRef.current?.click()}>🖼️ Photos & Videos</button>
+              <button className="attach-item" onClick={() => audioRef.current?.click()}>🎧 Audio</button>
+              <button className="attach-item" onClick={pickContact}>👤 Contact</button>
             </div>
           )}
-
-          {/* hidden inputs */}
           <input ref={docRef} type="file" onChange={onDocPicked} hidden />
           <input ref={mediaRef} type="file" accept="image/*,video/*" onChange={onMediaPicked} hidden />
-          <input ref={camRef} type="file" accept="image/*,video/*" capture="environment" onChange={onCamPicked} hidden />
           <input ref={audioRef} type="file" accept="audio/*" onChange={onAudioPicked} hidden />
-          <input ref={vcardRef} type="file" accept=".vcf,text/vcard" onChange={onVcardPicked} hidden />
+          <input ref={vcardRef} type="file" accept=".vcf,text/vcard" hidden />
         </div>
 
-        {/* middle input */}
         <input
           value={draft}
           onChange={e => {
@@ -287,15 +262,12 @@ export default function ChatRoom() {
           disabled={uploading}
         />
 
-        {/* right: send / mic */}
         {draft.trim().length > 0 ? (
-          <button className="send" onClick={onSend} aria-label="Send">➤</button>
+          <button className="send" onClick={onSend}>➤</button>
         ) : (
           <button
             className={`send mic ${isRecording ? 'recording' : ''}`}
             onClick={isRecording ? stopRecording : startRecording}
-            aria-label={isRecording ? 'Stop recording' : 'Record voice note'}
-            title={isRecording ? 'Stop recording' : 'Record voice note'}
           >
             {isRecording ? '■' : '🎙️'}
           </button>
@@ -311,7 +283,7 @@ export default function ChatRoom() {
               <h4>{room?.name}</h4>
               <p>{room?.member_count ?? room?.members?.length ?? 0} members</p>
             </div>
-            <button className="ri-close" onClick={() => setShowInfo(false)} aria-label="Close info">✕</button>
+            <button className="ri-close" onClick={() => setShowInfo(false)}>✕</button>
           </div>
 
           <div className="ri-section">
@@ -321,81 +293,11 @@ export default function ChatRoom() {
                 <li key={m.id}>
                   <span className="ri-avatar">{(m.name || m.username || 'U').slice(0, 1)}</span>
                   <span className="ri-name">{m.name || m.username || m.email}</span>
-                  {isAdmin && m.id !== user?.id && (
-                    <button
-                      className="ri-action"
-                      onClick={async () => {
-                        await apiFetch(`/api/chat/rooms/${roomId}/members/${m.id}/`, {
-                          method: 'DELETE',
-                          headers: { Authorization: `Bearer ${token}` },
-                        })
-                        setRoom((prev: any) =>
-                          prev ? { ...prev, members: prev.members.filter((x: any) => x.id !== m.id) } : prev
-                        )
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
                 </li>
               ))}
             </ul>
-            
             <button className="btn small" onClick={goInvite}>+ Invite</button>
           </div>
-
-          {isAdmin ? (
-            <div className="ri-section">
-              <div className="ri-title">Admin tools</div>
-              <div className="ri-actions">
-                <button
-                  className="btn small"
-                  onClick={async () => {
-                    const name = prompt('Rename group', room?.name || '')
-                    if (!name) return
-                    await apiFetch(`/api/chat/rooms/${roomId}/`, {
-                      method: 'PATCH',
-                      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ name }),
-                    })
-                    setRoom((prev: any) => (prev ? { ...prev, name } : prev))
-                  }}
-                >
-                  Rename
-                </button>
-                <button
-                  className="btn small"
-                  onClick={async () => {
-                    if (!confirm('Delete this group?')) return
-                    await apiFetch(`/api/chat/rooms/${roomId}/`, {
-                      method: 'DELETE',
-                      headers: { Authorization: `Bearer ${token}` },
-                    })
-                    navigate('/chat')
-                  }}
-                >
-                  Delete group
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="ri-section">
-              <div className="ri-title">Actions</div>
-              <button
-                className="btn small"
-                onClick={async () => {
-                  if (!confirm('Leave this group?')) return
-                  await apiFetch(`/api/chat/rooms/${roomId}/leave/`, {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` },
-                  })
-                  navigate('/chat')
-                }}
-              >
-                Leave group
-              </button>
-            </div>
-          )}
         </aside>
       )}
     </>

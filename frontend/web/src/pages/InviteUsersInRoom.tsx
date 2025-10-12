@@ -1,5 +1,3 @@
-//frontend/web/src/pages/InviteUsersInRoom.tsx
-
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../shared/api'
@@ -14,9 +12,9 @@ type UserLite = {
   avatar_url?: string
 }
 
-const SEARCH_URL   = import.meta.env.VITE_USERS_SEARCH_URL as string | undefined
-const SEARCH_PARAM = (import.meta.env.VITE_USERS_SEARCH_PARAM as 'q' | 'search' | undefined) ?? 'search'
-const INVITE_URL   = (import.meta.env.VITE_INVITE_USERS_URL as string | undefined) ?? '/api/chat/rooms/:roomId/invite/'
+const SEARCH_URL   = import.meta.env.VITE_USERS_SEARCH_URL
+const SEARCH_PARAM = import.meta.env.VITE_USERS_SEARCH_PARAM || 'search'
+const INVITE_URL   = import.meta.env.VITE_INVITE_USERS_URL || '/api/chat/rooms/:roomId/invite/'
 
 function buildInviteUrl(roomId: string) {
   return INVITE_URL.replace(':roomId', roomId)
@@ -31,7 +29,7 @@ export default function InviteUsersInRoom() {
   const [loading, setLoading] = React.useState(false)
   const [results, setResults] = React.useState<UserLite[]>([])
   const [selected, setSelected] = React.useState<UserLite[]>([])
-  const [manual, setManual] = React.useState('') // email or username fallback
+  const [manual, setManual] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -46,13 +44,9 @@ export default function InviteUsersInRoom() {
       try {
         const url = `${SEARCH_URL}?${SEARCH_PARAM}=${encodeURIComponent(q.trim())}`
         const r = await apiFetch(url, { headers: { Authorization: `Bearer ${token}` } })
-        if (!r.ok) {
-          // If your backend returns 404 here, we just hide results and stop searching
-          if (r.status === 404) { setResults([]); return }
-          throw new Error(`Search failed (${r.status})`)
-        }
+        if (!r.ok) { setResults([]); return }
         const data = await r.json()
-        const list: any[] = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : []
+        const list = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : []
         const normalized: UserLite[] = list
           .map((u: any) => ({
             id: u.id ?? u.pk ?? u.user_id,
@@ -73,100 +67,80 @@ export default function InviteUsersInRoom() {
     return () => { cancel = true; clearTimeout(t) }
   }, [q, token, user?.id, searchEnabled])
 
-  function isPicked(id: UserLite['id']) {
-    return selected.some(s => String(s.id) === String(id))
-  }
-  function togglePick(u: UserLite) {
+  const isPicked = (id: any) => selected.some(s => String(s.id) === String(id))
+  const togglePick = (u: UserLite) =>
     setSelected(prev => isPicked(u.id) ? prev.filter(p => String(p.id) !== String(u.id)) : [...prev, u])
-  }
-  function removeChip(id: UserLite['id']) {
-    setSelected(prev => prev.filter(p => String(p.id) !== String(id)))
-  }
-  function nameOrHandle(u: UserLite) {
-    return u.name || u.username || u.email || `User ${u.id}`
-  }
-  function initials(u: UserLite) {
-    const n = (u.name || u.username || 'U').trim()
-    return n.slice(0, 1).toUpperCase()
-  }
-async function inviteBySelection() {
-  if (!token) return
-  setSubmitting(true); setError(null)
-  try {
-    const usernames = selected
-      .map(s => s.username)
-      .filter(Boolean)
+  const removeChip = (id: any) => setSelected(prev => prev.filter(p => String(p.id) !== String(id)))
+  const nameOrHandle = (u: UserLite) => u.name || u.username || u.email || `User ${u.id}`
+  const initials = (u: UserLite) => (u.name || u.username || 'U').slice(0, 1).toUpperCase()
 
-    const emails = selected
-      .map(s => s.email)
-      .filter(Boolean)
-
-    const body = { usernames, emails }
-
-    const r = await apiFetch(buildInviteUrl(roomId), {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-
-    if (!r.ok) throw new Error((await safeMessage(r)) || 'Failed to invite users')
-    navigate(-1)
-  } catch (e: any) {
-    setError(e?.message ?? 'Failed to invite users')
-  } finally {
-    setSubmitting(false)
+  async function safeMessage(res: Response) {
+    try { const j = await res.json(); return j?.detail || j?.message } catch { return null }
   }
-}
 
-async function inviteManual() {
-  if (!token || !manual.trim()) return
-  setSubmitting(true); setError(null)
-  const val = manual.trim()
-  const body = val.includes('@')
-    ? { emails: [val] }
-    : { usernames: [val] }
-
-  try {
-    const r = await apiFetch(buildInviteUrl(roomId), {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-    if (!r.ok) throw new Error((await safeMessage(r)) || 'Manual invite failed')
-    navigate(-1)
-  } catch (e: any) {
-    setError(e?.message ?? 'Manual invite failed')
-  } finally {
-    setSubmitting(false)
+  async function inviteBySelection() {
+    if (!token) return
+    setSubmitting(true); setError(null)
+    try {
+      const usernames = selected.map(s => s.username).filter(Boolean)
+      const emails = selected.map(s => s.email).filter(Boolean)
+      const r = await apiFetch(buildInviteUrl(roomId), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ usernames, emails }),
+      })
+      if (!r.ok) throw new Error((await safeMessage(r)) || 'Failed to invite users')
+      navigate(-1)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to invite users')
+    } finally {
+      setSubmitting(false)
+    }
   }
-}
+
+  async function inviteManual() {
+    if (!token || !manual.trim()) return
+    setSubmitting(true); setError(null)
+    const val = manual.trim()
+    const body = val.includes('@') ? { emails: [val] } : { usernames: [val] }
+    try {
+      const r = await apiFetch(buildInviteUrl(roomId), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (!r.ok) throw new Error((await safeMessage(r)) || 'Manual invite failed')
+      navigate(-1)
+    } catch (e: any) {
+      setError(e?.message ?? 'Manual invite failed')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="invite-shell">
       <header className="invite-hd">
-        <button className="back-btn" onClick={() => navigate(-1)} aria-label="Back">←</button>
+        <button className="back-btn" onClick={() => navigate(-1)}>←</button>
         <div className="inv-title">Invite users</div>
-        <div />
       </header>
 
       <div className="inv-body">
-        {/* Selected chips */}
         <div className="chips">
           {selected.map(s => (
             <span className="chip" key={String(s.id)}>
               {nameOrHandle(s)}
-              <button className="chip-x" onClick={() => removeChip(s.id)} aria-label="Remove">×</button>
+              <button className="chip-x" onClick={() => removeChip(s.id)}>×</button>
             </span>
           ))}
         </div>
 
-        {/* Search (only if configured) */}
         {searchEnabled && (
           <>
             <div className="inv-search">
@@ -180,9 +154,7 @@ async function inviteManual() {
 
             <div className="inv-results">
               {loading && <div className="hint">Searching…</div>}
-              {!loading && q && results.length === 0 && (
-                <div className="hint">No users found.</div>
-              )}
+              {!loading && q && results.length === 0 && <div className="hint">No users found.</div>}
               <ul>
                 {results.map(u => (
                   <li
@@ -203,7 +175,6 @@ async function inviteManual() {
           </>
         )}
 
-        {/* Manual invite always available */}
         <div className="manual-invite">
           <div className="label">Invite by email or username</div>
           <div className="row">
@@ -232,8 +203,4 @@ async function inviteManual() {
       </footer>
     </div>
   )
-}
-
-async function safeMessage(res: Response) {
-  try { const j = await res.json(); return j?.detail || j?.message } catch { return null }
 }
