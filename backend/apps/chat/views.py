@@ -1,6 +1,6 @@
 # ============================================================
 # backend/apps/chat/views.py
-# TuChati - Chat API Views
+# TuChati Chat API Views
 # ============================================================
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
@@ -10,7 +10,13 @@ from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
 from django.contrib.auth import get_user_model
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from .models import SystemMessage
+
+# defining user to use our invite method
 User = get_user_model()
+
 # ============================================================
 # ChatRoom ViewSet (List, Create, Retrieve, Update, Delete)
 # ============================================================
@@ -49,7 +55,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(room)
         return Response(serializer.data, status=201)
 
-    # Inviting user to the chat room
+    # Inviting users to roomchat and adding a real-time system notification
     @action(detail=True, methods=["post"], url_path="invite")
     def invite(self, request, pk=None):
         """
@@ -62,13 +68,14 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         """
         room = self.get_object()
 
-        # Only allow existing participants or admins to invite
+        # Only allow existing participants or admins to invite in that group
         if not room.participants.filter(id=request.user.id).exists():
             raise PermissionDenied("You must be a participant to invite others.")
 
         usernames = request.data.get("usernames", [])
         emails = request.data.get("emails", [])
         added_users = []
+        added_instances = []
 
         # Fetch by username or email
         for username in usernames:
@@ -76,6 +83,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 user = User.objects.get(username=username)
                 room.participants.add(user)
                 added_users.append(user.username)
+                added_instances.append(user)
             except User.DoesNotExist:
                 continue
 
@@ -84,10 +92,34 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 user = User.objects.get(email=email)
                 room.participants.add(user)
                 added_users.append(user.username)
+                added_instances.append(user)
             except User.DoesNotExist:
                 continue
 
         room.save()
+
+        # ======================================================
+        # Creating a system message in DB
+        # ======================================================
+        if added_users:
+            msg_text = f"{request.user.username} added {', '.join(added_users)} to the chat."
+            system_msg = SystemMessage.objects.create(room=room, content=msg_text)
+
+            # ==================================================
+            # Broadcast it via WebSocket to the room
+            # ==================================================
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{room.id}",
+                {
+                    "type": "chat.system_message",
+                    "event": "user_invited",
+                    "message": msg_text,
+                    "room_id": str(room.id),
+                    "invited_users": added_users,
+                },
+            )
+
         return Response(
             {
                 "room": str(room.id),
@@ -96,6 +128,7 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             },
             status=200,
         )
+
 # ============================================================
 # Messages per room
 # ============================================================

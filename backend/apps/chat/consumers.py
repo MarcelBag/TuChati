@@ -225,6 +225,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "last_seen": event["last_seen"],
         }))
 
+    # adding a message to system
+    async def chat_system_message(self, event):
+        """Receiving a system message event and forward to WebSocket clients."""
+        await self.send(text_data=json.dumps({
+            "type": "system_message",
+            "event": event.get("event"),
+            "message": event.get("message"),
+            "room_id": event.get("room_id"),
+            "invited_users": event.get("invited_users", []),
+            "timestamp": str(timezone.now()),
+        }))
+
     # ================================================================
     # Database helper methods
     # ================================================================
