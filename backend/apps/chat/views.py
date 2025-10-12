@@ -14,6 +14,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .models import SystemMessage
 
+from .utils import get_or_create_direct_room
 # defining user to use our invite method
 User = get_user_model()
 
@@ -141,6 +142,52 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             },
             status=200,
         )
+        # ======================================================
+        # direct messaging : 1:1 user direct message
+        # ======================================================
+
+    @action(detail=False, methods=["post"], url_path="direct")
+    def direct_message(self, request):
+        """Send a direct message to another user (auto-creates room)."""
+        username = request.data.get("to_username")
+        content = request.data.get("content", "").strip()
+
+        if not username or not content:
+            return Response({"error": "to_username and content required"}, status=400)
+
+        try:
+            other_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        room = get_or_create_direct_room(request.user, other_user)
+
+        message = Message.objects.create(room=room, sender=request.user, content=content)
+
+        # Broadcast via WebSocket
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"room_{room.id}",
+            {
+                "type": "chat_message",
+                "payload": {
+                    "id": str(message.id),
+                    "sender": request.user.username,
+                    "content": message.content,
+                    "created_at": message.created_at.isoformat(),
+                },
+            },
+        )
+
+        return Response({
+            "room_id": str(room.id),
+            "message": {
+                "id": str(message.id),
+                "sender": request.user.username,
+                "content": message.content,
+                "created_at": message.created_at.isoformat(),
+            }
+        }, status=201)
 
 # ============================================================
 # Messages per room

@@ -89,46 +89,63 @@ export default function InviteUsersInRoom() {
     const n = (u.name || u.username || 'U').trim()
     return n.slice(0, 1).toUpperCase()
   }
+async function inviteBySelection() {
+  if (!token) return
+  setSubmitting(true); setError(null)
+  try {
+    const usernames = selected
+      .map(s => s.username)
+      .filter(Boolean)
 
-  async function inviteBySelection() {
-    if (!token) return
-    setSubmitting(true); setError(null)
-    try {
-      const ids = selected.map(s => s.id)
-      const r = await apiFetch(buildInviteUrl(roomId), {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        // Adjust payload to your backend here:
-        body: JSON.stringify({ users: ids, user_ids: ids }),
-      })
-      if (!r.ok) throw new Error((await safeMessage(r)) || 'Failed to invite users')
-      navigate(-1)
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to invite users')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+    const emails = selected
+      .map(s => s.email)
+      .filter(Boolean)
 
-  async function inviteManual() {
-    if (!token || !manual.trim()) return
-    setSubmitting(true); setError(null)
-    const val = manual.trim()
-    const body = val.includes('@') ? { email: val } : { username: val }
-    try {
-      const r = await apiFetch(buildInviteUrl(roomId), {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!r.ok) throw new Error((await safeMessage(r)) || 'Manual invite failed')
-      navigate(-1)
-    } catch (e: any) {
-      setError(e?.message ?? 'Manual invite failed')
-    } finally {
-      setSubmitting(false)
-    }
+    const body = { usernames, emails }
+
+    const r = await apiFetch(buildInviteUrl(roomId), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!r.ok) throw new Error((await safeMessage(r)) || 'Failed to invite users')
+    navigate(-1)
+  } catch (e: any) {
+    setError(e?.message ?? 'Failed to invite users')
+  } finally {
+    setSubmitting(false)
   }
+}
+
+async function inviteManual() {
+  if (!token || !manual.trim()) return
+  setSubmitting(true); setError(null)
+  const val = manual.trim()
+  const body = val.includes('@')
+    ? { emails: [val] }
+    : { usernames: [val] }
+
+  try {
+    const r = await apiFetch(buildInviteUrl(roomId), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+    if (!r.ok) throw new Error((await safeMessage(r)) || 'Manual invite failed')
+    navigate(-1)
+  } catch (e: any) {
+    setError(e?.message ?? 'Manual invite failed')
+  } finally {
+    setSubmitting(false)
+  }
+}
 
   return (
     <div className="invite-shell">

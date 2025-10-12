@@ -6,6 +6,7 @@
 // src/hooks/useChatSocket.ts
 import { useEffect, useRef } from 'react'
 
+
 type Handler = (data: any) => void
 
 const WS_TEMPLATE =
@@ -21,7 +22,20 @@ function buildWsUrl(roomId: string, token: string) {
   const host = window.location.host // includes port if any
   return `${proto}://${host.replace(/:\d+$/, '')}:8011/ws/chat/${roomId}/?token=${encodeURIComponent(token)}`
 }
-
+export function useInviteSocket(token: string | null, onInvite: (data: any) => void) {
+  useEffect(() => {
+    if (!token) return
+    const isHttps = window.location.protocol === 'https:'
+    const proto = isHttps ? 'wss' : 'ws'
+    const host = window.location.host.replace(/:\d+$/, '')
+    const url = `${proto}://${host}:8011/ws/notifications/?token=${encodeURIComponent(token)}`
+    const ws = new WebSocket(url)
+    ws.onmessage = ev => {
+      try { onInvite(JSON.parse(ev.data)) } catch {}
+    }
+    return () => ws.close()
+  }, [token, onInvite])
+}
 export function useChatSocket(
   roomId: string,
   token: string,
