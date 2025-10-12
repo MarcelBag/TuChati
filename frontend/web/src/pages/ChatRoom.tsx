@@ -1,5 +1,11 @@
+//frontend/web/src/ChatRoom.tsx
 // ============================================================
-// TuChati Chat Room – full width inside ChatPage + attach menu
+// TuChati Chat Room – stable rendering + sender/receiver UI
+// - Normalizes all incoming messages
+// - Loads history once (prevents list resets)
+// - Optimistic send with client-id then replace on server echo
+// - Stable React keys
+// - Context menu, attachments, voice notes, group drawer
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -9,6 +15,14 @@ import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room, ChatMessage } from '../types'
 import './ChatRoom.css'
 
+type CtxState = {
+  open: boolean
+  x: number
+  y: number
+  id: string | number | null
+  mine: boolean
+}
+
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
@@ -16,18 +30,19 @@ export default function ChatRoom() {
 
   const [room, setRoom] = React.useState<Room | any>(null)
   const [messages, setMessages] = React.useState<ChatMessage[]>([])
+  const [historyLoaded, setHistoryLoaded] = React.useState(false)
   const [typingUser, setTypingUser] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
   const [showInfo, setShowInfo] = React.useState(false)
   const [showAttach, setShowAttach] = React.useState(false)
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
+  const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
   const listRef = React.useRef<HTMLDivElement>(null)
 
   // file inputs
   const docRef = React.useRef<HTMLInputElement>(null)
   const mediaRef = React.useRef<HTMLInputElement>(null)
-  const camRef = React.useRef<HTMLInputElement>(null)
   const audioRef = React.useRef<HTMLInputElement>(null)
   const vcardRef = React.useRef<HTMLInputElement>(null)
 
@@ -35,6 +50,13 @@ export default function ChatRoom() {
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
 
+  // Reset when room changes
+  React.useEffect(() => {
+    setHistoryLoaded(false)
+    setMessages([])
+  }, [roomId])
+
+  // Load room meta
   React.useEffect(() => {
     if (!roomId || !token) return
     ;(async () => {
@@ -46,51 +68,102 @@ export default function ChatRoom() {
     })()
   }, [roomId, token, navigate])
 
-  // Handle all WebSocket events (messages, system, invites)
+  // --- Normalizer ensures we render whatever shape backend sends
+  const normalizeMsg = React.useCallback((raw: any) => {
+    const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
+    const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
+    return {
+      id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
+      _client_id: raw._client_id, // for optimistic replace
+      sender_id: senderId,
+      sender_name: raw.sender_name ?? raw.sender?.name ?? raw.sender?.username ?? raw.username ?? 'U',
+      text,
+      attachment: raw.attachment ?? raw.file ?? null,
+      audio: raw.audio ?? null,
+      created_at: raw.created_at ?? raw.timestamp ?? new Date().toISOString(),
+      is_me: !!senderId && senderId === (user?.id as any),
+    } as any
+  }, [user?.id])
+
+  // Handle WebSocket events
   const handleIncoming = (data: any) => {
     switch (data.type) {
-      case 'history':
-        setMessages(data.messages || [])
+      case 'history': {
+        if (!historyLoaded) {
+          const list = (data.messages || []).map(normalizeMsg)
+          setMessages(list)
+          setHistoryLoaded(true)
+        }
         break
+      }
       case 'typing':
         setTypingUser(data.typing ? data.from_user : null)
         break
-      case 'system_message':
-        setMessages(prev => [
-          ...prev,
-          {
-            id: Date.now(),
-            sender: 'system',
-            content: data.message,
-            created_at: data.timestamp,
-          },
-        ])
+      case 'system_message': {
+        const m = normalizeMsg({
+          id: `sys-${Date.now()}`,
+          content: data.message,
+          sender_name: 'system',
+          sender: 'system',
+          created_at: data.timestamp,
+        })
+        setMessages(prev => [...prev, m])
         break
-      case 'invitation':
-        alert(`${data.invited_by} added you to ${data.room_name}`)
-        break
-      default:
-        if (data.sender && (data.content || data.attachment || data.audio)) {
-          setMessages(prev => [...prev, data])
+      }
+      default: {
+        // single message broadcast
+        const payload = normalizeMsg(data)
+
+        // If server echoes a message we sent optimistically, replace it
+        if (payload._client_id) {
+          setMessages(prev => {
+            const idx = prev.findIndex((m: any) => m._client_id === payload._client_id)
+            if (idx !== -1) {
+              const copy = prev.slice()
+              copy[idx] = payload
+              return copy
+            }
+            return [...prev, payload]
+          })
+        } else {
+          setMessages(prev => [...prev, payload])
         }
+      }
     }
   }
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
+  // Always scroll to latest
   React.useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
   }, [messages])
 
-  // Send new message
+  // --- Sending text
+  const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
   const onSend = () => {
     const text = draft.trim()
     if (!text) return
-    sendMessage({ content: text })
+    const _client_id = mkClientId()
+
+    // optimistic add
+    const optimistic: any = {
+      id: _client_id,
+      _client_id,
+      sender_id: user?.id,
+      sender_name: (user as any)?.name || (user as any)?.username || 'Me',
+      text,
+      created_at: new Date().toISOString(),
+      is_me: true,
+    }
+    setMessages(prev => [...prev, optimistic])
+
+    // include _client_id so server can echo back and we replace
+    sendMessage({ content: text, _client_id })
     setDraft('')
   }
 
-  // Upload file helper
+  // --- Upload helper
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
     setUploading(true)
@@ -102,34 +175,30 @@ export default function ChatRoom() {
       })
       if (r.ok) {
         const m = await r.json()
-        if (m && (m.content || m.attachment || m.audio)) {
-          setMessages(prev => [...prev, m])
-        }
+        const msg = normalizeMsg(m)
+        if (msg.text || msg.attachment || msg.audio) setMessages(prev => [...prev, msg])
       }
     } finally {
       setUploading(false)
     }
   }
 
-  // Input + attachment handlers
+  // --- Pickers
   const onDocPicked = async (e: any) => {
     const f = e.target.files?.[0]; if (!f) return
     const fd = new FormData(); fd.append('attachment', f)
     await postFD(fd); e.target.value = ''
   }
-
   const onMediaPicked = async (e: any) => {
     const f = e.target.files?.[0]; if (!f) return
     const fd = new FormData(); fd.append('attachment', f)
     await postFD(fd); e.target.value = ''
   }
-
   const onAudioPicked = async (e: any) => {
     const f = e.target.files?.[0]; if (!f) return
     const fd = new FormData(); fd.append('audio', f)
     await postFD(fd); e.target.value = ''
   }
-
   const pickContact = async () => {
     // @ts-ignore
     if (navigator?.contacts?.select) {
@@ -147,7 +216,7 @@ export default function ChatRoom() {
     vcardRef.current?.click()
   }
 
-  // Voice recording
+  // --- Voice recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -168,22 +237,41 @@ export default function ChatRoom() {
       setIsRecording(false)
     }
   }
-
   const stopRecording = () => {
     mediaRecorderRef.current?.stop()
     mediaRecorderRef.current = null
     setIsRecording(false)
   }
 
-  if (!token) return null
+  // --- Context menu
+  const closeCtx = () => setCtx(s => ({ ...s, open: false }))
+  React.useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && closeCtx()
+    const onClick = () => closeCtx()
+    if (ctx.open) {
+      window.addEventListener('keydown', onEsc)
+      window.addEventListener('click', onClick)
+    }
+    return () => {
+      window.removeEventListener('keydown', onEsc)
+      window.removeEventListener('click', onClick)
+    }
+  }, [ctx.open])
+
+  const doCopy = async () => {
+    const msg: any = messages.find((m: any) => (m.id ?? m._client_id) === ctx.id)
+    const text = msg?.text ?? ''
+    try { await navigator.clipboard.writeText(text) } catch {}
+    closeCtx()
+  }
 
   const isGroup = !!room?.is_group
   const isAdmin =
     !!room?.is_admin ||
     (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
-
-  // invite flow (simple dialog)
   const goInvite = () => navigate(`/chat/${roomId}/invite`)
+
+  if (!token) return null
 
   return (
     <>
@@ -201,24 +289,41 @@ export default function ChatRoom() {
         </div>
       </header>
 
-      {/* Messages list */}
+      {/* Messages */}
       <div className="chat-scroll" ref={listRef}>
-        {messages.map((m, idx) => {
-          const mine = (m as any).sender?.id === user?.id || (m as any).sender === user?.id
+        {messages.map((m: any, idx: number) => {
+          const mine = m.is_me || m.sender_id === user?.id
+          const key = m.id ?? m._client_id ?? `k-${m.created_at}-${idx}`
           return (
-            <div key={(m as any).id || idx} className={`bubble-row ${mine ? 'right' : 'left'}`}>
-              {!mine && <div className="avatar-badge sm">{(((m as any).sender_name) || 'U').slice(0,1).toUpperCase()}</div>}
-              <div className={`bubble ${mine ? 'me' : ''}`}>
-                {(m as any).content && <p>{(m as any).content}</p>}
-                {(m as any).attachment && (
-                  <a className="attach" href={(m as any).attachment} target="_blank" rel="noreferrer">Attachment</a>
+            <div key={key} className={`bubble-row ${mine ? 'right' : 'left'}`}>
+              {!mine && (
+                <div className="avatar-badge sm">{(m.sender_name || 'U').slice(0,1).toUpperCase()}</div>
+              )}
+              <div
+                className={`bubble ${mine ? 'me' : 'other'}`}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setCtx({ open: true, x: e.clientX, y: e.clientY, id: key, mine })
+                }}
+                onTouchStart={(e) => {
+                  const x = (e.touches?.[0]?.clientX) ?? 0
+                  const y = (e.touches?.[0]?.clientY) ?? 0
+                  const t = setTimeout(() => setCtx({ open: true, x, y, id: key, mine }), 500)
+                  const clear = () => { clearTimeout(t) }
+                  e.currentTarget.addEventListener('touchend', clear, { once: true })
+                  e.currentTarget.addEventListener('touchmove', clear, { once: true })
+                }}
+              >
+                {m.text && <p>{m.text}</p>}
+                {m.attachment && (
+                  <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>
                 )}
-                {(m as any).audio && (
-                  <audio controls src={(m as any).audio} style={{maxWidth: 280, display:'block'}} />
+                {m.audio && (
+                  <audio controls src={m.audio} style={{maxWidth: 280, display:'block'}} />
                 )}
                 <span className="time">
-                  {(m as any).created_at
-                    ? new Date((m as any).created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  {m.created_at
+                    ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     : ''}
                 </span>
               </div>
@@ -296,9 +401,26 @@ export default function ChatRoom() {
                 </li>
               ))}
             </ul>
-            <button className="btn small" onClick={goInvite}>+ Invite</button>
+            {isAdmin && <button className="btn small" onClick={goInvite}>+ Invite</button>}
           </div>
         </aside>
+      )}
+
+      {/* Context menu */}
+      {ctx.open && (
+        <div className="ctx-wrap" onClick={closeCtx}>
+          <div
+            className="menu ctx"
+            style={{ left: ctx.x, top: ctx.y }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button className="menu-item">Forward</button>
+            {ctx.mine && <button className="menu-item">Edit</button>}
+            <button className="menu-item" onClick={doCopy}>Copy text</button>
+            <button className="menu-item">Info</button>
+            {ctx.mine && <button className="menu-item danger">Delete</button>}
+          </div>
+        </div>
       )}
     </>
   )
