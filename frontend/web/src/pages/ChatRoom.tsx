@@ -1,11 +1,5 @@
-//frontend/web/src/ChatRoom.tsx
 // ============================================================
-// TuChati Chat Room – stable rendering + sender/receiver UI
-// - Normalizes all incoming messages
-// - Loads history once (prevents list resets)
-// - Optimistic send with client-id then replace on server echo
-// - Stable React keys
-// - Context menu, attachments, voice notes, group drawer
+// TuChati Chat Room – polished UI + grouping + day separators
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -15,12 +9,17 @@ import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room, ChatMessage } from '../types'
 import './ChatRoom.css'
 
-type CtxState = {
-  open: boolean
-  x: number
-  y: number
-  id: string | number | null
-  mine: boolean
+type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
+
+function formatDayLabel(d: Date) {
+  const now = new Date()
+  const one = 24 * 60 * 60 * 1000
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const nd = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  const diff = Math.round((dd - nd) / one)
+  if (diff === 0) return 'Today'
+  if (diff === -1) return 'Yesterday'
+  return d.toLocaleDateString()
 }
 
 export default function ChatRoom() {
@@ -29,7 +28,7 @@ export default function ChatRoom() {
   const navigate = useNavigate()
 
   const [room, setRoom] = React.useState<Room | any>(null)
-  const [messages, setMessages] = React.useState<ChatMessage[]>([])
+  const [messages, setMessages] = React.useState<any[]>([])
   const [historyLoaded, setHistoryLoaded] = React.useState(false)
   const [typingUser, setTypingUser] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
@@ -40,23 +39,18 @@ export default function ChatRoom() {
   const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
   const listRef = React.useRef<HTMLDivElement>(null)
 
-  // file inputs
+  // inputs
   const docRef = React.useRef<HTMLInputElement>(null)
   const mediaRef = React.useRef<HTMLInputElement>(null)
   const audioRef = React.useRef<HTMLInputElement>(null)
   const vcardRef = React.useRef<HTMLInputElement>(null)
 
-  // media recorder
+  // recorder
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
 
-  // Reset when room changes
-  React.useEffect(() => {
-    setHistoryLoaded(false)
-    setMessages([])
-  }, [roomId])
+  React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
 
-  // Load room meta
   React.useEffect(() => {
     if (!roomId || !token) return
     ;(async () => {
@@ -68,13 +62,12 @@ export default function ChatRoom() {
     })()
   }, [roomId, token, navigate])
 
-  // --- Normalizer ensures we render whatever shape backend sends
   const normalizeMsg = React.useCallback((raw: any) => {
     const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
     const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
-      _client_id: raw._client_id, // for optimistic replace
+      _client_id: raw._client_id,
       sender_id: senderId,
       sender_name: raw.sender_name ?? raw.sender?.name ?? raw.sender?.username ?? raw.username ?? 'U',
       text,
@@ -85,7 +78,6 @@ export default function ChatRoom() {
     } as any
   }, [user?.id])
 
-  // Handle WebSocket events
   const handleIncoming = (data: any) => {
     switch (data.type) {
       case 'history': {
@@ -101,27 +93,17 @@ export default function ChatRoom() {
         break
       case 'system_message': {
         const m = normalizeMsg({
-          id: `sys-${Date.now()}`,
-          content: data.message,
-          sender_name: 'system',
-          sender: 'system',
-          created_at: data.timestamp,
+          id: `sys-${Date.now()}`, content: data.message, sender_name: 'system', sender: 'system', created_at: data.timestamp,
         })
-        setMessages(prev => [...prev, m])
-        break
+        setMessages(prev => [...prev, m]); break
       }
       default: {
-        // single message broadcast
         const payload = normalizeMsg(data)
-
-        // If server echoes a message we sent optimistically, replace it
         if (payload._client_id) {
           setMessages(prev => {
             const idx = prev.findIndex((m: any) => m._client_id === payload._client_id)
             if (idx !== -1) {
-              const copy = prev.slice()
-              copy[idx] = payload
-              return copy
+              const copy = prev.slice(); copy[idx] = payload; return copy
             }
             return [...prev, payload]
           })
@@ -134,71 +116,44 @@ export default function ChatRoom() {
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
-  // Always scroll to latest
   React.useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
   }, [messages])
 
-  // --- Sending text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
   const onSend = () => {
-    const text = draft.trim()
-    if (!text) return
+    const text = draft.trim(); if (!text) return
     const _client_id = mkClientId()
-
-    // optimistic add
     const optimistic: any = {
-      id: _client_id,
-      _client_id,
-      sender_id: user?.id,
-      sender_name: (user as any)?.name || (user as any)?.username || 'Me',
-      text,
-      created_at: new Date().toISOString(),
-      is_me: true,
+      id: _client_id, _client_id,
+      sender_id: user?.id, sender_name: (user as any)?.name || (user as any)?.username || 'Me',
+      text, created_at: new Date().toISOString(), is_me: true,
     }
     setMessages(prev => [...prev, optimistic])
-
-    // include _client_id so server can echo back and we replace
     sendMessage({ content: text, _client_id })
     setDraft('')
   }
 
-  // --- Upload helper
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
     setUploading(true)
     try {
       const r = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
+        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
       })
       if (r.ok) {
-        const m = await r.json()
-        const msg = normalizeMsg(m)
-        if (msg.text || msg.attachment || msg.audio) setMessages(prev => [...prev, msg])
+        const m = normalizeMsg(await r.json())
+        if (m.text || m.attachment || m.audio) setMessages(prev => [...prev, m])
       }
-    } finally {
-      setUploading(false)
-    }
+    } finally { setUploading(false) }
   }
 
-  // --- Pickers
-  const onDocPicked = async (e: any) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f)
-    await postFD(fd); e.target.value = ''
-  }
-  const onMediaPicked = async (e: any) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f)
-    await postFD(fd); e.target.value = ''
-  }
-  const onAudioPicked = async (e: any) => {
-    const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('audio', f)
-    await postFD(fd); e.target.value = ''
-  }
+  const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
+    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
+    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onAudioPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
+    const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = '' }
   const pickContact = async () => {
     // @ts-ignore
     if (navigator?.contacts?.select) {
@@ -208,70 +163,84 @@ export default function ChatRoom() {
         if (contact) {
           const fd = new FormData()
           fd.append('contact_json', new Blob([JSON.stringify(contact)], { type: 'application/json' }))
-          await postFD(fd)
-          return
+          await postFD(fd); return
         }
       } catch {}
     }
     vcardRef.current?.click()
   }
 
-  // --- Voice recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream)
-      audioChunksRef.current = []
+      const mr = new MediaRecorder(stream); audioChunksRef.current = []
       mr.ondataavailable = e => { if (e.data.size) audioChunksRef.current.push(e.data) }
       mr.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        const fd = new FormData()
-        fd.append('audio', blob, `voice-${Date.now()}.webm`)
+        const fd = new FormData(); fd.append('audio', blob, `voice-${Date.now()}.webm`)
         await postFD(fd)
       }
-      mr.start()
-      mediaRecorderRef.current = mr
-      setIsRecording(true)
-    } catch (err) {
-      console.error('mic error', err)
-      setIsRecording(false)
-    }
+      mr.start(); mediaRecorderRef.current = mr; setIsRecording(true)
+    } catch { setIsRecording(false) }
   }
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop()
-    mediaRecorderRef.current = null
-    setIsRecording(false)
-  }
+  const stopRecording = () => { mediaRecorderRef.current?.stop(); mediaRecorderRef.current = null; setIsRecording(false) }
 
-  // --- Context menu
+  // context menu
   const closeCtx = () => setCtx(s => ({ ...s, open: false }))
   React.useEffect(() => {
     const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && closeCtx()
     const onClick = () => closeCtx()
-    if (ctx.open) {
-      window.addEventListener('keydown', onEsc)
-      window.addEventListener('click', onClick)
-    }
-    return () => {
-      window.removeEventListener('keydown', onEsc)
-      window.removeEventListener('click', onClick)
-    }
+    if (ctx.open) { window.addEventListener('keydown', onEsc); window.addEventListener('click', onClick) }
+    return () => { window.removeEventListener('keydown', onEsc); window.removeEventListener('click', onClick) }
   }, [ctx.open])
 
   const doCopy = async () => {
     const msg: any = messages.find((m: any) => (m.id ?? m._client_id) === ctx.id)
-    const text = msg?.text ?? ''
-    try { await navigator.clipboard.writeText(text) } catch {}
+    try { await navigator.clipboard.writeText(msg?.text ?? '') } catch {}
     closeCtx()
   }
 
   const isGroup = !!room?.is_group
-  const isAdmin =
-    !!room?.is_admin ||
-    (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
+  const isAdmin = !!room?.is_admin || (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
   const goInvite = () => navigate(`/chat/${roomId}/invite`)
 
   if (!token) return null
+
+  // ---- Build render list with grouping + day separators ----
+  type RenderItem =
+    | { kind: 'day'; id: string; label: string }
+    | { kind: 'msg'; id: string; mine: boolean; showAvatar: boolean; showTail: boolean; m: any }
+
+  const renderItems: RenderItem[] = []
+  let lastDayKey = ''
+  let prevSender: any = null
+
+  const filtered = messages.filter((m: any) => !!(m.text || m.attachment || m.audio))
+
+  filtered.forEach((m: any, i: number) => {
+    const date = new Date(m.created_at || Date.now())
+    const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    if (dayKey !== lastDayKey) {
+      renderItems.push({ kind: 'day', id: `day-${dayKey}`, label: formatDayLabel(date) })
+      lastDayKey = dayKey
+      prevSender = null
+    }
+    const curSender = m.is_me ? 'me' : (m.sender_id ?? 'other')
+    const next = filtered[i + 1]
+    const nextSender = next ? (next.is_me ? 'me' : (next.sender_id ?? 'other')) : null
+    const showAvatar = curSender !== prevSender // first in a block
+    const showTail = curSender !== nextSender   // last in a block
+    prevSender = curSender
+
+    renderItems.push({
+      kind: 'msg',
+      id: m.id ?? m._client_id ?? `k-${m.created_at}-${i}`,
+      mine: !!m.is_me || m.sender_id === user?.id,
+      showAvatar,
+      showTail,
+      m,
+    })
+  })
 
   return (
     <>
@@ -289,25 +258,27 @@ export default function ChatRoom() {
         </div>
       </header>
 
-      {/* Messages */}
       <div className="chat-scroll" ref={listRef}>
-        {messages.map((m: any, idx: number) => {
-          const mine = m.is_me || m.sender_id === user?.id
-          const key = m.id ?? m._client_id ?? `k-${m.created_at}-${idx}`
+        {renderItems.map((it, idx) => {
+          if (it.kind === 'day') {
+            return <div key={it.id} className="day-sep"><span>{it.label}</span></div>
+          }
+          const { m, mine, showAvatar, showTail } = it
+          const key = it.id || idx
           return (
-            <div key={key} className={`bubble-row ${mine ? 'right' : 'left'}`}>
-              {!mine && (
+            <div key={key} className={`row ${mine ? 'right' : 'left'}`}>
+              {!mine && showAvatar && (
                 <div className="avatar-badge sm">{(m.sender_name || 'U').slice(0,1).toUpperCase()}</div>
               )}
+
               <div
-                className={`bubble ${mine ? 'me' : 'other'}`}
+                className={`bubble ${mine ? 'me' : 'other'} ${showTail ? 'tail' : ''}`}
                 onContextMenu={(e) => {
                   e.preventDefault()
                   setCtx({ open: true, x: e.clientX, y: e.clientY, id: key, mine })
                 }}
                 onTouchStart={(e) => {
-                  const x = (e.touches?.[0]?.clientX) ?? 0
-                  const y = (e.touches?.[0]?.clientY) ?? 0
+                  const x = (e.touches?.[0]?.clientX) ?? 0, y = (e.touches?.[0]?.clientY) ?? 0
                   const t = setTimeout(() => setCtx({ open: true, x, y, id: key, mine }), 500)
                   const clear = () => { clearTimeout(t) }
                   e.currentTarget.addEventListener('touchend', clear, { once: true })
@@ -315,16 +286,10 @@ export default function ChatRoom() {
                 }}
               >
                 {m.text && <p>{m.text}</p>}
-                {m.attachment && (
-                  <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>
-                )}
-                {m.audio && (
-                  <audio controls src={m.audio} style={{maxWidth: 280, display:'block'}} />
-                )}
+                {m.attachment && <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>}
+                {m.audio && <audio controls src={m.audio} style={{maxWidth: 320, display:'block'}} />}
                 <span className="time">
-                  {m.created_at
-                    ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : ''}
+                  {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                 </span>
               </div>
             </div>
@@ -332,7 +297,6 @@ export default function ChatRoom() {
         })}
       </div>
 
-      {/* Composer */}
       <footer className="composer">
         <div className="composer-left">
           <button className="icon-btn" onClick={() => setShowAttach(s => !s)}>＋</button>
@@ -352,17 +316,9 @@ export default function ChatRoom() {
 
         <input
           value={draft}
-          onChange={e => {
-            setDraft(e.target.value)
-            try { sendTyping?.(true) } catch {}
-          }}
+          onChange={e => { setDraft(e.target.value); try { sendTyping?.(true) } catch {} }}
           onBlur={() => { try { sendTyping?.(false) } catch {} }}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              onSend()
-            }
-          }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() } }}
           placeholder={uploading ? 'Uploading…' : (isRecording ? 'Recording…' : 'Type a message')}
           disabled={uploading}
         />
@@ -370,16 +326,12 @@ export default function ChatRoom() {
         {draft.trim().length > 0 ? (
           <button className="send" onClick={onSend}>➤</button>
         ) : (
-          <button
-            className={`send mic ${isRecording ? 'recording' : ''}`}
-            onClick={isRecording ? stopRecording : startRecording}
-          >
+          <button className={`send mic ${isRecording ? 'recording' : ''}`} onClick={isRecording ? stopRecording : startRecording}>
             {isRecording ? '■' : '🎙️'}
           </button>
         )}
       </footer>
 
-      {/* Right info drawer */}
       {isGroup && (
         <aside className={`room-info ${showInfo ? 'open' : ''}`}>
           <div className="room-info-hd">
@@ -390,7 +342,6 @@ export default function ChatRoom() {
             </div>
             <button className="ri-close" onClick={() => setShowInfo(false)}>✕</button>
           </div>
-
           <div className="ri-section">
             <div className="ri-title">Members</div>
             <ul className="ri-list">
@@ -406,14 +357,9 @@ export default function ChatRoom() {
         </aside>
       )}
 
-      {/* Context menu */}
       {ctx.open && (
         <div className="ctx-wrap" onClick={closeCtx}>
-          <div
-            className="menu ctx"
-            style={{ left: ctx.x, top: ctx.y }}
-            onClick={e => e.stopPropagation()}
-          >
+          <div className="menu ctx" style={{ left: ctx.x, top: ctx.y }} onClick={e => e.stopPropagation()}>
             <button className="menu-item">Forward</button>
             {ctx.mine && <button className="menu-item">Edit</button>}
             <button className="menu-item" onClick={doCopy}>Copy text</button>
