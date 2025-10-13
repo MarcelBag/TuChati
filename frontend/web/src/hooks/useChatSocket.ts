@@ -33,6 +33,7 @@ export function useInviteSocket(token: string | null, onInvite: (data: any) => v
 // -------------------------------------------------------------
 // Main chat WebSocket hook (stable)
 // -------------------------------------------------------------
+
 export function useChatSocket(roomId: string, token: string, onMessage: Handler) {
   const wsRef = useRef<WebSocket | null>(null)
   const retryRef = useRef<number | null>(null)
@@ -68,7 +69,7 @@ export function useChatSocket(roomId: string, token: string, onMessage: Handler)
 
       ws.onopen = () => {
         connectingRef.current = false
-        console.log('✅ WS connected to room', roomId)
+        console.log(' WS connected to room', roomId)
       }
 
       ws.onmessage = ev => {
@@ -116,7 +117,7 @@ export function useChatSocket(roomId: string, token: string, onMessage: Handler)
         try { s.close() } catch {}
       }
     }
-    // IMPORTANT: do NOT depend on onMessage here — it causes recreate loops
+    // do NOT depend on onMessage here — it causes recreate loops
   }, [roomId, token])
 
   const send = (payload: any) => {

@@ -91,53 +91,50 @@ export default function ChatRoom() {
   }, [user?.id])
 
   // Socket
-  const handleIncoming = (data: any) => {
-    switch (data.type) {
-      case 'history': {
-        if (!historyLoaded) {
-          const list = (data.messages || []).map(normalizeMsg)
-          setMessages(list)
-          setHistoryLoaded(true)
-        }
-        break
-      }
-      case 'typing':
-        setTypingUser(data.typing ? data.from_user : null)
-        break
-      case 'reaction': {
-        // expected: { type:'reaction', message_id, emoji, user_id, op:'add'|'remove' }
-        const { message_id, emoji, user_id, op } = data
-        setMessages(prev => prev.map((m:any) => {
-          if ((m.id ?? m._client_id) !== message_id) return m
-          const current = { ...(m.reactions || {}) }
-          const arr = new Set<string>(current[emoji] || [])
-          if (op === 'remove') arr.delete(String(user_id))
-          else arr.add(String(user_id))
-          current[emoji] = Array.from(arr)
-          return { ...m, reactions: current }
-        }))
-        break
-      }
-      case 'system_message': {
-        const m = normalizeMsg({
-          id: `sys-${Date.now()}`, content: data.message, sender_name: 'system', sender: 'system', created_at: data.timestamp,
-        })
-        setMessages(prev => [...prev, m]); break
-      }
-      default: {
-        const payload = normalizeMsg(data)
-        if (payload._client_id) {
-          setMessages(prev => {
-            const idx = prev.findIndex((m: any) => m._client_id === payload._client_id)
-            if (idx !== -1) { const copy = prev.slice(); copy[idx] = payload; return copy }
-            return [...prev, payload]
-          })
-        } else {
-          setMessages(prev => [...prev, payload])
-        }
-      }
+
+   // make handler stable
+const handleIncoming = React.useCallback((data: any) => {
+  switch (data.type) {
+    case 'history': {
+      // load once
+      setMessages(prev => {
+        if (historyLoaded || prev.length) return prev;
+        const list = (data.messages || []).map(normalizeMsg);
+        return list;
+      });
+      setHistoryLoaded(true);
+      return;
+    }
+    case 'typing':
+      setTypingUser(data.typing ? data.from_user : null);
+      return;
+    case 'reaction': {
+      const { message_id, emoji, user_id, op } = data;
+      setMessages(prev => prev.map((m:any) => {
+        if ((m.id ?? m._client_id) !== message_id) return m;
+        const current = { ...(m.reactions || {}) };
+        const arr = new Set<string>(current[emoji] || []);
+        op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id));
+        current[emoji] = Array.from(arr);
+        return { ...m, reactions: current };
+      }));
+      return;
+    }
+    default: {
+      const payload = normalizeMsg(data);
+      // hard de-dupe by id or _client_id
+      setMessages(prev => {
+        const id = payload.id ?? payload._client_id;
+        if (prev.some((m:any) => (m.id ?? m._client_id) === id)) return prev;
+        return [...prev, payload];
+      });
+      return;
     }
   }
+}, [normalizeMsg, historyLoaded]);
+
+
+  
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
   React.useEffect(() => {
