@@ -1,3 +1,4 @@
+// frontend/web/src/pages/ChatRoom.tsx
 // ============================================================
 // TuChati Chat Room grouping + day separators + reactions
 // Fix: timestamp overlap on single-line messages (extra padding)
@@ -13,7 +14,6 @@ import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
 import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
 import MessageMenu from '../components/Chat/MessageMenu'
-//import ReactionsBar from '../components/Chat/ReactionsBar'
 
 
 
