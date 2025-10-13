@@ -1,13 +1,18 @@
 // ============================================================
-// TuChati Chat Room – polished UI + grouping + day separators
+// TuChati Chat Room grouping + day separators + reactions
+// Fix: timestamp overlap on single-line messages (extra padding)
+// Per-bubble "more" chevron to open actions menu
+// Emoji reactions (optimistic); listens for WS 'reaction' events
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiFetch } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
-import { ChatRoom as Room, ChatMessage } from '../types'
+import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
+import ReactionsBar, { REACTION_SET } from './components/ReactionsBar'
+import MessageMenu from './components/MessageMenu'
 
 type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
 
@@ -37,6 +42,7 @@ export default function ChatRoom() {
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
   const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
+  const [reactAnchor, setReactAnchor] = React.useState<{id: string | number | null, x: number, y: number} | null>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
 
   // inputs
@@ -62,9 +68,11 @@ export default function ChatRoom() {
     })()
   }, [roomId, token, navigate])
 
+  // Normalizer
   const normalizeMsg = React.useCallback((raw: any) => {
     const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
     const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
+    const reactions = raw.reactions ?? {} // { "👍": [userIds], "❤️": [userIds] }
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
       _client_id: raw._client_id,
@@ -75,9 +83,11 @@ export default function ChatRoom() {
       audio: raw.audio ?? null,
       created_at: raw.created_at ?? raw.timestamp ?? new Date().toISOString(),
       is_me: !!senderId && senderId === (user?.id as any),
+      reactions,
     } as any
   }, [user?.id])
 
+  // Socket
   const handleIncoming = (data: any) => {
     switch (data.type) {
       case 'history': {
@@ -91,6 +101,20 @@ export default function ChatRoom() {
       case 'typing':
         setTypingUser(data.typing ? data.from_user : null)
         break
+      case 'reaction': {
+        // expected: { type:'reaction', message_id, emoji, user_id, op:'add'|'remove' }
+        const { message_id, emoji, user_id, op } = data
+        setMessages(prev => prev.map((m:any) => {
+          if ((m.id ?? m._client_id) !== message_id) return m
+          const current = { ...(m.reactions || {}) }
+          const arr = new Set<string>(current[emoji] || [])
+          if (op === 'remove') arr.delete(String(user_id))
+          else arr.add(String(user_id))
+          current[emoji] = Array.from(arr)
+          return { ...m, reactions: current }
+        }))
+        break
+      }
       case 'system_message': {
         const m = normalizeMsg({
           id: `sys-${Date.now()}`, content: data.message, sender_name: 'system', sender: 'system', created_at: data.timestamp,
@@ -102,9 +126,7 @@ export default function ChatRoom() {
         if (payload._client_id) {
           setMessages(prev => {
             const idx = prev.findIndex((m: any) => m._client_id === payload._client_id)
-            if (idx !== -1) {
-              const copy = prev.slice(); copy[idx] = payload; return copy
-            }
+            if (idx !== -1) { const copy = prev.slice(); copy[idx] = payload; return copy }
             return [...prev, payload]
           })
         } else {
@@ -113,13 +135,13 @@ export default function ChatRoom() {
       }
     }
   }
-
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
   React.useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
   }, [messages])
 
+  // send text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
   const onSend = () => {
     const text = draft.trim(); if (!text) return
@@ -127,13 +149,32 @@ export default function ChatRoom() {
     const optimistic: any = {
       id: _client_id, _client_id,
       sender_id: user?.id, sender_name: (user as any)?.name || (user as any)?.username || 'Me',
-      text, created_at: new Date().toISOString(), is_me: true,
+      text, created_at: new Date().toISOString(), is_me: true, reactions: {},
     }
     setMessages(prev => [...prev, optimistic])
     sendMessage({ content: text, _client_id })
     setDraft('')
   }
 
+  // reactions (optimistic update + WS notify)
+  const toggleReaction = (messageId: string | number, emoji: string) => {
+    const uid = String(user?.id ?? 'me')
+    setMessages(prev => prev.map((m:any) => {
+      if ((m.id ?? m._client_id) !== messageId) return m
+      const current = { ...(m.reactions || {}) }
+      const set = new Set<string>(current[emoji] || [])
+      const had = set.has(uid)
+      if (had) set.delete(uid); else set.add(uid)
+      current[emoji] = Array.from(set)
+      return { ...m, reactions: current }
+    }))
+    // Inform backend (safe if unimplemented)
+    try {
+      sendMessage({ type: 'reaction', message_id: messageId, emoji })
+    } catch {}
+  }
+
+  // uploads
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
     setUploading(true)
@@ -147,13 +188,9 @@ export default function ChatRoom() {
       }
     } finally { setUploading(false) }
   }
-
-  const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
-  const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
-  const onAudioPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return
-    const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = '' }
+  const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onAudioPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = '' }
   const pickContact = async () => {
     // @ts-ignore
     if (navigator?.contacts?.select) {
@@ -170,6 +207,7 @@ export default function ChatRoom() {
     vcardRef.current?.click()
   }
 
+  // recorder
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -185,7 +223,7 @@ export default function ChatRoom() {
   }
   const stopRecording = () => { mediaRecorderRef.current?.stop(); mediaRecorderRef.current = null; setIsRecording(false) }
 
-  // context menu
+  // context menu (3-dots)
   const closeCtx = () => setCtx(s => ({ ...s, open: false }))
   React.useEffect(() => {
     const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && closeCtx()
@@ -203,10 +241,9 @@ export default function ChatRoom() {
   const isGroup = !!room?.is_group
   const isAdmin = !!room?.is_admin || (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
   const goInvite = () => navigate(`/chat/${roomId}/invite`)
-
   if (!token) return null
 
-  // ---- Build render list with grouping + day separators ----
+  // ---- Render list with grouping + day separators ----
   type RenderItem =
     | { kind: 'day'; id: string; label: string }
     | { kind: 'msg'; id: string; mine: boolean; showAvatar: boolean; showTail: boolean; m: any }
@@ -214,7 +251,6 @@ export default function ChatRoom() {
   const renderItems: RenderItem[] = []
   let lastDayKey = ''
   let prevSender: any = null
-
   const filtered = messages.filter((m: any) => !!(m.text || m.attachment || m.audio))
 
   filtered.forEach((m: any, i: number) => {
@@ -228,10 +264,9 @@ export default function ChatRoom() {
     const curSender = m.is_me ? 'me' : (m.sender_id ?? 'other')
     const next = filtered[i + 1]
     const nextSender = next ? (next.is_me ? 'me' : (next.sender_id ?? 'other')) : null
-    const showAvatar = curSender !== prevSender // first in a block
-    const showTail = curSender !== nextSender   // last in a block
+    const showAvatar = curSender !== prevSender
+    const showTail = curSender !== nextSender
     prevSender = curSender
-
     renderItems.push({
       kind: 'msg',
       id: m.id ?? m._client_id ?? `k-${m.created_at}-${i}`,
@@ -260,11 +295,14 @@ export default function ChatRoom() {
 
       <div className="chat-scroll" ref={listRef}>
         {renderItems.map((it, idx) => {
-          if (it.kind === 'day') {
-            return <div key={it.id} className="day-sep"><span>{it.label}</span></div>
-          }
+          if (it.kind === 'day') return <div key={it.id} className="day-sep"><span>{it.label}</span></div>
           const { m, mine, showAvatar, showTail } = it
           const key = it.id || idx
+          const messageId = (m.id ?? m._client_id)
+
+          // counts for reaction chips
+          const reactionPairs = Object.entries(m.reactions || {}).filter(([, arr]) => Array.isArray(arr) && arr.length>0)
+
           return (
             <div key={key} className={`row ${mine ? 'right' : 'left'}`}>
               {!mine && showAvatar && (
@@ -273,24 +311,47 @@ export default function ChatRoom() {
 
               <div
                 className={`bubble ${mine ? 'me' : 'other'} ${showTail ? 'tail' : ''}`}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setCtx({ open: true, x: e.clientX, y: e.clientY, id: key, mine })
-                }}
-                onTouchStart={(e) => {
-                  const x = (e.touches?.[0]?.clientX) ?? 0, y = (e.touches?.[0]?.clientY) ?? 0
-                  const t = setTimeout(() => setCtx({ open: true, x, y, id: key, mine }), 500)
-                  const clear = () => { clearTimeout(t) }
-                  e.currentTarget.addEventListener('touchend', clear, { once: true })
-                  e.currentTarget.addEventListener('touchmove', clear, { once: true })
-                }}
               >
+                {/* kebab / more icon */}
+                <button
+                  className="more"
+                  aria-label="Message actions"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setCtx({ open: true, x: e.clientX, y: e.clientY, id: key, mine })
+                  }}
+                >
+                  ⋯
+                </button>
+
+                {/* text / attachments */}
                 {m.text && <p>{m.text}</p>}
                 {m.attachment && <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>}
                 {m.audio && <audio controls src={m.audio} style={{maxWidth: 320, display:'block'}} />}
+
+                {/* timestamp */}
                 <span className="time">
                   {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                 </span>
+
+                {/* reactions summary chips */}
+                {reactionPairs.length > 0 && (
+                  <div className="rxn-chips">
+                    {reactionPairs.map(([emoji, arr]: any) => (
+                      <span key={`${emoji}`} className="rxn-chip">{emoji} {arr.length}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* quick reactions trigger (smiley button) */}
+                <button
+                  className="react-btn"
+                  aria-label="React"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setReactAnchor({ id: messageId, x: e.clientX, y: e.clientY })
+                  }}
+                >☺</button>
               </div>
             </div>
           )
@@ -332,6 +393,7 @@ export default function ChatRoom() {
         )}
       </footer>
 
+      {/* group info */}
       {isGroup && (
         <aside className={`room-info ${showInfo ? 'open' : ''}`}>
           <div className="room-info-hd">
@@ -357,16 +419,32 @@ export default function ChatRoom() {
         </aside>
       )}
 
-      {ctx.open && (
-        <div className="ctx-wrap" onClick={closeCtx}>
-          <div className="menu ctx" style={{ left: ctx.x, top: ctx.y }} onClick={e => e.stopPropagation()}>
-            <button className="menu-item">Forward</button>
-            {ctx.mine && <button className="menu-item">Edit</button>}
-            <button className="menu-item" onClick={doCopy}>Copy text</button>
-            <button className="menu-item">Info</button>
-            {ctx.mine && <button className="menu-item danger">Delete</button>}
-          </div>
-        </div>
+      {/* context menu */}
+      <MessageMenu
+        open={ctx.open}
+        x={ctx.x}
+        y={ctx.y}
+        mine={ctx.mine}
+        onClose={() => setCtx(s => ({ ...s, open: false }))}
+        onCopy={doCopy}
+        // placeholders for your future handlers:
+        onForward={() => setCtx(s => ({ ...s, open: false }))}
+        onEdit={() => setCtx(s => ({ ...s, open: false }))}
+        onDelete={() => setCtx(s => ({ ...s, open: false }))}
+      />
+
+      {/* quick reactions popover */}
+      {reactAnchor && (
+        <ReactionsBar
+          x={reactAnchor.x}
+          y={reactAnchor.y}
+          onPick={(emoji) => {
+            if (!reactAnchor?.id) return
+            toggleReaction(reactAnchor.id, emoji)
+            setReactAnchor(null)
+          }}
+          onClose={() => setReactAnchor(null)}
+        />
       )}
     </>
   )
