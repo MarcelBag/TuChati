@@ -2,7 +2,7 @@
 // TuChati Chat Room grouping + day separators + reactions
 // Fix: timestamp overlap on single-line messages (extra padding)
 // Per-bubble "more" chevron to open actions menu
-// Emoji reactions (optimistic); listens for WS 'reaction' events
+// Emoji reactions; listens for WS 'reaction' events
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -11,8 +11,11 @@ import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
-import ReactionsBar, { REACTION_SET } from './components/ReactionsBar'
-import MessageMenu from './components/MessageMenu'
+import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
+import MessageMenu from '../components/Chat/MessageMenu'
+//import ReactionsBar from '../components/Chat/ReactionsBar'
+
+
 
 type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
 
