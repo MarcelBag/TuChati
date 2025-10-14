@@ -1,7 +1,8 @@
 # backend/apps/chat/serializers.py
 # ============================================================
-# TuChati Chat serializers (frontend-aligned)
+# TuChati Chat serializers (frontend-aligned, no 500s)
 # ============================================================
+from django.db.models import Max
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import ChatRoom, Message
@@ -9,19 +10,14 @@ from .models import ChatRoom, Message
 User = get_user_model()
 
 
-class MemberLiteSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    username = serializers.CharField()
-    name = serializers.CharField()
-    email = serializers.EmailField(allow_null=True, required=False)
-
-
 class ChatRoomSerializer(serializers.ModelSerializer):
-    # Frontend expects these:
+    # Frontend extras
     member_count = serializers.SerializerMethodField()
     members = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
     admin_ids = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()     # computed, not a model field
+    last_message = serializers.SerializerMethodField()   # compact preview object
 
     class Meta:
         model = ChatRoom
@@ -33,9 +29,9 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             "members",
             "is_admin",
             "admin_ids",
-            "created_at",
-            "updated_at",
-            # include whatever else you already expose (e.g. last_message)
+            "last_message",
+            "updated_at",          # computed
+            "created_at",          # only if your model has it; otherwise remove this line
         ]
 
     # ---- helpers used by the UI ----
@@ -43,7 +39,6 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return obj.participants.count()
 
     def get_members(self, obj: ChatRoom):
-        # compact list for the right-side “Members” pane
         rows = obj.participants.all().values(
             "id", "username", "email", "first_name", "last_name"
         )
@@ -61,7 +56,6 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return out
 
     def get_is_admin(self, obj: ChatRoom) -> bool:
-        # the viewer is admin?
         request = self.context.get("request")
         if not request or not request.user or not request.user.is_authenticated:
             return False
@@ -70,9 +64,42 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     def get_admin_ids(self, obj: ChatRoom):
         return list(obj.admins.values_list("id", flat=True))
 
+    def get_updated_at(self, obj: ChatRoom):
+        # “activity” time: last message timestamp or room.created_at
+        last = (
+            Message.objects.filter(room=obj)
+            .aggregate(m=Max("created_at"))
+            .get("m")
+        )
+        if last:
+            return last.isoformat()
+        # fall back to model timestamp if present
+        created_at = getattr(obj, "created_at", None)
+        return created_at.isoformat() if created_at else None
+
+    def get_last_message(self, obj: ChatRoom):
+        m = (
+            Message.objects.filter(room=obj)
+            .select_related("sender")
+            .order_by("-created_at")
+            .first()
+        )
+        if not m:
+            return None
+        return {
+            "id": str(m.id),
+            "content": m.content,
+            "text": m.content,  # so your UI's preview() finds a sensible field
+            "created_at": m.created_at.isoformat(),
+            "sender": {
+                "id": m.sender_id,
+                "username": m.sender.username,
+                "name": (getattr(m.sender, "get_full_name", lambda: "")() or m.sender.username),
+            },
+        }
+
 
 class MessageSerializer(serializers.ModelSerializer):
-    # Keep your existing fields, but ensure these common ones exist.
     sender = serializers.SerializerMethodField()
 
     class Meta:
@@ -83,7 +110,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "attachment",
             "audio",
             "created_at",
-            "sender",  # {id, username, name}
+            "sender",
         ]
 
     def get_sender(self, obj: Message):
