@@ -101,6 +101,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = serializers.SerializerMethodField()
+    audio = serializers.FileField(source="voice_note", allow_null=True, required=False)
 
     class Meta:
         model = Message

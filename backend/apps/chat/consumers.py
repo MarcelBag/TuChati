@@ -8,6 +8,7 @@
 # ================================================================
 import json
 import asyncio
+from collections import defaultdict
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
@@ -24,6 +25,22 @@ def _user_display(u: User) -> str:
     return full or u.username
 
 
+def _reactions_to_dict(message: Message) -> dict:
+    """Represent reactions as {emoji: [userIds]} for JSON serialization."""
+    cache = getattr(message, "_prefetched_objects_cache", {}) or {}
+    reactions = cache.get("reactions")
+    if reactions is None:
+        manager = getattr(message, "reactions", None)
+        if manager is None:
+            return {}
+        reactions = list(manager.all())
+
+    grouped = defaultdict(list)
+    for reaction in reactions:
+        grouped[reaction.emoji].append(str(reaction.user_id))
+    return dict(grouped)
+
+
 def _msg_to_dict(m: Message) -> dict:
     """Return a JSON-serializable message dict the frontend expects."""
     return {
@@ -36,7 +53,7 @@ def _msg_to_dict(m: Message) -> dict:
         "attachment": (m.attachment.url if getattr(m, "attachment", None) else None),
         "audio": (m.audio.url if getattr(m, "audio", None) else None),
         "created_at": m.created_at.isoformat(),
-        "reactions": getattr(m, "reactions", {}) or {},
+        "reactions": _reactions_to_dict(m),
     }
 
 
@@ -193,8 +210,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not content:
                 return
             client_id = data.get("_client_id")
-            m = await self._save_message(self.room_id, self.user.id, content)
-            payload = _msg_to_dict(m)
+            payload = await self._save_message(self.room_id, self.user.id, content)
             if client_id:
                 payload["_client_id"] = client_id  # allow optimistic replacement
             await self.channel_layer.group_send(
@@ -299,11 +315,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _save_message(self, room_id, user_id, content):
-        return Message.objects.create(room_id=room_id, sender_id=user_id, content=content)
+        msg = Message.objects.create(room_id=room_id, sender_id=user_id, content=content)
+        return _msg_to_dict(msg)
 
     @database_sync_to_async
     def _get_last_messages(self, room_id, limit=50):
-        msgs = list(Message.objects.filter(room_id=room_id).select_related("sender").order_by("-created_at")[:limit])
+        msgs = list(
+            Message.objects.filter(room_id=room_id)
+            .select_related("sender")
+            .prefetch_related("reactions")
+            .order_by("-created_at")[:limit]
+        )
         sys = list(SystemMessage.objects.filter(room_id=room_id).order_by("-created_at")[:limit])
 
         # serialize and sort by created_at
