@@ -111,3 +111,13 @@ export async function apiFetch(input: string, init: Opts = {}) {
 
   return run()
 }
+export async function ensureFreshAccess(): Promise<string | null> {
+  // A no-op authenticated GET that will trigger a refresh if needed
+  const res = await apiFetch('/api/accounts/me/', { retryOn401: true })
+  // We don’t care about payload here; we just want the side-effect
+  if (res.ok) {
+    const a = localStorage.getItem('access')
+    return a || null
+  }
+  return null
+}
