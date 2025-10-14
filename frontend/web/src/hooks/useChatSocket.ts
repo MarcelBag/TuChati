@@ -1,135 +1,136 @@
-// src/hooks/useChatSocket.ts
-import { useEffect, useRef } from 'react'
+// hooks/useChatSocket.ts
+// Single-bind WebSocket with handler ref, typing throttle, and safe reconnects.
 
-type Handler = (data: any) => void
+import * as React from 'react'
 
-const WS_TEMPLATE = import.meta.env.VITE_WS_URL || ''
+type WSLike = WebSocket | null
 
-function buildWsUrl(roomId: string, token: string) {
-  if (WS_TEMPLATE && WS_TEMPLATE.includes(':roomId')) {
-    return WS_TEMPLATE.replace(':roomId', roomId) + `?token=${encodeURIComponent(token)}`
+export type ChatSocket = {
+  sendMessage: (payload: any) => void
+  sendTyping: (typing: boolean, fromUser?: string) => void
+  isConnected: boolean
+}
+
+function makeWsUrl(roomId: string, token: string) {
+  const base = import.meta.env.VITE_WS_BASE_URL as string | undefined
+  if (base) {
+    const u = new URL(base.replace(/\/+$/, '') + `/ws/chat/${roomId}/`)
+    if (token) u.searchParams.set('token', token)
+    return u.toString()
   }
-  const isHttps = window.location.protocol === 'https:'
-  const proto = isHttps ? 'wss' : 'ws'
-  const host = window.location.host.replace(/:\d+$/, '')
-  return `${proto}://${host}:8011/ws/chat/${roomId}/?token=${encodeURIComponent(token)}`
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const host  = window.location.host
+  const u = new URL(`${proto}//${host}/ws/chat/${roomId}/`)
+  if (token) u.searchParams.set('token', token)
+  return u.toString()
 }
 
-export function useInviteSocket(token: string | null, onInvite: (data: any) => void) {
-  useEffect(() => {
-    if (!token) return
-    const isHttps = window.location.protocol === 'https:'
-    const proto = isHttps ? 'wss' : 'ws'
-    const host = window.location.host.replace(/:\d+$/, '')
-    const url = `${proto}://${host}:8011/ws/notifications/?token=${encodeURIComponent(token)}`
-    const ws = new WebSocket(url)
-    ws.onmessage = ev => {
-      try { onInvite(JSON.parse(ev.data)) } catch { /* noop */ }
+
+export function useChatSocket(
+  roomId: string,
+  token: string,
+  onEvent: (data: any) => void
+): ChatSocket {
+  const wsRef = React.useRef<WSLike>(null)
+  const cbRef = React.useRef(onEvent)
+  cbRef.current = onEvent
+
+  const [isConnected, setIsConnected] = React.useState(false)
+
+  // reconnection state
+  const retryRef = React.useRef(0)
+  const reconnectTimer = React.useRef<number | null>(null)
+
+  const clearReconnectTimer = () => {
+    if (reconnectTimer.current) {
+      window.clearTimeout(reconnectTimer.current)
+      reconnectTimer.current = null
     }
-    return () => ws.close(1000, 'unmount')
-  }, [token, onInvite])
-}
+  }
 
-// -------------------------------------------------------------
-// Main chat WebSocket hook (stable)
-// -------------------------------------------------------------
-
-export function useChatSocket(roomId: string, token: string, onMessage: Handler) {
-  const wsRef = useRef<WebSocket | null>(null)
-  const retryRef = useRef<number | null>(null)
-  const closingRef = useRef(false)
-  const connectingRef = useRef(false)
-  const handlerRef = useRef<Handler>(() => {})
-
-  // Keep the latest handler without retriggering the socket effect
-  useEffect(() => {
-    handlerRef.current = onMessage
-  }, [onMessage])
-
-  useEffect(() => {
+  const connect = React.useCallback(() => {
     if (!roomId || !token) return
-
-    const url = buildWsUrl(roomId, token)
-    closingRef.current = false
-
-    const cleanupTimer = () => {
-      if (retryRef.current) {
-        window.clearTimeout(retryRef.current)
-        retryRef.current = null
-      }
-    }
-
-    const connect = () => {
-      if (closingRef.current || connectingRef.current || wsRef.current) return
-      connectingRef.current = true
-
-      console.log('🔌 connecting WS', url)
-      const ws = new WebSocket(url)
+    try {
+      const ws = new WebSocket(makeWsUrl(roomId, token))
       wsRef.current = ws
 
       ws.onopen = () => {
-        connectingRef.current = false
-        console.log(' WS connected to room', roomId)
+        setIsConnected(true)
+        retryRef.current = 0
+        clearReconnectTimer()
+        // Ask server for history on initial open (idempotent on server)
+        try { ws.send(JSON.stringify({ type: 'history' })) } catch {}
       }
 
-      ws.onmessage = ev => {
-        const handler = handlerRef.current
-        try {
-          handler(JSON.parse(ev.data))
-        } catch {
-          handler(ev.data)
-        }
-      }
-
-      ws.onclose = ev => {
+      ws.onclose = () => {
+        setIsConnected(false)
         wsRef.current = null
-        connectingRef.current = false
-        console.warn('⚠️ WS closed', ev.code, ev.reason)
-
-        // If we are intentionally closing (unmount/navigation), do not retry
-        if (closingRef.current) return
-
-        // Normal close (1000) often happens when a render recreated the socket.
-        // Backoff reconnect to avoid rapid thrash.
-        cleanupTimer()
-        const delay = 1500
-        retryRef.current = window.setTimeout(connect, delay)
+        // Exponential backoff reconnect
+        const n = Math.min(retryRef.current + 1, 6) // cap ~64s
+        retryRef.current = n
+        clearReconnectTimer()
+        reconnectTimer.current = window.setTimeout(connect, Math.pow(2, n) * 500) // 0.5s,1s,2s,...
       }
 
-      ws.onerror = err => {
-        console.error('❌ WS error', err)
-        // Let onclose handle the retry/backoff
+      ws.onerror = () => {
+        // treat like close to trigger retry
         try { ws.close() } catch {}
       }
-    }
 
-    connect()
-
-    return () => {
-      closingRef.current = true
-      cleanupTimer()
-      const s = wsRef.current
-      wsRef.current = null
-      if (s && s.readyState === WebSocket.OPEN) {
-        s.close(1000, 'unmount')
-      } else if (s && s.readyState === WebSocket.CONNECTING) {
-        // Best-effort cancel during CONNECTING
-        try { s.close() } catch {}
+      // IMPORTANT: single binding that always calls the latest handler
+      ws.onmessage = (ev) => {
+        let data: any
+        try { data = JSON.parse(ev.data) } catch { return }
+        cbRef.current?.(data)
       }
+    } catch {
+      // schedule another try if constructor failed
+      setIsConnected(false)
+      const n = Math.min(retryRef.current + 1, 6)
+      retryRef.current = n
+      clearReconnectTimer()
+      reconnectTimer.current = window.setTimeout(connect, Math.pow(2, n) * 500)
     }
-    // do NOT depend on onMessage here — it causes recreate loops
   }, [roomId, token])
 
-  const send = (payload: any) => {
-    const s = wsRef.current
-    if (s && s.readyState === WebSocket.OPEN) {
-      s.send(JSON.stringify(payload))
+  // (re)connect when room/token changes
+  React.useEffect(() => {
+    // close any existing
+    try { wsRef.current?.close() } catch {}
+    wsRef.current = null
+    setIsConnected(false)
+    retryRef.current = 0
+    clearReconnectTimer()
+    if (roomId && token) connect()
+    return () => {
+      clearReconnectTimer()
+      try { wsRef.current?.close() } catch {}
+      wsRef.current = null
     }
-  }
+  }, [roomId, token, connect])
 
-  return {
-    sendMessage: send,
-    sendTyping: (typing: boolean) => send({ type: typing ? 'typing' : 'stopped_typing' }),
-    sendFocus: () => send({ type: 'focus' }),
-  }
+  // stable senders
+  const sendRaw = React.useCallback((obj: any) => {
+    const ws = wsRef.current
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(obj))
+    }
+  }, [])
+
+  // public API
+  const sendMessage = React.useCallback((payload: any) => {
+    // payload can be: {content, _client_id} or {type:'reaction',...} etc.
+    sendRaw(payload)
+  }, [sendRaw])
+
+  // throttle typing events to avoid storms
+  const typingTimer = React.useRef<number | null>(null)
+  const sendTyping = React.useCallback((typing: boolean, fromUser?: string) => {
+    if (typingTimer.current) window.clearTimeout(typingTimer.current)
+    typingTimer.current = window.setTimeout(() => {
+      sendRaw({ type: 'typing', typing, from_user: fromUser })
+    }, 120)
+  }, [sendRaw])
+
+  return { sendMessage, sendTyping, isConnected }
 }

@@ -1,152 +1,148 @@
 // src/context/AuthContext.tsx
 // ============================================================
-// TuChati AuthContext.tsx
-// JWT login/logout + auto-refresh + avatar support
+// TuChati AuthContext
+// Single-flight token handling via shared/api, no polling,
+// one-time /me load, and tab sync.
 // ============================================================
 
-import {
+import React, {
   createContext,
   useContext,
-  useState,
   useEffect,
-  useCallback,
+  useMemo,
+  useState,
   ReactNode,
 } from 'react'
-import { apiFetch } from '../shared/api'
+import { apiFetch, loadTokensFromStorage, setTokens } from '../shared/api'
 
-interface User {
-  id?: number
+type User = {
+  id: number
   username?: string
   email?: string
+  name?: string
   avatar?: string | null
-}
+} | null
 
-interface AuthContextType {
-  user: User | null
+type AuthContextType = {
+  user: User
   token: string | null
+  loading: boolean
   login: (usernameOrEmail: string, password: string) => Promise<void>
   logout: () => void
-  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(localStorage.getItem('access'))
-  const [refresh, setRefresh] = useState<string | null>(localStorage.getItem('refresh'))
+  const [user, setUser] = useState<User>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // --- Helpers for storage ---
-  const saveTokens = useCallback((access: string, refreshToken: string) => {
-    localStorage.setItem('access', access)
-    localStorage.setItem('refresh', refreshToken)
-    setToken(access)
-    setRefresh(refreshToken)
-  }, [])
+  // Load tokens once on mount and attempt to fetch /me
+  useEffect(() => {
+    loadTokensFromStorage()
+    const access = localStorage.getItem('access')
+    const refresh = localStorage.getItem('refresh')
 
-  const clearTokens = useCallback(() => {
-    localStorage.removeItem('access')
-    localStorage.removeItem('refresh')
-    setToken(null)
-    setRefresh(null)
-  }, [])
-
-  // --- Refresh token automatically ---
-  const refreshAccessToken = useCallback(async () => {
-    if (!refresh) return false
-    try {
-      const res = await apiFetch('/api/accounts/token/refresh/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh }),
-      })
-      if (!res.ok) return false
-      const data = await res.json()
-      saveTokens(data.access, refresh)
-      return true
-    } catch {
-      return false
-    }
-  }, [refresh, saveTokens])
-
-  // --- Load user profile ---
-  const loadUser = useCallback(async () => {
-    if (!token) {
+    if (!access || !refresh) {
+      // not logged in
       setUser(null)
+      setToken(null)
       setLoading(false)
       return
     }
 
-    const res = await apiFetch('/api/accounts/me/', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    setToken(access)
 
-    if (res.ok) {
-      const data = await res.json()
-      setUser(data)
-    } else {
-      const refreshed = await refreshAccessToken()
-      if (refreshed) {
-        await loadUser()
+    // Single /me call; apiFetch will refresh if needed
+    ;(async () => {
+      const res = await apiFetch('/api/accounts/me/')
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data)
       } else {
-        clearTokens()
+        // refresh failed upstream -> tokens cleared there; reflect here
         setUser(null)
+        setToken(null)
       }
+      setLoading(false)
+    })()
+  }, [])
+
+  // Keep multiple tabs in sync (login/logout elsewhere)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== 'access' && e.key !== 'refresh') return
+      const access = localStorage.getItem('access')
+      const refresh = localStorage.getItem('refresh')
+
+      if (!access || !refresh) {
+        // logged out in another tab
+        setUser(null)
+        setToken(null)
+        return
+      }
+
+      // logged in / refreshed in another tab
+      setToken(access)
+      ;(async () => {
+        const r = await apiFetch('/api/accounts/me/')
+        if (r.ok) setUser(await r.json())
+      })()
     }
-
-    setLoading(false)
-  }, [token, refreshAccessToken, clearTokens])
-
-  // --- On mount, load user if token exists ---
-  useEffect(() => {
-    loadUser()
-  }, [loadUser])
-
-  // --- Auto-refresh every 4 min (token lifespan 5 min) ---
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const refreshed = await refreshAccessToken()
-      if (!refreshed) {
-        clearTokens()
-        setUser(null)
-      }
-    }, 4 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [refreshAccessToken, clearTokens])
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   // --- LOGIN ---
-  async function login(usernameOrEmail: string, password: string) {
-    const res = await apiFetch('/api/accounts/token/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: usernameOrEmail, password }),
-    })
+  const login = useMemo(
+    () => async (usernameOrEmail: string, password: string) => {
+      // Public call; do not attach auth header
+      const res = await apiFetch('/api/accounts/token/', {
+        method: 'POST',
+        skipAuth: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameOrEmail, password }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.detail || 'Invalid credentials')
+      }
+      const data = await res.json()
+      const access = data.access || data.token || data.access_token
+      const refresh = data.refresh
+      if (!access || !refresh) throw new Error('Malformed auth response')
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      throw new Error(data.detail || 'Invalid credentials')
-    }
+      // Persist + reflect in state
+      setTokens(access, refresh)
+      setToken(access)
 
-    const data = await res.json()
-    saveTokens(data.access, data.refresh)
-    setUser(data.user)
-  }
+      // Get user profile (apiFetch handles refresh from now on)
+      const meRes = await apiFetch('/api/accounts/me/')
+      if (meRes.ok) setUser(await meRes.json())
+      else setUser(null)
+    },
+    []
+  )
 
   // --- LOGOUT ---
-  function logout() {
-    clearTokens()
-    setUser(null)
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
+  const logout = useMemo(
+    () => () => {
+      setTokens(null, null) // clears localStorage too
+      setUser(null)
+      setToken(null)
+    },
+    []
   )
+
+  const value = useMemo<AuthContextType>(
+    () => ({ user, token, loading, login, logout }),
+    [user, token, loading, login, logout]
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-// --- Hook ---
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
