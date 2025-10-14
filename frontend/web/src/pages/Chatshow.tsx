@@ -9,13 +9,14 @@
 
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { apiFetch } from '../shared/api'
+import { apiFetch, resolveUrl } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
 import ReactionsBar from '../components/Chat/ReactionsBar'
 import MessageMenu from '../components/Chat/MessageMenu'
+import VoiceMessage from '../components/Chat/VoiceMessage'
 
 type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
 
@@ -29,6 +30,8 @@ function formatDayLabel(d: Date) {
   if (diff === -1) return 'Yesterday'
   return d.toLocaleDateString()
 }
+
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 
 export default function ChatRoom() {
   const { roomId } = useParams()
@@ -80,18 +83,56 @@ export default function ChatRoom() {
     const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
     const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
     const reactions = raw.reactions ?? {} // { "👍": [userIds], "❤️": [userIds] }
+    const attachment = resolveUrl(raw.attachment ?? raw.file ?? null)
+    const audio = resolveUrl(raw.audio ?? raw.voice_note ?? raw.voice ?? null)
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
       _client_id: raw._client_id,
       sender_id: senderId,
       sender_name: raw.sender_name ?? raw.sender?.name ?? raw.sender?.username ?? raw.username ?? 'U',
       text,
-      attachment: raw.attachment ?? raw.file ?? null,
-      audio: raw.audio ?? null,
+      attachment,
+      audio,
       created_at: raw.created_at ?? raw.timestamp ?? new Date().toISOString(),
       is_me: !!senderId && senderId === (user?.id as any),
       reactions,
     } as any
+  }, [user?.id])
+
+  const mergeMessage = React.useCallback((payload: any) => {
+    if (!payload) return
+    const normalized = { ...payload }
+    if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
+      normalized.is_me = true
+    }
+
+    setMessages(prev => {
+      const candidateKeys = [normalized.id, normalized._client_id].filter(Boolean)
+      if (!candidateKeys.length) {
+        return [...prev, normalized]
+      }
+
+      const idx = prev.findIndex((m: any) => {
+        const keys = [m.id, m._client_id].filter(Boolean)
+        return candidateKeys.some(key => keys.includes(key))
+      })
+
+      if (idx !== -1) {
+        const existing = prev[idx]
+        const updated = { ...existing, ...normalized }
+        if (!!existing.sender_id && existing.sender_id === (user?.id as any)) {
+          updated.is_me = true
+        }
+        if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
+          updated.is_me = true
+        }
+        const next = prev.slice()
+        next[idx] = updated
+        return next
+      }
+
+      return [...prev, normalized]
+    })
   }, [user?.id])
 
   // ---- WebSocket incoming handler (stable) ----
@@ -123,21 +164,11 @@ export default function ChatRoom() {
       }
       default: {
         const payload = normalizeMsg(data)
-        // hard de-dupe by id/_client_id
-        setMessages(prev => {
-          const pid = payload.id ?? payload._client_id
-          if (prev.some((m: any) => (m.id ?? m._client_id) === pid)) return prev
-          // If server echoes _client_id of an optimistic temp message, replace it
-          const idx = prev.findIndex((m: any) => m._client_id && payload._client_id && m._client_id === payload._client_id)
-          if (idx !== -1) {
-            const copy = prev.slice(); copy[idx] = payload; return copy
-          }
-          return [...prev, payload]
-        })
+        mergeMessage(payload)
         return
       }
     }
-  }, [normalizeMsg, historyLoaded])
+  }, [normalizeMsg, historyLoaded, mergeMessage])
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
@@ -177,6 +208,16 @@ export default function ChatRoom() {
   // ---- Uploads (with temp bubble replacement) ----
   async function postFD(fd: FormData, tempId?: string) {
     if (!token || !roomId) return
+    const audio = fd.get('audio')
+    if (audio instanceof Blob && 'size' in audio && audio.size > MAX_UPLOAD_BYTES) {
+      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
+    const attachment = fd.get('attachment')
+    if (attachment instanceof File && attachment.size > MAX_UPLOAD_BYTES) {
+      alert('Attachment is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
     setUploading(true)
     try {
       const r = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
@@ -186,21 +227,17 @@ export default function ChatRoom() {
       })
       if (r.ok) {
         const saved = normalizeMsg(await r.json())
-        // replace temp if present
-        if (tempId) {
-          setMessages(prev => {
-            const idx = prev.findIndex(m => (m.id ?? m._client_id) === tempId)
-            if (idx !== -1) {
-              const copy = prev.slice(); copy[idx] = saved; return copy
-            }
-            // fallback append if not found
-            return [...prev, saved]
-          })
-        } else {
-          if (saved.text || saved.attachment || saved.audio) {
-            setMessages(prev => [...prev, saved])
-          }
+        const payload = tempId ? { ...saved, _client_id: tempId } : saved
+        if (payload.text || payload.attachment || payload.audio) {
+          mergeMessage(payload)
         }
+      } else {
+        let message = 'Upload failed.'
+        try {
+          const err = await r.json()
+          message = err?.audio || err?.attachment || err?.detail || message
+        } catch {}
+        alert(message)
       }
     } finally {
       setUploading(false)
@@ -211,6 +248,10 @@ export default function ChatRoom() {
   const onDocPicked = async (e: any) => {
     const f = e.target.files?.[0]; e.target.value = ''
     if (!f) return
+    if (f.size > MAX_UPLOAD_BYTES) {
+      alert('Attachment is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
     const _client_id = mkClientId()
     const blobUrl = URL.createObjectURL(f)
     // temp bubble
@@ -228,6 +269,10 @@ export default function ChatRoom() {
   const onMediaPicked = async (e: any) => {
     const f = e.target.files?.[0]; e.target.value = ''
     if (!f) return
+    if (f.size > MAX_UPLOAD_BYTES) {
+      alert('Attachment is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
     const _client_id = mkClientId()
     const blobUrl = URL.createObjectURL(f)
     setMessages(prev => [...prev, {
@@ -243,6 +288,10 @@ export default function ChatRoom() {
   const onAudioPicked = async (e: any) => {
     const f = e.target.files?.[0]; e.target.value = ''
     if (!f) return
+    if (f.size > MAX_UPLOAD_BYTES) {
+      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
     const _client_id = mkClientId()
     const blobUrl = URL.createObjectURL(f)
     setMessages(prev => [...prev, {
@@ -282,6 +331,10 @@ export default function ChatRoom() {
       mr.ondataavailable = e => { if (e.data.size) audioChunksRef.current.push(e.data) }
       mr.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        if (blob.size > MAX_UPLOAD_BYTES) {
+          alert('Audio is larger than 3 MB. Please record a shorter clip.')
+          return
+        }
         const blobUrl = URL.createObjectURL(blob)
         const _client_id = mkClientId()
 
@@ -412,7 +465,7 @@ export default function ChatRoom() {
               {/* text / attachments */}
               {m.text && <p>{m.text}</p>}
               {m.attachment && <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>}
-              {m.audio && <audio controls src={m.audio} style={{ maxWidth: 320, display: 'block' }} />}
+              {m.audio && <VoiceMessage src={m.audio} />}
 
               {/* timestamp */}
               <span className="time">

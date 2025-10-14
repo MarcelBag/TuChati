@@ -7,13 +7,14 @@
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { apiFetch } from '../shared/api'
+import { apiFetch, resolveUrl } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
 import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
 import MessageMenu from '../components/Chat/MessageMenu'
+import VoiceMessage from '../components/Chat/VoiceMessage'
 
 
 
@@ -30,6 +31,8 @@ function formatDayLabel(d: Date) {
   return d.toLocaleDateString()
 }
 
+const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
+
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
@@ -44,6 +47,7 @@ export default function ChatRoom() {
   const [showAttach, setShowAttach] = React.useState(false)
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
+  const [recordPeaks, setRecordPeaks] = React.useState<number[]>([])
   const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
   const [reactAnchor, setReactAnchor] = React.useState<{id: string | number | null, x: number, y: number} | null>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
@@ -57,6 +61,11 @@ export default function ChatRoom() {
   // recorder
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
+  const analyserRef = React.useRef<AnalyserNode | null>(null)
+  const dataArrayRef = React.useRef<Uint8Array | null>(null)
+  const recordAnimationRef = React.useRef<number | null>(null)
+  const audioCtxRef = React.useRef<AudioContext | null>(null)
+  const sourceStreamRef = React.useRef<MediaStream | null>(null)
 
   React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
 
@@ -76,62 +85,94 @@ export default function ChatRoom() {
     const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
     const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
     const reactions = raw.reactions ?? {} // { "👍": [userIds], "❤️": [userIds] }
+    const attachment = resolveUrl(raw.attachment ?? raw.file ?? null)
+    const audio = resolveUrl(raw.audio ?? raw.voice_note ?? raw.voice ?? null)
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
       _client_id: raw._client_id,
       sender_id: senderId,
       sender_name: raw.sender_name ?? raw.sender?.name ?? raw.sender?.username ?? raw.username ?? 'U',
       text,
-      attachment: raw.attachment ?? raw.file ?? null,
-      audio: raw.audio ?? null,
+      attachment,
+      audio,
       created_at: raw.created_at ?? raw.timestamp ?? new Date().toISOString(),
       is_me: !!senderId && senderId === (user?.id as any),
       reactions,
     } as any
   }, [user?.id])
 
-  // Socket
+  const mergeMessage = React.useCallback((payload: any) => {
+    if (!payload) return
+    const normalized = { ...payload }
+    if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
+      normalized.is_me = true
+    }
 
-   // make handler stable
-const handleIncoming = React.useCallback((data: any) => {
-  switch (data.type) {
-    case 'history': {
-      // load once
-      setMessages(prev => {
-        if (historyLoaded || prev.length) return prev;
-        const list = (data.messages || []).map(normalizeMsg);
-        return list;
-      });
-      setHistoryLoaded(true);
-      return;
+    setMessages(prev => {
+      const candidateKeys = [normalized.id, normalized._client_id].filter(Boolean)
+      if (!candidateKeys.length) {
+        return [...prev, normalized]
+      }
+
+      const idx = prev.findIndex((m: any) => {
+        const keys = [m.id, m._client_id].filter(Boolean)
+        return candidateKeys.some(key => keys.includes(key))
+      })
+
+      if (idx !== -1) {
+        const existing = prev[idx]
+        const updated = { ...existing, ...normalized }
+        if (!!existing.sender_id && existing.sender_id === (user?.id as any)) {
+          updated.is_me = true
+        }
+        if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
+          updated.is_me = true
+        }
+        const next = prev.slice()
+        next[idx] = updated
+        return next
+      }
+
+      return [...prev, normalized]
+    })
+  }, [user?.id])
+
+  // Socket
+  // make handler stable
+  const handleIncoming = React.useCallback((data: any) => {
+    switch (data.type) {
+      case 'history': {
+        // load once
+        setMessages(prev => {
+          if (historyLoaded || prev.length) return prev;
+          const list = (data.messages || []).map(normalizeMsg);
+          return list;
+        });
+        setHistoryLoaded(true);
+        return;
+      }
+      case 'typing':
+        setTypingUser(data.typing ? data.from_user : null);
+        return;
+      case 'reaction': {
+        const { message_id, emoji, user_id, op } = data;
+        setMessages(prev => prev.map((m:any) => {
+          if ((m.id ?? m._client_id) !== message_id) return m;
+          const current = { ...(m.reactions || {}) };
+          const arr = new Set<string>(current[emoji] || []);
+          op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id));
+          current[emoji] = Array.from(arr);
+          return { ...m, reactions: current };
+        }));
+        return;
+      }
+      default: {
+        const payload = normalizeMsg(data);
+        mergeMessage(payload)
+        return;
+      }
     }
-    case 'typing':
-      setTypingUser(data.typing ? data.from_user : null);
-      return;
-    case 'reaction': {
-      const { message_id, emoji, user_id, op } = data;
-      setMessages(prev => prev.map((m:any) => {
-        if ((m.id ?? m._client_id) !== message_id) return m;
-        const current = { ...(m.reactions || {}) };
-        const arr = new Set<string>(current[emoji] || []);
-        op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id));
-        current[emoji] = Array.from(arr);
-        return { ...m, reactions: current };
-      }));
-      return;
-    }
-    default: {
-      const payload = normalizeMsg(data);
-      // hard de-dupe by id or _client_id
-      setMessages(prev => {
-        const id = payload.id ?? payload._client_id;
-        if (prev.some((m:any) => (m.id ?? m._client_id) === id)) return prev;
-        return [...prev, payload];
-      });
-      return;
-    }
-  }
-}, [normalizeMsg, historyLoaded]);
+  }, [normalizeMsg, historyLoaded, mergeMessage]);
 
 
   
@@ -177,6 +218,16 @@ const handleIncoming = React.useCallback((data: any) => {
   // uploads
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
+    const audio = fd.get('audio')
+    if (audio instanceof File && audio.size > MAX_UPLOAD_BYTES) {
+      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
+    const attachment = fd.get('attachment')
+    if (attachment instanceof File && attachment.size > MAX_UPLOAD_BYTES) {
+      alert('Attachment is larger than 3 MB. Please choose a smaller file.')
+      return
+    }
     setUploading(true)
     try {
       const r = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
@@ -184,13 +235,29 @@ const handleIncoming = React.useCallback((data: any) => {
       })
       if (r.ok) {
         const m = normalizeMsg(await r.json())
-        if (m.text || m.attachment || m.audio) setMessages(prev => [...prev, m])
+        if (m.text || m.attachment || m.audio) mergeMessage(m)
+      } else {
+        let message = 'Upload failed.'
+        try {
+          const err = await r.json()
+          message = err?.audio || err?.attachment || err?.detail || message
+        } catch {}
+        alert(message)
       }
     } finally { setUploading(false) }
   }
   const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
   const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
-  const onAudioPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = '' }
+  const onAudioPicked = async (e: any) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (f.size > MAX_UPLOAD_BYTES) {
+      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      e.target.value = ''
+      return
+    }
+    const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = ''
+  }
   const pickContact = async () => {
     // @ts-ignore
     if (navigator?.contacts?.select) {
@@ -207,21 +274,121 @@ const handleIncoming = React.useCallback((data: any) => {
     vcardRef.current?.click()
   }
 
+  const stopRecordAnimation = React.useCallback(() => {
+    if (recordAnimationRef.current) {
+      cancelAnimationFrame(recordAnimationRef.current)
+      recordAnimationRef.current = null
+    }
+  }, [])
+
+  const drawRecordWave = React.useCallback(() => {
+    const analyser = analyserRef.current
+    const dataArray = dataArrayRef.current
+    if (!analyser || !dataArray) return
+    analyser.getByteTimeDomainData(dataArray)
+    const sliceCount = 24
+    const step = Math.floor(dataArray.length / sliceCount) || 1
+    const next: number[] = new Array(sliceCount).fill(0)
+    for (let i = 0; i < sliceCount; i += 1) {
+      let sum = 0
+      for (let j = 0; j < step; j += 1) {
+        const idx = i * step + j
+        if (idx >= dataArray.length) break
+        const value = (dataArray[idx] - 128) / 128
+        sum += Math.abs(value)
+      }
+      next[i] = Math.min(sum / step * 3, 1.25)
+    }
+    setRecordPeaks(next)
+    recordAnimationRef.current = requestAnimationFrame(drawRecordWave)
+  }, [])
+
   // recorder
   const startRecording = async () => {
+    if (isRecording) return
+    if (typeof MediaRecorder === 'undefined') {
+      alert('Audio recording is not supported in this browser.')
+      return
+    }
+    let stream: MediaStream | null = null
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream); audioChunksRef.current = []
-      mr.ondataavailable = e => { if (e.data.size) audioChunksRef.current.push(e.data) }
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const audioCtx = new AudioContext()
+      audioCtxRef.current = audioCtx
+      const source = audioCtx.createMediaStreamSource(stream)
+      const gain = audioCtx.createGain()
+      gain.gain.value = 1.6
+      const analyser = audioCtx.createAnalyser()
+      analyser.fftSize = 1024
+      const destination = audioCtx.createMediaStreamDestination()
+      source.connect(gain)
+      gain.connect(analyser)
+      gain.connect(destination)
+
+      analyserRef.current = analyser
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+      sourceStreamRef.current = stream
+
+      const mr = new MediaRecorder(destination.stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 128000,
+      })
+      audioChunksRef.current = []
+      mr.ondataavailable = (e) => { if (e.data.size) audioChunksRef.current.push(e.data) }
       mr.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        const fd = new FormData(); fd.append('audio', blob, `voice-${Date.now()}.webm`)
-        await postFD(fd)
+        stopRecordAnimation()
+        setRecordPeaks([])
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' })
+        if (blob.size > MAX_UPLOAD_BYTES) {
+          alert('Audio is larger than 3 MB. Please record a shorter clip.')
+        } else {
+          const fd = new FormData()
+          fd.append('audio', blob, `voice-${Date.now()}.webm`)
+          await postFD(fd)
+        }
+        audioCtxRef.current?.close().catch(() => {})
+        audioCtxRef.current = null
+        sourceStreamRef.current?.getTracks().forEach(track => track.stop())
+        sourceStreamRef.current = null
       }
-      mr.start(); mediaRecorderRef.current = mr; setIsRecording(true)
-    } catch { setIsRecording(false) }
+      mediaRecorderRef.current = mr
+      setRecordPeaks(new Array(24).fill(0.1))
+      setIsRecording(true)
+      mr.start()
+      drawRecordWave()
+    } catch {
+      setIsRecording(false)
+      stopRecordAnimation()
+      setRecordPeaks([])
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+      audioCtxRef.current?.close().catch(() => {})
+      audioCtxRef.current = null
+      sourceStreamRef.current?.getTracks().forEach(track => track.stop())
+      sourceStreamRef.current = null
+    }
   }
-  const stopRecording = () => { mediaRecorderRef.current?.stop(); mediaRecorderRef.current = null; setIsRecording(false) }
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return
+    mediaRecorderRef.current.stop()
+    mediaRecorderRef.current = null
+    setIsRecording(false)
+    stopRecordAnimation()
+    setRecordPeaks([])
+  }
+
+  React.useEffect(() => {
+    return () => {
+      stopRecordAnimation()
+      try { mediaRecorderRef.current?.stop() } catch {}
+      mediaRecorderRef.current = null
+      audioCtxRef.current?.close().catch(() => {})
+      audioCtxRef.current = null
+      sourceStreamRef.current?.getTracks().forEach(track => track.stop())
+      sourceStreamRef.current = null
+    }
+  }, [stopRecordAnimation])
 
   // context menu (3-dots)
   const closeCtx = () => setCtx(s => ({ ...s, open: false }))
@@ -327,7 +494,7 @@ const handleIncoming = React.useCallback((data: any) => {
                 {/* text / attachments */}
                 {m.text && <p>{m.text}</p>}
                 {m.attachment && <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>}
-                {m.audio && <audio controls src={m.audio} style={{maxWidth: 320, display:'block'}} />}
+                {m.audio && <VoiceMessage src={m.audio} />}
 
                 {/* timestamp */}
                 <span className="time">
@@ -367,6 +534,17 @@ const handleIncoming = React.useCallback((data: any) => {
               <button className="attach-item" onClick={() => mediaRef.current?.click()}>🖼️ Photos & Videos</button>
               <button className="attach-item" onClick={() => audioRef.current?.click()}>🎧 Audio</button>
               <button className="attach-item" onClick={pickContact}>👤 Contact</button>
+            </div>
+          )}
+          {isRecording && (
+            <div className="record-visual" aria-label="Recording audio">
+              {(recordPeaks.length ? recordPeaks : new Array(24).fill(0.1)).map((v, i) => (
+                <span
+                  key={i}
+                  className="bar"
+                  style={{ transform: `scaleY(${Math.max(v, 0.08) + 0.2})` }}
+                />
+              ))}
             </div>
           )}
           <input ref={docRef} type="file" onChange={onDocPicked} hidden />

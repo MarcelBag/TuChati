@@ -13,6 +13,11 @@ function makeUrl(input: string): string {
   return API_BASE ? `${API_BASE}${path}` : path
 }
 
+export function resolveUrl(input?: string | null): string | null {
+  if (!input) return null
+  return makeUrl(input)
+}
+
 // Token helpers
 export function setTokens(a: string | null, r: string | null) {
   accessToken = a; refreshToken = r

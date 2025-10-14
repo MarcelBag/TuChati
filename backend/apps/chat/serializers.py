@@ -114,6 +114,20 @@ class MessageSerializer(serializers.ModelSerializer):
             "sender",
         ]
 
+    def validate(self, attrs):
+        max_bytes = 3 * 1024 * 1024
+        file_fields = {
+            "attachment": attrs.get("attachment"),
+            "audio": attrs.get("voice_note"),
+        }
+        errors = {}
+        for field, file in file_fields.items():
+            if file and hasattr(file, "size") and file.size > max_bytes:
+                errors[field] = "File too large (max 3 MB)."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
     def get_sender(self, obj: Message):
         u = obj.sender
         return {

@@ -18,6 +18,7 @@
   --border: rgba(148, 163, 184, 0.16);
   --hover: rgba(255, 255, 255, 0.05);
   --active: rgba(255, 255, 255, 0.08);
+  --wave-color: #3b82f6;
 }
 
 html.light {
@@ -35,6 +36,7 @@ html.light {
   --border: rgba(2, 6, 23, 0.1);
   --hover: rgba(0, 0, 0, 0.04);
   --active: rgba(0, 0, 0, 0.08);
+  --wave-color: #2563eb;
 }
 
 /* Layout */
@@ -268,6 +270,11 @@ html:not(.light) .day-sep span{background:rgba(255,255,255,.08)}
   position:absolute;bottom:-18px;right:10px;width:26px;height:26px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer;font-size:14px;display:grid;place-items:center
 }
 .bubble .react-btn:hover{background:var(--hover)}
+.bubble .voice-message{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.voice-wave{width:100%;max-width:260px;border-radius:12px;background:linear-gradient(180deg,rgba(59,130,246,.12),rgba(59,130,246,.02));overflow:hidden}
+.voice-audio{width:100%;max-width:260px}
+.record-visual{display:flex;gap:4px;align-items:flex-end;height:32px;padding:0 4px}
+.record-visual .bar{width:4px;border-radius:999px;background:var(--ring);transform-origin:bottom center;transition:transform .08s linear}
 
 /* reactions chips under bubble */
 .rxn-chips{display:flex;gap:6px;margin-top:6px}

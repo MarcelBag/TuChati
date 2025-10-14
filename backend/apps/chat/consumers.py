@@ -51,7 +51,11 @@ def _msg_to_dict(m: Message) -> dict:
         "content": m.content or "",
         "text": m.content or "",
         "attachment": (m.attachment.url if getattr(m, "attachment", None) else None),
-        "audio": (m.audio.url if getattr(m, "audio", None) else None),
+        "audio": (
+            m.voice_note.url
+            if getattr(m, "voice_note", None)
+            else None
+        ),
         "created_at": m.created_at.isoformat(),
         "reactions": _reactions_to_dict(m),
     }
