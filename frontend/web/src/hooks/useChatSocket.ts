@@ -1,5 +1,4 @@
-// hooks/useChatSocket.ts
-// Single-bind WebSocket with handler ref, typing throttle, and safe reconnects.
+// Single-bind WebSocket with handler ref, typing throttle, join, heartbeat, and safe reconnects.
 
 import * as React from 'react'
 
@@ -12,19 +11,19 @@ export type ChatSocket = {
 }
 
 function makeWsUrl(roomId: string, token: string) {
-  const base = import.meta.env.VITE_WS_BASE_URL as string | undefined
-  if (base) {
-    const u = new URL(base.replace(/\/+$/, '') + `/ws/chat/${roomId}/`)
-    if (token) u.searchParams.set('token', token)
-    return u.toString()
-  }
+  // ENV
+  const base = (import.meta.env.VITE_WS_BASE_URL as string | undefined)?.replace(/\/+$/, '')
+  const paramKey = (import.meta.env.VITE_WS_TOKEN_PARAM as string | undefined) || 'token'
+
+  const qs = token ? `?${encodeURIComponent(paramKey)}=${encodeURIComponent(token)}` : ''
+
+  if (base) return `${base}/ws/chat/${encodeURIComponent(roomId)}${qs}`
+
+  // Fallback to same host as the webapp
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host  = window.location.host
-  const u = new URL(`${proto}//${host}/ws/chat/${roomId}/`)
-  if (token) u.searchParams.set('token', token)
-  return u.toString()
+  return `${proto}//${host}/ws/chat/${encodeURIComponent(roomId)}${qs}`
 }
-
 
 export function useChatSocket(
   roomId: string,
@@ -37,16 +36,22 @@ export function useChatSocket(
 
   const [isConnected, setIsConnected] = React.useState(false)
 
-  // reconnection state
   const retryRef = React.useRef(0)
   const reconnectTimer = React.useRef<number | null>(null)
+  const heartbeatTimer = React.useRef<number | null>(null)
 
-  const clearReconnectTimer = () => {
-    if (reconnectTimer.current) {
-      window.clearTimeout(reconnectTimer.current)
-      reconnectTimer.current = null
-    }
+  const clearTimer = (t: React.MutableRefObject<number | null>) => {
+    if (t.current) { window.clearTimeout(t.current); t.current = null }
   }
+
+  const scheduleHeartbeat = React.useCallback(() => {
+    clearTimer(heartbeatTimer)
+    // Send a ping every 25s to keep proxies happy
+    heartbeatTimer.current = window.setTimeout(() => {
+      try { wsRef.current?.readyState === WebSocket.OPEN && wsRef.current?.send(JSON.stringify({ type: 'ping' })) } catch {}
+      scheduleHeartbeat()
+    }, 25000)
+  }, [])
 
   const connect = React.useCallback(() => {
     if (!roomId || !token) return
@@ -57,53 +62,57 @@ export function useChatSocket(
       ws.onopen = () => {
         setIsConnected(true)
         retryRef.current = 0
-        clearReconnectTimer()
-        // Ask server for history on initial open (idempotent on server)
+        clearTimer(reconnectTimer)
+        scheduleHeartbeat()
+        // Ask history & join explicitly (safe if backend ignores)
         try { ws.send(JSON.stringify({ type: 'history' })) } catch {}
+        try { ws.send(JSON.stringify({ type: 'join', room_id: roomId })) } catch {}
       }
 
       ws.onclose = () => {
         setIsConnected(false)
         wsRef.current = null
-        // Exponential backoff reconnect
-        const n = Math.min(retryRef.current + 1, 6) // cap ~64s
+        clearTimer(heartbeatTimer)
+        // Exponential backoff
+        const n = Math.min(retryRef.current + 1, 6) // cap ~32s
         retryRef.current = n
-        clearReconnectTimer()
-        reconnectTimer.current = window.setTimeout(connect, Math.pow(2, n) * 500) // 0.5s,1s,2s,...
+        clearTimer(reconnectTimer)
+        reconnectTimer.current = window.setTimeout(connect, Math.pow(2, n) * 500) // 0.5,1,2,4,8,16,32
       }
 
       ws.onerror = () => {
-        // treat like close to trigger retry
         try { ws.close() } catch {}
       }
 
-      // IMPORTANT: single binding that always calls the latest handler
       ws.onmessage = (ev) => {
-        let data: any
-        try { data = JSON.parse(ev.data) } catch { return }
-        cbRef.current?.(data)
+        try {
+          const data = JSON.parse(ev.data)
+          cbRef.current?.(data)
+        } catch {}
       }
     } catch {
-      // schedule another try if constructor failed
       setIsConnected(false)
       const n = Math.min(retryRef.current + 1, 6)
       retryRef.current = n
-      clearReconnectTimer()
+      clearTimer(reconnectTimer)
       reconnectTimer.current = window.setTimeout(connect, Math.pow(2, n) * 500)
     }
-  }, [roomId, token])
+  }, [roomId, token, scheduleHeartbeat])
 
-  // (re)connect when room/token changes
+  // (re)connect on changes
   React.useEffect(() => {
-    // close any existing
     try { wsRef.current?.close() } catch {}
     wsRef.current = null
     setIsConnected(false)
     retryRef.current = 0
-    clearReconnectTimer()
+    clearTimer(reconnectTimer)
+    clearTimer(heartbeatTimer)
+
     if (roomId && token) connect()
+
     return () => {
-      clearReconnectTimer()
+      clearTimer(reconnectTimer)
+      clearTimer(heartbeatTimer)
       try { wsRef.current?.close() } catch {}
       wsRef.current = null
     }
@@ -117,13 +126,9 @@ export function useChatSocket(
     }
   }, [])
 
-  // public API
-  const sendMessage = React.useCallback((payload: any) => {
-    // payload can be: {content, _client_id} or {type:'reaction',...} etc.
-    sendRaw(payload)
-  }, [sendRaw])
+  const sendMessage = React.useCallback((payload: any) => { sendRaw(payload) }, [sendRaw])
 
-  // throttle typing events to avoid storms
+  // throttle typing events
   const typingTimer = React.useRef<number | null>(null)
   const sendTyping = React.useCallback((typing: boolean, fromUser?: string) => {
     if (typingTimer.current) window.clearTimeout(typingTimer.current)

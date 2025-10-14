@@ -2,7 +2,7 @@
 // ============================================================
 // TuChati AuthContext
 // Single-flight token handling via shared/api, no polling,
-// one-time /me load, and tab sync.
+// one-time /me load, and tab sync (with /me de-dupe guard).
 // ============================================================
 
 import React, {
@@ -10,6 +10,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   ReactNode,
 } from 'react'
@@ -38,6 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Prevent overlapping /me calls from mount + storage sync
+  const meBusyRef = useRef(false)
+
   // Load tokens once on mount and attempt to fetch /me
   useEffect(() => {
     loadTokensFromStorage()
@@ -56,6 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Single /me call; apiFetch will refresh if needed
     ;(async () => {
+      if (meBusyRef.current) { setLoading(false); return }
+      meBusyRef.current = true
+
       const res = await apiFetch('/api/accounts/me/')
       if (res.ok) {
         const data = await res.json()
@@ -65,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
         setToken(null)
       }
+
+      meBusyRef.current = false
       setLoading(false)
     })()
   }, [])
@@ -73,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== 'access' && e.key !== 'refresh') return
+
       const access = localStorage.getItem('access')
       const refresh = localStorage.getItem('refresh')
 
@@ -85,11 +95,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // logged in / refreshed in another tab
       setToken(access)
+
       ;(async () => {
+        if (meBusyRef.current) return
+        meBusyRef.current = true
+
         const r = await apiFetch('/api/accounts/me/')
         if (r.ok) setUser(await r.json())
+
+        meBusyRef.current = false
       })()
     }
+
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
@@ -108,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json().catch(() => ({}))
         throw new Error(data?.detail || 'Invalid credentials')
       }
+
       const data = await res.json()
       const access = data.access || data.token || data.access_token
       const refresh = data.refresh
@@ -118,9 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(access)
 
       // Get user profile (apiFetch handles refresh from now on)
-      const meRes = await apiFetch('/api/accounts/me/')
-      if (meRes.ok) setUser(await meRes.json())
-      else setUser(null)
+      if (!meBusyRef.current) {
+        meBusyRef.current = true
+        const meRes = await apiFetch('/api/accounts/me/')
+        if (meRes.ok) setUser(await meRes.json())
+        meBusyRef.current = false
+      }
     },
     []
   )

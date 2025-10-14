@@ -23,11 +23,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
     HEARTBEAT_INTERVAL = 30  # seconds
 
     async def connect(self):
+        
         """Authenticate, join room, mark online, start heartbeat."""
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.user = self.scope.get("user")
         self.group_name = f"room_{self.room_id}"
         self._heartbeat_task = None
+        # name matches
+        room_id = self.scope["url_route"]["kwargs"]["room_id"]
 
         # Reject unauthenticated users
         if not getattr(self.user, "is_authenticated", False):
@@ -72,7 +75,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "last_seen": None,
             },
         )
-
+        
         # Start heartbeat
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         print(f"[WS] {self.user.username} joined {self.group_name}")
