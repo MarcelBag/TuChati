@@ -10,6 +10,7 @@ from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from .consumers import _msg_to_dict
 
 from .models import ChatRoom, Message, SystemMessage
 from .serializers import ChatRoomSerializer, MessageSerializer
@@ -123,7 +124,6 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             status=200,
         )
 
-
 class MessageListCreateViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -140,4 +140,13 @@ class MessageListCreateViewSet(viewsets.ModelViewSet):
         room = ChatRoom.objects.filter(id=room_id, participants=self.request.user).first()
         if not room:
             raise PermissionDenied("You are not a participant of this room.")
-        serializer.save(room=room, sender=self.request.user)
+        # save
+        message: Message = serializer.save(room=room, sender=self.request.user)
+
+        # broadcast to WS listeners so other clients see uploads/voice notes instantly
+        channel_layer = get_channel_layer()
+        payload = _msg_to_dict(message)
+        async_to_sync(channel_layer.group_send)(
+            f"room_{room.id}",
+            {"type": "chat_message", "payload": payload},
+        )
