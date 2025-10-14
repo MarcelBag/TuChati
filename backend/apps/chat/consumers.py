@@ -1,11 +1,12 @@
 # ================================================================
 # backend/apps/chat/consumers.py
-# Full-featured WebSocket chat consumer (stable)
-# - Real-time messaging
-# - Delivery + Read receipts
-# - Typing indicators
-# - Presence & Last Seen
-# - Auto-presence heartbeat (every 30s)
+# Full-featured WebSocket chat consumer (frontend-aligned)
+# - Real-time messaging (type: "message")
+# - History on connect (type: "history")
+# - Typing indicators (type: "typing")
+# - Reactions pass-through (type: "reaction")
+# - Delivery & Read receipts (type: "delivery")
+# - Presence + heartbeat (type: "presence")
 # ================================================================
 import json
 import asyncio
@@ -23,32 +24,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
     HEARTBEAT_INTERVAL = 30  # seconds
 
     async def connect(self):
-        
         """Authenticate, join room, mark online, start heartbeat."""
         self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.user = self.scope.get("user")
         self.group_name = f"room_{self.room_id}"
         self._heartbeat_task = None
-        # name matches
-        room_id = self.scope["url_route"]["kwargs"]["room_id"]
 
         # Reject unauthenticated users
         if not getattr(self.user, "is_authenticated", False):
             await self.close(code=4003)
             return
 
-        # Accept ASAP to avoid browser auto-close
+        # Accept early to avoid browser auto-close
         await self.accept()
         print(f"[WS] accepted socket for {self.user.username} room={self.room_id}")
 
-        # Join user-specific notification group
+        # Join per-user group (personal notifications)
         await self.channel_layer.group_add(f"user_{self.user.id}", self.channel_name)
 
         # Participant membership check
         if not await self._is_participant(self.user.id, self.room_id):
             await self.send(text_data=json.dumps({
                 "type": "error",
-                "message": "Not a participant of this room"
+                "message": "Not a participant of this room",
             }))
             await self.close(code=4003)
             return
@@ -60,11 +58,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self._update_presence(self.user.id, True)
         await self._auto_mark_delivered(self.room_id, self.user.id)
 
-        # Send chat history
+        # Send chat history (normalized for frontend)
         messages = await self._get_last_messages(self.room_id)
         await self.send(text_data=json.dumps({"type": "history", "messages": messages}))
 
-        # Notify others: user online
+        # Announce online
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -75,8 +73,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "last_seen": None,
             },
         )
-        
-        # Start heartbeat
+
+        # Start heartbeat loop
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         print(f"[WS] {self.user.username} joined {self.group_name}")
 
@@ -99,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if hasattr(self, "user") and getattr(self.user, "id", None):
             await self.channel_layer.group_discard(f"user_{self.user.id}", self.channel_name)
 
-        # Mark offline and broadcast one last presence
+        # Mark offline & broadcast
         if getattr(self, "user", None) and getattr(self.user, "id", None):
             last_seen = await self._update_presence(self.user.id, False)
             await self.channel_layer.group_send(
@@ -114,7 +112,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
     async def receive(self, text_data=None, bytes_data=None):
-        """Handle incoming messages and events from clients."""
+        """Handle incoming frames from clients."""
         try:
             data = json.loads(text_data or "{}")
         except json.JSONDecodeError:
@@ -122,124 +120,115 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         msg_type = data.get("type", "message")
 
-        # --- Typing indicator ---
+        # --- Typing indicator (boolean compatible) ---
         if msg_type in ["typing", "stopped_typing"]:
+            typing_flag = bool(data.get("typing", msg_type == "typing"))
             await self.channel_layer.group_send(
                 self.group_name,
                 {
                     "type": "user_typing_to_you",
                     "from_user": self.user.username,
-                    "typing": (msg_type == "typing"),
+                    "typing": typing_flag,
                 },
             )
             return
 
-        # --- Focus (user opened chat) ---
+        # --- Focus (mark all read) ---
         if msg_type == "focus":
             await self._auto_mark_read(self.room_id, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {
-                    "type": "message_delivery",
-                    "status": "read",
-                    "user": self.user.username,
-                    "ids": [],
-                },
+                {"type": "message_delivery", "status": "read", "user": self.user.username, "ids": []},
             )
             return
 
-        # --- Delivered ---
+        # --- Delivered receipts ---
         if msg_type == "delivered":
             ids = data.get("ids", [])
             await self._mark_delivered(ids, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {
-                    "type": "message_delivery",
-                    "status": "delivered",
-                    "user": self.user.username,
-                    "ids": ids,
-                },
+                {"type": "message_delivery", "status": "delivered", "user": self.user.username, "ids": ids},
             )
             return
 
-        # --- Read ---
+        # --- Read receipts ---
         if msg_type == "read":
             ids = data.get("ids", [])
             await self._mark_read(ids, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {
-                    "type": "message_delivery",
-                    "status": "read",
-                    "user": self.user.username,
-                    "ids": ids,
-                },
+                {"type": "message_delivery", "status": "read", "user": self.user.username, "ids": ids},
             )
+            return
+
+        # --- Reaction echo (frontend merges) ---
+        if msg_type == "reaction":
+            payload = {
+                "type": "reaction",
+                "message_id": data.get("message_id"),
+                "emoji": data.get("emoji"),
+                "user_id": self.user.id,
+                "op": data.get("op", "toggle"),
+            }
+            await self.channel_layer.group_send(self.group_name, {"type": "chat_reaction", "payload": payload})
             return
 
         # --- Normal message ---
         if msg_type == "message":
             content = (data.get("content") or "").strip()
+            client_id = data.get("_client_id")
             if not content:
-                # ignore empty messages
                 return
 
             message = await self._save_message(self.room_id, self.user.id, content)
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    "type": "chat_message",
-                    "payload": {
-                        "type": "message",
-                        "id": message["id"],
-                        "sender": self.user.username,
-                        "content": message["content"],
-                        "created_at": message["created_at"],
-                    },
+            # Echo to room (include _client_id if one came from the client)
+            payload = {
+                "type": "message",
+                "id": message["id"],
+                "_client_id": client_id,
+                "sender": {
+                    "id": self.user.id,
+                    "username": self.user.username,
+                    "name": getattr(self.user, "get_full_name", lambda: "")() or self.user.username,
                 },
-            )
+                "content": message["content"],
+                "created_at": message["created_at"],
+            }
+            await self.channel_layer.group_send(self.group_name, {"type": "chat_message", "payload": payload})
             return
 
-        # --- Ping/Pong (optional) ---
+        # --- Ping/Pong ---
         if msg_type == "ping":
             await self.send(text_data=json.dumps({"type": "pong", "ts": timezone.now().isoformat()}))
             return
 
     # ================================================================
-    # Internal heartbeat
+    # Heartbeat
     # ================================================================
     async def _heartbeat_loop(self):
-        """Broadcast presence every HEARTBEAT_INTERVAL seconds."""
         try:
             while True:
                 await asyncio.sleep(self.HEARTBEAT_INTERVAL)
-                # Refresh presence in DB
                 await self._update_presence(self.user.id, True)
-                # Notify room that this user is still online
                 await self.channel_layer.group_send(
                     self.group_name,
-                    {
-                        "type": "presence_update",
-                        "user": self.user.username,
-                        "status": "online",
-                        "device": getattr(self.user, "device_type", "web"),
-                        "last_seen": None,
-                    },
+                    {"type": "presence_update", "user": self.user.username, "status": "online", "device": "web", "last_seen": None},
                 )
         except asyncio.CancelledError:
-            # normal on disconnect
             pass
 
     # ================================================================
-    # Event Handlers (for group_send)
+    # Event handlers (group_send targets)
     # ================================================================
     async def chat_message(self, event):
-        # Always send with a type so UIs can route the payload
         payload = event.get("payload", {})
         if "type" not in payload:
             payload["type"] = "message"
         await self.send(text_data=json.dumps(payload))
+
+    async def chat_reaction(self, event):
+        await self.send(text_data=json.dumps(event["payload"]))
 
     async def user_typing_to_you(self, event):
         if event["from_user"] != self.user.username:
@@ -288,7 +277,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     # ================================================================
-    # Database helpers
+    # DB helpers
     # ================================================================
     @database_sync_to_async
     def _is_participant(self, user_id, room_id):
@@ -311,29 +300,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _get_last_messages(self, room_id, limit=25):
         from apps.chat.models import SystemMessage
-        msgs = Message.objects.filter(room_id=room_id).order_by("-created_at")[:limit]
+        msgs = Message.objects.filter(room_id=room_id).select_related("sender").order_by("-created_at")[:limit]
         system_msgs = SystemMessage.objects.filter(room_id=room_id).order_by("-created_at")[:limit]
 
-        all_msgs = [
-            {
-                "id": str(m.id),
-                "sender": m.sender.username,
-                "content": m.content,
-                "created_at": m.created_at.isoformat(),
-                "type": "message",
-            }
-            for m in msgs
-        ] + [
-            {
-                "id": str(s.id),
-                "sender": "system",
-                "content": s.content,
-                "created_at": s.created_at.isoformat(),
-                "type": "system_message",
-            }
-            for s in system_msgs
-        ]
-        all_msgs = sorted(all_msgs, key=lambda x: x["created_at"])
+        normal = [{
+            "id": str(m.id),
+            "type": "message",
+            "sender": {
+                "id": m.sender_id,
+                "username": m.sender.username,
+                "name": m.sender.get_full_name() or m.sender.username,
+            },
+            "content": m.content,
+            "attachment": getattr(m, "attachment", None),
+            "audio": getattr(m, "audio", None),
+            "created_at": m.created_at.isoformat(),
+        } for m in msgs]
+
+        sys = [{
+            "id": str(s.id),
+            "type": "system_message",
+            "sender": "system",
+            "content": s.content,
+            "created_at": s.created_at.isoformat(),
+        } for s in system_msgs]
+
+        all_msgs = sorted(normal + sys, key=lambda x: x["created_at"])
         return all_msgs[-limit:]
 
     @database_sync_to_async
@@ -361,7 +353,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _auto_mark_delivered(self, room_id, user_id):
-        # mark all messages not yet delivered to this user as delivered
         msgs = Message.objects.filter(room_id=room_id).exclude(delivered_to=user_id)
         now = timezone.now()
         for msg in msgs:
@@ -388,13 +379,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 user.mark_offline()
 
-            DeviceSession.objects.filter(
-                user_id=user_id, is_active=True
-            ).update(
+            DeviceSession.objects.filter(user_id=user_id, is_active=True).update(
                 last_active=timezone.now(),
                 connection_status="online" if is_online else "offline",
             )
-
             return user.last_seen.isoformat() if not is_online else None
         except User.DoesNotExist:
             return None
