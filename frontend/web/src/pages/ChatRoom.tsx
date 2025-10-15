@@ -597,24 +597,27 @@ export default function ChatRoom() {
         setMessages(prev => prev.map((m: any) => {
           if ((m.id ?? m._client_id) !== message_id) return m
           const next: Record<string, string[]> = {}
-          let removedTarget = false
+          let previousWasSame = false
           Object.entries(m.reactions || {}).forEach(([key, list]) => {
-            const filtered = (list || []).filter(id => id !== uid)
-            if (filtered.length) {
-              next[key] = filtered
+            const set = new Set<string>(list || [])
+            if (set.has(uid)) {
+              if (key === emoji) previousWasSame = true
+              set.delete(uid)
             }
-            if (key === emoji && filtered.length !== (list || []).length) {
-              removedTarget = true
-            }
+            if (set.size) next[key] = Array.from(set)
           })
 
-          const shouldAdd = op !== 'remove' && !removedTarget
+          const shouldAdd = op !== 'remove' && !previousWasSame
           if (shouldAdd) {
             const set = new Set<string>(next[emoji] || [])
             set.add(uid)
             next[emoji] = Array.from(set)
           }
-          return { ...m, reactions: next }
+          const updated = { ...m, reactions: next }
+          if (updated.is_me) {
+            updated.status = computeStatus(updated)
+          }
+          return updated
         }))
         return
       }
@@ -730,11 +733,16 @@ export default function ChatRoom() {
     setMessages(prev => prev.map((m:any) => {
       if ((m.id ?? m._client_id) !== messageId) return m
       const next: Record<string, string[]> = {}
+      let previousWasSame = false
       Object.entries(m.reactions || {}).forEach(([key, list]) => {
-        const filtered = (list || []).filter(id => id !== uid)
-        if (filtered.length) next[key] = filtered
+        const set = new Set<string>(list || [])
+        if (set.has(uid)) {
+          if (key === emoji) previousWasSame = true
+          set.delete(uid)
+        }
+        if (set.size) next[key] = Array.from(set)
       })
-      if (!sameEmoji) {
+      if (!previousWasSame) {
         const set = new Set<string>(next[emoji] || [])
         set.add(uid)
         next[emoji] = Array.from(set)
@@ -822,11 +830,13 @@ export default function ChatRoom() {
   }, [])
 
   const openInviteModal = React.useCallback(() => {
-    setInviteOpen(true)
-    setInviteSelected([])
-    setInviteUsersOptions([])
-    setInviteLoading(false)
-    setInviteSubmitting(false)
+    window.setTimeout(() => {
+      setInviteOpen(true)
+      setInviteSelected([])
+      setInviteUsersOptions([])
+      setInviteLoading(false)
+      setInviteSubmitting(false)
+    }, 0)
   }, [])
 
   const closeInviteModal = React.useCallback(() => {
@@ -1499,7 +1509,19 @@ export default function ChatRoom() {
                 </li>
               ))}
             </ul>
-            {isAdmin && <button className="btn small" onClick={openInviteModal}>+ Invite</button>}
+            {isAdmin && (
+              <button
+                className="btn small"
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  openInviteModal()
+                }}
+              >
+                + Invite
+              </button>
+            )}
           </div>
         </aside>
       )}
