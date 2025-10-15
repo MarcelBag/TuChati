@@ -1,9 +1,9 @@
 // frontend/web/src/pages/ChatRoom.tsx
 // ============================================================
 // TuChati Chat Room grouping + day separators + reactions
-// Fix: timestamp overlap on single-line messages (extra padding)
 // Per-bubble "more" chevron to open actions menu
 // Emoji reactions; listens for WS 'reaction' events
+// (Fixed TDZ/ReferenceError: menuActions; boolean op; ordering)
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -13,12 +13,12 @@ import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
 import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
-import MessageMenu from '../components/Chat/MessageMenu'
+import MessageMenu, { MessageMenuAction } from '../components/Chat/MessageMenu'
 import VoiceMessage from '../components/Chat/VoiceMessage'
-
-
-
-type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
+import MessageInfoModal from '../components/Chat/MessageInfoModal'
+import { useChatNotifications } from '../hooks/useChatNotifications'
+import { useMediaPreference } from '../context/PreferencesContext'
+import { deleteMessage, deleteMessages, fetchMessageInfo, saveNote, setPinned, setStarred } from '../api/chatActions'
 
 function formatDayLabel(d: Date) {
   const now = new Date()
@@ -33,10 +33,18 @@ function formatDayLabel(d: Date) {
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 
+const AUDIO_MIME_CANDIDATES = [
+  { mime: 'audio/mp4;codecs=mp4a.40.2', ext: 'm4a' },
+  { mime: 'audio/webm;codecs=opus', ext: 'webm' },
+  { mime: 'audio/ogg;codecs=opus', ext: 'ogg' },
+  { mime: 'audio/mpeg', ext: 'mp3' },
+]
+
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
   const navigate = useNavigate()
+  const { playSend, playReceive } = useChatNotifications()
 
   const [room, setRoom] = React.useState<Room | any>(null)
   const [messages, setMessages] = React.useState<any[]>([])
@@ -48,24 +56,74 @@ export default function ChatRoom() {
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
   const [recordPeaks, setRecordPeaks] = React.useState<number[]>([])
-  const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
-  const [reactAnchor, setReactAnchor] = React.useState<{id: string | number | null, x: number, y: number} | null>(null)
+  const [menuState, setMenuState] = React.useState<{ open: boolean; x: number; y: number; message: any | null }>({ open: false, x: 0, y: 0, message: null })
+  const [selectionMode, setSelectionMode] = React.useState(false)
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([])
+  const [composerContext, setComposerContext] = React.useState<{ type: 'reply' | 'forward'; message: any } | null>(null)
+  const [infoState, setInfoState] = React.useState<{ open: boolean; loading: boolean; data?: any; messageId?: string }>({ open: false, loading: false })
+  const [reactAnchor, setReactAnchor] = React.useState<{ id: string | number | null, x: number, y: number } | null>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
 
-  // inputs
+  const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds])
+
+  React.useEffect(() => {
+    if (selectionMode && selectedIds.length === 0) {
+      setSelectionMode(false)
+    }
+  }, [selectedIds.length, selectionMode])
+
   const docRef = React.useRef<HTMLInputElement>(null)
   const mediaRef = React.useRef<HTMLInputElement>(null)
   const audioRef = React.useRef<HTMLInputElement>(null)
+  const gifRef = React.useRef<HTMLInputElement>(null)
   const vcardRef = React.useRef<HTMLInputElement>(null)
 
-  // recorder
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
+  const recorderConfigRef = React.useRef<{ mime: string; ext: string } | null>(null)
   const analyserRef = React.useRef<AnalyserNode | null>(null)
   const dataArrayRef = React.useRef<Uint8Array | null>(null)
   const recordAnimationRef = React.useRef<number | null>(null)
   const audioCtxRef = React.useRef<AudioContext | null>(null)
-  const sourceStreamRef = React.useRef<MediaStream | null>(null)
+  const imagePreference = useMediaPreference('images')
+  const videoPreference = useMediaPreference('videos')
+
+  const toggleSelection = React.useCallback((id: string | number | null) => {
+    const value = String(id)
+    setSelectedIds(prev => (prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]))
+  }, [])
+
+  const clearSelection = React.useCallback(() => {
+    setSelectionMode(false)
+    setSelectedIds([])
+  }, [])
+
+  const enterSelection = React.useCallback((id?: string | number | null) => {
+    setSelectionMode(true)
+    if (id !== undefined && id !== null) {
+      const value = String(id)
+      setSelectedIds(prev => (prev.includes(value) ? prev : [...prev, value]))
+    }
+  }, [])
+
+  const removeMessagesLocal = React.useCallback((ids: string[]) => {
+    if (!ids || ids.length === 0) return
+    const idSet = new Set(ids.map(String))
+    setMessages(prev => prev.filter((m: any) => !idSet.has(String(m.id ?? m._client_id))))
+    setSelectedIds(prev => prev.filter(id => !idSet.has(id)))
+  }, [])
+
+  const handleCopy = React.useCallback((message: any) => {
+    const content = message?.text || ''
+    if (!content) return
+    navigator.clipboard?.writeText(content).catch(() => console.warn('Clipboard copy failed'))
+  }, [])
+
+  // --- derive role flags BEFORE anything that uses them ---
+  const isGroup = !!room?.is_group
+  const isAdmin =
+    !!room?.is_admin ||
+    (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
 
   React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
 
@@ -82,11 +140,27 @@ export default function ChatRoom() {
 
   // Normalizer
   const normalizeMsg = React.useCallback((raw: any) => {
+    if (!raw) return null
     const text = raw.content ?? raw.message ?? raw.text ?? raw.body ?? ''
     const senderId = raw.sender?.id ?? raw.sender_id ?? raw.sender ?? null
-    const reactions = raw.reactions ?? {} // { "👍": [userIds], "❤️": [userIds] }
+    const reactions = raw.reactions ?? {}
     const attachment = resolveUrl(raw.attachment ?? raw.file ?? null)
     const audio = resolveUrl(raw.audio ?? raw.voice_note ?? raw.voice ?? null)
+    const attachmentInfo = raw.attachment_info ?? null
+
+    const mapRef = (ref: any) => {
+      if (!ref) return null
+      return {
+        id: ref.id ?? ref.uuid ?? null,
+        sender_id: ref.sender?.id ?? ref.sender_id ?? null,
+        sender_name: ref.sender_name ?? ref.sender?.name ?? ref.sender?.username ?? 'U',
+        text: ref.content ?? ref.text ?? '',
+        attachment: resolveUrl(ref.attachment ?? null),
+        audio: resolveUrl(ref.audio ?? null),
+        created_at: ref.created_at ?? new Date().toISOString(),
+      }
+    }
+
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
       _client_id: raw._client_id,
@@ -94,23 +168,40 @@ export default function ChatRoom() {
       sender_name: raw.sender_name ?? raw.sender?.name ?? raw.sender?.username ?? raw.username ?? 'U',
       text,
       attachment,
+      attachment_info: attachmentInfo,
       audio,
       created_at: raw.created_at ?? raw.timestamp ?? new Date().toISOString(),
       is_me: !!senderId && senderId === (user?.id as any),
       reactions,
+      reply_to: mapRef(raw.reply_to ?? raw.reply),
+      forwarded_from: mapRef(raw.forwarded_from ?? raw.forwarded),
+      pinned: !!raw.pinned,
+      pinned_by: raw.pinned_by ?? null,
+      starred: !!raw.starred,
+      note: raw.note ?? '',
+      deleted_for_me: !!raw.deleted_for_me,
+      duration: raw.duration ?? null,
     } as any
   }, [user?.id])
 
+  // --- mergeMessage must come BEFORE any callbacks that depend on it ---
   const mergeMessage = React.useCallback((payload: any) => {
-    if (!payload) return
+    if (!payload) return false
     const normalized = { ...payload }
     if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
       normalized.is_me = true
     }
 
+    if (normalized.deleted_for_me && normalized.id) {
+      removeMessagesLocal([normalized.id])
+      return true
+    }
+
+    let changed = false
     setMessages(prev => {
       const candidateKeys = [normalized.id, normalized._client_id].filter(Boolean)
       if (!candidateKeys.length) {
+        changed = true
         return [...prev, normalized]
       }
 
@@ -128,54 +219,337 @@ export default function ChatRoom() {
         if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
           updated.is_me = true
         }
+        if (JSON.stringify(existing) !== JSON.stringify(updated)) {
+          changed = true
+        }
         const next = prev.slice()
         next[idx] = updated
         return next
       }
 
+      changed = true
       return [...prev, normalized]
     })
-  }, [user?.id])
+    return changed
+  }, [removeMessagesLocal, user?.id])
 
-  // Socket
-  // make handler stable
+  const handlePinToggle = React.useCallback(async (message: any) => {
+    if (!roomId || !message?.id) return
+    try {
+      const next = await setPinned(roomId, message.id, !message.pinned)
+      mergeMessage(next)
+    } catch (error: any) {
+      alert(error?.message || 'Failed to update pin state')
+    }
+  }, [mergeMessage, roomId])
+
+  const handleStarToggle = React.useCallback(async (message: any) => {
+    if (!roomId || !message?.id) return
+    try {
+      const next = await setStarred(roomId, message.id, !message.starred)
+      mergeMessage(next)
+    } catch (error: any) {
+      alert(error?.message || 'Failed to update star state')
+    }
+  }, [mergeMessage, roomId])
+
+  const handleNoteEdit = React.useCallback(async (message: any) => {
+    if (!roomId || !message?.id) return
+    const current = message.note || ''
+    const nextNote = window.prompt('Add a note for this message', current)
+    if (nextNote === null) return
+    try {
+      const next = await saveNote(roomId, message.id, nextNote)
+      mergeMessage(next)
+    } catch (error: any) {
+      alert(error?.message || 'Failed to save note')
+    }
+  }, [mergeMessage, roomId])
+
+  const handleInfo = React.useCallback(async (message: any) => {
+    if (!roomId || !message?.id) return
+    setInfoState({ open: true, loading: true, messageId: message.id })
+    try {
+      const data = await fetchMessageInfo(roomId, message.id)
+      setInfoState({ open: true, loading: false, data, messageId: message.id })
+    } catch (error: any) {
+      alert(error?.message || 'Failed to load message info')
+      setInfoState({ open: false, loading: false })
+    }
+  }, [roomId])
+
+  const handleReply = React.useCallback((message: any) => {
+    setComposerContext({ type: 'reply', message })
+  }, [])
+
+  const handleForward = React.useCallback((message: any) => {
+    setComposerContext({ type: 'forward', message })
+  }, [])
+
+  const handleDelete = React.useCallback(async (message: any, scope: 'me' | 'all' = 'me') => {
+    const targetId = message?.id ?? message?._client_id
+    if (!targetId) return
+    // FIXED boolean op: and -> &&
+    if (!roomId || !message?.id || (scope === 'me' && !message?.id)) {
+      removeMessagesLocal([String(targetId)])
+      if (selectionMode) clearSelection()
+      return
+    }
+    try {
+      await deleteMessage(roomId, message.id, scope)
+      removeMessagesLocal([String(targetId)])
+      if (selectionMode) clearSelection()
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete message')
+    }
+  }, [clearSelection, removeMessagesLocal, roomId, selectionMode])
+
+  const handleBulkDelete = React.useCallback(async (scope: 'me' | 'all' = 'me') => {
+    if (!roomId || selectedIds.length === 0) return
+    const realIds = selectedIds.filter(id => {
+      const msg = messages.find((m: any) => String(m.id) === id)
+      return !!msg
+    })
+    if (scope === 'all' && realIds.length === 0) {
+      alert('Only delivered messages can be removed for everyone.')
+      return
+    }
+    if (scope === 'me' && realIds.length === 0) {
+      removeMessagesLocal(selectedIds)
+      clearSelection()
+      return
+    }
+    try {
+      if (scope === 'all') {
+        await deleteMessages(roomId, realIds, 'all')
+        removeMessagesLocal(realIds)
+      } else {
+        await deleteMessages(roomId, realIds, 'me')
+        removeMessagesLocal(selectedIds)
+      }
+      clearSelection()
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete messages')
+    }
+  }, [clearSelection, messages, removeMessagesLocal, roomId, selectedIds])
+
+  type AttachmentRender = {
+    node: React.ReactNode | null
+    kind: 'none' | 'audio' | 'image' | 'video' | 'file'
+  }
+
+  const renderAttachment = React.useCallback((message: any): AttachmentRender => {
+    if (!message) return { node: null, kind: 'none' }
+
+    const info = message.attachment_info || {}
+    const attachmentUrl = message.attachment || ''
+    const audioUrl = message.audio || ''
+    const contentType = (info.content_type || '').toLowerCase()
+    const filename = info.name || info.filename || info.title || null
+    const rawDuration = message.duration
+    const numericDuration = typeof rawDuration === 'number' ? rawDuration : Number(rawDuration)
+    const durationSeconds = Number.isFinite(numericDuration) ? numericDuration : undefined
+    const cleanExt = (() => {
+      if (!attachmentUrl) return ''
+      const withoutQuery = attachmentUrl.split('?')[0]
+      const parts = withoutQuery.split('.')
+      return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : ''
+    })()
+
+    const isImage = !!attachmentUrl && (
+      contentType.startsWith('image/') ||
+      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif'].includes(cleanExt)
+    )
+    const isVideo = !!attachmentUrl && (
+      contentType.startsWith('video/') ||
+      ['mp4', 'mov', 'webm', 'mkv', 'avi'].includes(cleanExt)
+    )
+    const isAudioFile = !!attachmentUrl && (
+      contentType.startsWith('audio/') || ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga'].includes(cleanExt)
+    )
+
+    if (audioUrl || isAudioFile) {
+      const src = audioUrl || attachmentUrl
+      if (!src) return { node: null, kind: 'none' }
+      return {
+        kind: 'audio',
+        node: (
+          <VoiceMessage
+            src={src}
+            durationSeconds={durationSeconds}
+          />
+        ),
+      }
+    }
+
+    if (isImage) {
+      if (imagePreference === 'manual') {
+        return {
+          kind: 'image',
+          node: (
+            <button
+              type="button"
+              className="attach"
+              onClick={() => window.open(attachmentUrl, '_blank', 'noopener')}
+            >
+              {filename ? `Open ${filename}` : 'View image'}
+            </button>
+          ),
+        }
+      }
+      return {
+        kind: 'image',
+        node: (
+          <figure className="media-attachment image">
+            <div className="media-frame">
+              <img src={attachmentUrl} alt={filename || 'Image attachment'} loading="lazy" />
+            </div>
+            <div className="media-meta">
+              <span>{filename || 'Image'}</span>
+              <a href={attachmentUrl} download>
+                Download
+              </a>
+            </div>
+          </figure>
+        ),
+      }
+    }
+
+    if (isVideo) {
+      if (videoPreference === 'manual') {
+        return {
+          kind: 'video',
+          node: (
+            <button
+              type="button"
+              className="attach"
+              onClick={() => window.open(attachmentUrl, '_blank', 'noopener')}
+            >
+              {filename ? `Open ${filename}` : 'Play video'}
+            </button>
+          ),
+        }
+      }
+      return {
+        kind: 'video',
+        node: (
+          <figure className="media-attachment video">
+            <div className="media-frame">
+              <video controls playsInline preload="metadata" src={attachmentUrl} />
+            </div>
+            <div className="media-meta">
+              <span>{filename || 'Video'}</span>
+              <a href={attachmentUrl} download>
+                Download
+              </a>
+            </div>
+          </figure>
+        ),
+      }
+    }
+
+    if (attachmentUrl) {
+      return {
+        kind: 'file',
+        node: (
+          <a className="attach" href={attachmentUrl} target="_blank" rel="noreferrer">
+            {filename || 'Attachment'}
+          </a>
+        ),
+      }
+    }
+
+    return { node: null, kind: 'none' }
+  }, [imagePreference, videoPreference])
+
+  const openMenu = React.useCallback((message: any, event: React.MouseEvent) => {
+    event.stopPropagation()
+    setMenuState({ open: true, x: event.clientX, y: event.clientY, message })
+  }, [])
+
+  const closeMenu = React.useCallback(() => {
+    setMenuState(prev => ({ ...prev, open: false, message: null }))
+  }, [])
+
+  const sourceStreamRef = React.useRef<MediaStream | null>(null)
+
+  const scrollToMessage = React.useCallback((target: string | number | null | undefined) => {
+    if (target === undefined || target === null) return
+    const container = listRef.current
+    if (!container) return
+    const raw = String(target)
+    const escapeFn = (window as any).CSS?.escape as ((value: string) => string) | undefined
+    const safe = escapeFn ? escapeFn(raw) : raw.replace(/[^a-zA-Z0-9_-]/g, '\\$&')
+    const el = container.querySelector<HTMLElement>(`[data-message-id="${safe}"]`)
+    if (!el) return
+    const containerRect = container.getBoundingClientRect()
+    const targetRect = el.getBoundingClientRect()
+    const offset = targetRect.top - containerRect.top + container.scrollTop - 80
+    container.scrollTo({ top: offset, behavior: 'smooth' })
+    el.classList.add('jump-highlight')
+    window.setTimeout(() => {
+      el.classList.remove('jump-highlight')
+    }, 1400)
+  }, [])
+
+  // Socket & incoming events
   const handleIncoming = React.useCallback((data: any) => {
     switch (data.type) {
       case 'history': {
-        // load once
         setMessages(prev => {
-          if (historyLoaded || prev.length) return prev;
-          const list = (data.messages || []).map(normalizeMsg);
-          return list;
-        });
-        setHistoryLoaded(true);
-        return;
+          if (historyLoaded || prev.length) return prev
+          const list = (data.messages || [])
+            .map((item: any) => normalizeMsg(item))
+            .filter(Boolean)
+          return list as any[]
+        })
+        setHistoryLoaded(true)
+        return
       }
       case 'typing':
-        setTypingUser(data.typing ? data.from_user : null);
-        return;
+        setTypingUser(data.typing ? data.from_user : null)
+        return
       case 'reaction': {
-        const { message_id, emoji, user_id, op } = data;
-        setMessages(prev => prev.map((m:any) => {
-          if ((m.id ?? m._client_id) !== message_id) return m;
-          const current = { ...(m.reactions || {}) };
-          const arr = new Set<string>(current[emoji] || []);
-          op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id));
-          current[emoji] = Array.from(arr);
-          return { ...m, reactions: current };
-        }));
-        return;
+        const { message_id, emoji, user_id, op } = data
+        setMessages(prev => prev.map((m: any) => {
+          if ((m.id ?? m._client_id) !== message_id) return m
+          const current = { ...(m.reactions || {}) }
+          const arr = new Set<string>(current[emoji] || [])
+          op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id))
+          current[emoji] = Array.from(arr)
+          return { ...m, reactions: current }
+        }))
+        return
+      }
+      case 'message_update':
+      case 'message_meta': {
+        const payload = normalizeMsg(data.payload)
+        if (!payload) return
+        mergeMessage(payload)
+        return
+      }
+      case 'message_remove': {
+        const id = data.message_id
+        if (id) removeMessagesLocal([id])
+        return
+      }
+      case 'message_remove_bulk': {
+        const ids = (data.message_ids || []).filter(Boolean)
+        if (ids.length) removeMessagesLocal(ids)
+        return
       }
       default: {
-        const payload = normalizeMsg(data);
-        mergeMessage(payload)
-        return;
+        const payload = normalizeMsg(data)
+        if (!payload) return
+        const changed = mergeMessage(payload)
+        if (changed && payload.sender_id && payload.sender_id !== (user?.id as any)) {
+          playReceive()
+        }
+        return
       }
     }
-  }, [normalizeMsg, historyLoaded, mergeMessage]);
+  }, [historyLoaded, mergeMessage, normalizeMsg, playReceive, removeMessagesLocal, user?.id])
 
-
-  
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
   React.useEffect(() => {
@@ -185,16 +559,44 @@ export default function ChatRoom() {
   // send text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
   const onSend = () => {
-    const text = draft.trim(); if (!text) return
+    const text = draft.trim()
+    if (!text && !composerContext) return
     const _client_id = mkClientId()
     const optimistic: any = {
-      id: _client_id, _client_id,
-      sender_id: user?.id, sender_name: (user as any)?.name || (user as any)?.username || 'Me',
-      text, created_at: new Date().toISOString(), is_me: true, reactions: {},
+      id: _client_id,
+      _client_id,
+      sender_id: user?.id,
+      sender_name: (user as any)?.name || (user as any)?.username || 'Me',
+      text,
+      created_at: new Date().toISOString(),
+      is_me: true,
+      reactions: {},
+      pinned: false,
+      starred: false,
+      note: '',
     }
-    setMessages(prev => [...prev, optimistic])
-    sendMessage({ content: text, _client_id })
+    if (composerContext?.type === 'reply') {
+      optimistic.reply_to = composerContext.message
+    }
+    if (composerContext?.type === 'forward') {
+      optimistic.forwarded_from = composerContext.message
+    }
+    if (text) {
+      setMessages(prev => [...prev, optimistic])
+    }
+
+    const payload: any = { content: text, _client_id }
+    if (composerContext?.type === 'reply' && composerContext.message?.id) {
+      payload.reply_to_id = composerContext.message.id
+    }
+    if (composerContext?.type === 'forward' && composerContext.message?.id) {
+      payload.forwarded_from_id = composerContext.message.id
+    }
+
+    sendMessage(payload)
+    playSend()
     setDraft('')
+    setComposerContext(null)
   }
 
   // reactions (optimistic update + WS notify)
@@ -209,7 +611,6 @@ export default function ChatRoom() {
       current[emoji] = Array.from(set)
       return { ...m, reactions: current }
     }))
-    // Inform backend (safe if unimplemented)
     try {
       sendMessage({ type: 'reaction', message_id: messageId, emoji })
     } catch {}
@@ -235,7 +636,7 @@ export default function ChatRoom() {
       })
       if (r.ok) {
         const m = normalizeMsg(await r.json())
-        if (m.text || m.attachment || m.audio) mergeMessage(m)
+        if (m) mergeMessage(m)
       } else {
         let message = 'Upload failed.'
         try {
@@ -248,6 +649,16 @@ export default function ChatRoom() {
   }
   const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
   const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onGifPicked = async (e: any) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (f.type && !f.type.toLowerCase().includes('gif')) {
+      alert('Please select a GIF file')
+      e.target.value = ''
+      return
+    }
+    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = ''
+  }
   const onAudioPicked = async (e: any) => {
     const f = e.target.files?.[0]
     if (!f) return
@@ -329,23 +740,45 @@ export default function ChatRoom() {
       dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
       sourceStreamRef.current = stream
 
-      const mr = new MediaRecorder(destination.stream, {
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 128000,
-      })
+      const preferred = (() => {
+        try {
+          if (typeof MediaRecorder.isTypeSupported === 'function') {
+            const found = AUDIO_MIME_CANDIDATES.find(candidate => MediaRecorder.isTypeSupported(candidate.mime))
+            if (found) return found
+          }
+        } catch {}
+        return AUDIO_MIME_CANDIDATES[1]
+      })()
+
+      let mr: MediaRecorder
+      try {
+        mr = new MediaRecorder(destination.stream, {
+          mimeType: preferred.mime,
+          audioBitsPerSecond: 128000,
+        })
+        recorderConfigRef.current = preferred
+      } catch (error) {
+        mr = new MediaRecorder(destination.stream)
+        const actualMime = mr.mimeType || preferred.mime
+        const mapped = AUDIO_MIME_CANDIDATES.find(candidate => candidate.mime === actualMime)
+        recorderConfigRef.current = mapped || { mime: actualMime, ext: preferred.ext }
+      }
       audioChunksRef.current = []
       mr.ondataavailable = (e) => { if (e.data.size) audioChunksRef.current.push(e.data) }
       mr.onstop = async () => {
         stopRecordAnimation()
         setRecordPeaks([])
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' })
+        const config = recorderConfigRef.current || AUDIO_MIME_CANDIDATES[1]
+        const blob = new Blob(audioChunksRef.current, { type: config.mime })
         if (blob.size > MAX_UPLOAD_BYTES) {
           alert('Audio is larger than 3 MB. Please record a shorter clip.')
         } else {
           const fd = new FormData()
-          fd.append('audio', blob, `voice-${Date.now()}.webm`)
+          const ext = config.ext || 'webm'
+          fd.append('audio', blob, `voice-${Date.now()}.${ext}`)
           await postFD(fd)
         }
+        recorderConfigRef.current = null
         audioCtxRef.current?.close().catch(() => {})
         audioCtxRef.current = null
         sourceStreamRef.current?.getTracks().forEach(track => track.stop())
@@ -360,6 +793,7 @@ export default function ChatRoom() {
       setIsRecording(false)
       stopRecordAnimation()
       setRecordPeaks([])
+      recorderConfigRef.current = null
       if (stream) {
         stream.getTracks().forEach(track => track.stop())
       }
@@ -390,30 +824,86 @@ export default function ChatRoom() {
     }
   }, [stopRecordAnimation])
 
-  // context menu (3-dots)
-  const closeCtx = () => setCtx(s => ({ ...s, open: false }))
-  React.useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && closeCtx()
-    const onClick = () => closeCtx()
-    if (ctx.open) { window.addEventListener('keydown', onEsc); window.addEventListener('click', onClick) }
-    return () => { window.removeEventListener('keydown', onEsc); window.removeEventListener('click', onClick) }
-  }, [ctx.open])
+  // --- define menuActions AFTER isAdmin and handlers exist ---
+  const menuActions = React.useMemo<MessageMenuAction[]>(() => {
+    const message = menuState.message
+    if (!menuState.open || !message) return []
+    const mine = message.is_me || message.sender_id === user?.id
+    const actions: MessageMenuAction[] = []
 
-  const doCopy = async () => {
-    const msg: any = messages.find((m: any) => (m.id ?? m._client_id) === ctx.id)
-    try { await navigator.clipboard.writeText(msg?.text ?? '') } catch {}
-    closeCtx()
-  }
+    actions.push({ key: 'info', label: 'Info', onClick: () => handleInfo(message) })
+    actions.push({ key: 'reply', label: 'Reply', onClick: () => handleReply(message) })
+    actions.push({ key: 'forward', label: 'Forward', onClick: () => handleForward(message) })
 
-  const isGroup = !!room?.is_group
-  const isAdmin = !!room?.is_admin || (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
-  const goInvite = () => navigate(`/chat/${roomId}/invite`)
-  if (!token) return null
+    if (message.text) {
+      actions.push({ key: 'copy', label: 'Copy text', onClick: () => handleCopy(message) })
+    }
+
+    actions.push({
+      key: 'star',
+      label: message.starred ? 'Unstar' : 'Star',
+      onClick: () => handleStarToggle(message),
+      separatorBefore: true,
+    })
+
+    actions.push({
+      key: 'note',
+      label: message.note ? 'Edit note' : 'Add note',
+      onClick: () => handleNoteEdit(message),
+    })
+
+    if (mine || isAdmin) {
+      actions.push({
+        key: 'pin',
+        label: message.pinned ? 'Unpin' : 'Pin',
+        onClick: () => handlePinToggle(message),
+      })
+    }
+
+    actions.push({
+      key: 'select',
+      label: selectionMode ? 'Add to selection' : 'Select messages',
+      onClick: () => enterSelection(message.id ?? message._client_id),
+      separatorBefore: true,
+    })
+
+    actions.push({
+      key: 'delete-me',
+      label: 'Delete for me',
+      onClick: () => handleDelete(message, 'me'),
+      danger: true,
+    })
+
+    if (mine || isAdmin) {
+      actions.push({
+        key: 'delete-all',
+        label: 'Delete for everyone',
+        onClick: () => handleDelete(message, 'all'),
+        danger: true,
+      })
+    }
+
+    return actions
+  }, [
+    enterSelection,
+    handleDelete,
+    handleForward,
+    handleInfo,
+    handleNoteEdit,
+    handlePinToggle,
+    handleStarToggle,
+    handleCopy,
+    isAdmin,
+    menuState.message,
+    menuState.open,
+    selectionMode,
+    user?.id,
+  ])
 
   // ---- Render list with grouping + day separators ----
   type RenderItem =
     | { kind: 'day'; id: string; label: string }
-    | { kind: 'msg'; id: string; mine: boolean; showAvatar: boolean; showTail: boolean; m: any }
+    | { kind: 'msg'; id: string; mine: boolean; showAvatar: boolean; showTail: boolean; selected: boolean; m: any }
 
   const renderItems: RenderItem[] = []
   let lastDayKey = ''
@@ -434,15 +924,20 @@ export default function ChatRoom() {
     const showAvatar = curSender !== prevSender
     const showTail = curSender !== nextSender
     prevSender = curSender
+    const messageKey = String(m.id ?? m._client_id ?? `k-${m.created_at}-${i}`)
+    const selected = selectedSet.has(messageKey)
     renderItems.push({
       kind: 'msg',
-      id: m.id ?? m._client_id ?? `k-${m.created_at}-${i}`,
+      id: messageKey,
       mine: !!m.is_me || m.sender_id === user?.id,
       showAvatar,
       showTail,
+      selected,
       m,
     })
   })
+
+  if (!token) return null
 
   return (
     <>
@@ -460,48 +955,120 @@ export default function ChatRoom() {
         </div>
       </header>
 
+      {selectionMode && (
+        <div className="selection-bar">
+          <span>{selectedIds.length} selected</span>
+          <div className="actions">
+            <button type="button" onClick={() => handleBulkDelete('me')}>Delete</button>
+            {(isAdmin || selectedIds.every(id => {
+              const msg = messages.find((m: any) => m.id === id || m._client_id === id)
+              return msg?.is_me || msg?.sender_id === user?.id
+            })) && (
+              <button type="button" onClick={() => handleBulkDelete('all')}>Delete for all</button>
+            )}
+            <button type="button" onClick={clearSelection}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div className="chat-scroll" ref={listRef}>
         {renderItems.map((it, idx) => {
           if (it.kind === 'day') return <div key={it.id} className="day-sep"><span>{it.label}</span></div>
-          const { m, mine, showAvatar, showTail } = it
+          const { m, mine, showAvatar, showTail, selected } = it
           const key = it.id || idx
-          const messageId = (m.id ?? m._client_id)
-
-          // counts for reaction chips
+          const messageId = it.id
           const reactionPairs = Object.entries(m.reactions || {}).filter(([, arr]) => Array.isArray(arr) && arr.length>0)
+          const attachment = renderAttachment(m)
+          const hasAttachment = attachment.kind !== 'none'
+          const hasText = !!m.text
+          const voiceOnly = attachment.kind === 'audio' && !hasText
+          const attachmentOnly = !hasText && hasAttachment
+
+          const handleContextMenu = (e: React.MouseEvent) => {
+            e.preventDefault()
+            openMenu(m, e)
+          }
+
+          const bubbleClass = [
+            'bubble',
+            mine ? 'me' : 'other',
+            showTail ? 'tail' : '',
+            selected ? 'selected' : '',
+            voiceOnly ? 'voice-only' : '',
+            attachmentOnly ? 'attachment-only' : '',
+          ].filter(Boolean).join(' ')
+
+          const replyTargetId = m.reply_to?.id ?? m.reply_to?._client_id ?? null
 
           return (
-            <div key={key} className={`row ${mine ? 'right' : 'left'}`}>
+            <div key={key} className={`row ${mine ? 'right' : 'left'}`} onContextMenu={handleContextMenu}>
               {!mine && showAvatar && (
                 <div className="avatar-badge sm">{(m.sender_name || 'U').slice(0,1).toUpperCase()}</div>
               )}
 
+              {selectionMode && (
+                <input
+                  type="checkbox"
+                  className="select-checkbox"
+                  checked={selected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => toggleSelection(messageId)}
+                />
+              )}
+
               <div
-                className={`bubble ${mine ? 'me' : 'other'} ${showTail ? 'tail' : ''}`}
+                className={bubbleClass}
+                data-message-id={messageId}
+                onClick={() => { if (selectionMode) toggleSelection(messageId) }}
               >
-                {/* kebab / more icon */}
                 <button
                   className="more"
                   aria-label="Message actions"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setCtx({ open: true, x: e.clientX, y: e.clientY, id: key, mine })
-                  }}
+                  onClick={(e) => openMenu(m, e)}
                 >
                   ⋯
                 </button>
 
-                {/* text / attachments */}
-                {m.text && <p>{m.text}</p>}
-                {m.attachment && <a className="attach" href={m.attachment} target="_blank" rel="noreferrer">Attachment</a>}
-                {m.audio && <VoiceMessage src={m.audio} />}
+                {m.pinned && (<div className="pin-flag">📌 Pinned</div>)}
+                {m.starred && <div className="meta-row"><span className="star">★</span> Starred</div>}
+                {m.note && <div className="note-chip">Note: {m.note}</div>}
 
-                {/* timestamp */}
+                {m.reply_to && (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="reply-preview actionable"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!selectionMode) scrollToMessage(replyTargetId)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (!selectionMode) scrollToMessage(replyTargetId)
+                      }
+                    }}
+                  >
+                    <strong>{m.reply_to.sender_name}</strong>
+                    <div>{m.reply_to.text || (m.reply_to.attachment ? 'Attachment' : '')}</div>
+                  </div>
+                )}
+
+                {m.forwarded_from && (
+                  <div className="reply-preview">
+                    <strong>Forwarded from {m.forwarded_from.sender_name}</strong>
+                    <div>{m.forwarded_from.text || (m.forwarded_from.attachment ? 'Attachment' : '')}</div>
+                  </div>
+                )}
+
+                {m.text && <p>{m.text}</p>}
+                {attachment.node}
+
                 <span className="time">
                   {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                 </span>
 
-                {/* reactions summary chips */}
                 {reactionPairs.length > 0 && (
                   <div className="rxn-chips">
                     {reactionPairs.map(([emoji, arr]: any) => (
@@ -510,7 +1077,6 @@ export default function ChatRoom() {
                   </div>
                 )}
 
-                {/* quick reactions trigger (smiley button) */}
                 <button
                   className="react-btn"
                   aria-label="React"
@@ -532,6 +1098,7 @@ export default function ChatRoom() {
             <div className="attach-menu">
               <button className="attach-item" onClick={() => docRef.current?.click()}>📄 Document</button>
               <button className="attach-item" onClick={() => mediaRef.current?.click()}>🖼️ Photos & Videos</button>
+              <button className="attach-item" onClick={() => gifRef.current?.click()}>🎞️ GIF</button>
               <button className="attach-item" onClick={() => audioRef.current?.click()}>🎧 Audio</button>
               <button className="attach-item" onClick={pickContact}>👤 Contact</button>
             </div>
@@ -549,9 +1116,19 @@ export default function ChatRoom() {
           )}
           <input ref={docRef} type="file" onChange={onDocPicked} hidden />
           <input ref={mediaRef} type="file" accept="image/*,video/*" onChange={onMediaPicked} hidden />
+          <input ref={gifRef} type="file" accept="image/gif" onChange={onGifPicked} hidden />
           <input ref={audioRef} type="file" accept="audio/*" onChange={onAudioPicked} hidden />
           <input ref={vcardRef} type="file" accept=".vcf,text/vcard" hidden />
         </div>
+
+        {composerContext && (
+          <div className="composer-context">
+            <div className="context-body">
+              <strong>{composerContext.type === 'reply' ? 'Replying to' : 'Forwarding'}</strong> {composerContext.message?.sender_name || 'message'}
+            </div>
+            <button type="button" onClick={() => setComposerContext(null)}>✕</button>
+          </div>
+        )}
 
         <input
           value={draft}
@@ -592,26 +1169,26 @@ export default function ChatRoom() {
                 </li>
               ))}
             </ul>
-            {isAdmin && <button className="btn small" onClick={goInvite}>+ Invite</button>}
+            {isAdmin && <button className="btn small" onClick={() => navigate(`/chat/${roomId}/invite`)}>+ Invite</button>}
           </div>
         </aside>
       )}
 
-      {/* context menu */}
       <MessageMenu
-        open={ctx.open}
-        x={ctx.x}
-        y={ctx.y}
-        mine={ctx.mine}
-        onClose={() => setCtx(s => ({ ...s, open: false }))}
-        onCopy={doCopy}
-        // placeholders for your future handlers:
-        onForward={() => setCtx(s => ({ ...s, open: false }))}
-        onEdit={() => setCtx(s => ({ ...s, open: false }))}
-        onDelete={() => setCtx(s => ({ ...s, open: false }))}
+        open={menuState.open}
+        x={menuState.x}
+        y={menuState.y}
+        actions={menuActions}
+        onClose={closeMenu}
       />
 
-      {/* quick reactions popover */}
+      <MessageInfoModal
+        open={infoState.open}
+        loading={infoState.loading}
+        data={infoState.data}
+        onClose={() => setInfoState({ open: false, loading: false })}
+      />
+
       {reactAnchor && (
         <ReactionsBar
           x={reactAnchor.x}

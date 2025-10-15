@@ -17,6 +17,7 @@ import AuthModal from './shared/AuthModal'
 import ProfileModal from './shared/ProfileModal'
 
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { PreferencesProvider } from './context/PreferencesContext'
 import ProtectedRoute from './routes/ProtectedRoute'
 import { getInitials } from './shared/utils'
 
@@ -125,9 +126,11 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <PreferencesProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </PreferencesProvider>
     </AuthProvider>
   )
 }

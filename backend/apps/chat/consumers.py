@@ -13,8 +13,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 
-from apps.chat.models import ChatRoom, Message, SystemMessage
+from apps.chat.models import ChatRoom, Message, SystemMessage, MessageUserMeta
 from apps.accounts.models import DeviceSession
 
 User = get_user_model()
@@ -41,9 +42,57 @@ def _reactions_to_dict(message: Message) -> dict:
     return dict(grouped)
 
 
-def _msg_to_dict(m: Message) -> dict:
-    """Return a JSON-serializable message dict the frontend expects."""
+def _reply_stub(msg: Message | None):
+    if not msg:
+        return None
+    sender = getattr(msg, "sender", None)
     return {
+        "id": str(msg.id),
+        "sender_id": msg.sender_id,
+        "sender_name": _user_display(sender or msg.sender),
+        "text": msg.content or "",
+        "attachment": msg.attachment.url if getattr(msg, "attachment", None) else None,
+        "audio": msg.voice_note.url if getattr(msg, "voice_note", None) else None,
+        "created_at": msg.created_at.isoformat() if getattr(msg, "created_at", None) else None,
+    }
+
+
+def _attachment_info(message: Message) -> dict:
+    info = {
+        "name": None,
+        "size": None,
+        "content_type": message.file_type or None,
+        "thumbnail": message.thumbnail.url if getattr(message, "thumbnail", None) else None,
+    }
+    if getattr(message, "attachment", None):
+        try:
+            info["name"] = message.attachment.name.split("/")[-1]
+        except Exception:
+            info["name"] = message.attachment.name
+        try:
+            info["size"] = message.attachment.size
+        except Exception:
+            info["size"] = None
+    return info
+
+
+def _msg_to_dict(m: Message, *, current_user_id: str | None = None) -> dict:
+    """Return a JSON-serializable message dict the frontend expects."""
+    meta = None
+    include_meta = current_user_id is not None
+    if include_meta:
+        meta_list = getattr(m, "meta_for_user", None) or []
+        if meta_list:
+            meta = meta_list[0]
+
+    pinned_by_payload = None
+    if getattr(m, "pinned_by", None):
+        pinned_by_payload = {
+            "id": m.pinned_by_id,
+            "name": _user_display(m.pinned_by),
+        }
+
+    payload = {
         "type": "message",
         "id": str(m.id),
         "sender_id": m.sender_id,
@@ -56,9 +105,24 @@ def _msg_to_dict(m: Message) -> dict:
             if getattr(m, "voice_note", None)
             else None
         ),
+        "attachment_info": _attachment_info(m),
+        "reply_to": _reply_stub(getattr(m, "reply_to", None)),
+        "forwarded_from": _reply_stub(getattr(m, "forwarded_from", None)),
+        "pinned": bool(getattr(m, "pinned", False)),
+        "pinned_by": pinned_by_payload,
         "created_at": m.created_at.isoformat(),
         "reactions": _reactions_to_dict(m),
+        "duration": getattr(m, "duration", None),
     }
+    if include_meta:
+        payload.update(
+            {
+                "starred": bool(getattr(meta, "starred", False)) if meta else False,
+                "note": getattr(meta, "note", "") if meta else "",
+                "deleted_for_me": bool(getattr(meta, "deleted_for_me", False)) if meta else False,
+            }
+        )
+    return payload
 
 
 def _sys_to_dict(s: SystemMessage) -> dict:
@@ -105,7 +169,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self._auto_mark_delivered(self.room_id, self.user.id)
 
         # Send history safely (no FieldFile objects)
-        messages = await self._get_last_messages(self.room_id)
+        messages = await self._get_last_messages(self.room_id, self.user.id)
         await self.send(text_data=json.dumps({"type": "history", "messages": messages}))
 
         # announce online
@@ -211,12 +275,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # text message
         if msg_type == "message":
             content = (data.get("content") or "").strip()
-            if not content:
+            if not content and not data.get("reply_to_id") and not data.get("forwarded_from_id"):
                 return
             client_id = data.get("_client_id")
-            payload = await self._save_message(self.room_id, self.user.id, content)
-            if client_id:
-                payload["_client_id"] = client_id  # allow optimistic replacement
+            payload = await self._save_message(
+                self.room_id,
+                self.user.id,
+                content,
+                reply_to_id=data.get("reply_to_id"),
+                forwarded_from_id=data.get("forwarded_from_id"),
+                starred=bool(data.get("starred")),
+                note=data.get("note") or "",
+                client_id=client_id,
+            )
             await self.channel_layer.group_send(
                 self.group_name,
                 {"type": "chat_message", "payload": payload},
@@ -308,6 +379,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "timestamp": str(timezone.now()),
         }))
 
+    async def message_update(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "message_update",
+            "payload": event.get("payload", {}),
+        }))
+
+    async def message_remove(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "message_remove",
+            "message_id": event.get("message_id"),
+        }))
+
+    async def message_remove_bulk(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "message_remove_bulk",
+            "message_ids": event.get("message_ids", []),
+        }))
+
+    async def message_meta(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "message_meta",
+            "payload": event.get("payload", {}),
+        }))
+
     # ---------------- DB helpers ----------------
     @database_sync_to_async
     def _is_participant(self, user_id, room_id):
@@ -318,22 +413,68 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return False
 
     @database_sync_to_async
-    def _save_message(self, room_id, user_id, content):
-        msg = Message.objects.create(room_id=room_id, sender_id=user_id, content=content)
-        return _msg_to_dict(msg)
+    def _save_message(self, room_id, user_id, content, *, reply_to_id=None, forwarded_from_id=None, starred=False, note="", client_id=None):
+        msg = Message.objects.create(
+            room_id=room_id,
+            sender_id=user_id,
+            content=content,
+            reply_to_id=reply_to_id,
+            forwarded_from_id=forwarded_from_id,
+        )
+
+        meta = None
+        if starred or note:
+            meta, _ = MessageUserMeta.objects.update_or_create(
+                message=msg,
+                user_id=user_id,
+                defaults={
+                    "starred": starred,
+                    "note": note,
+                    "deleted_for_me": False,
+                },
+            )
+        if meta:
+            msg.meta_for_user = [meta]
+        else:
+            msg.meta_for_user = []
+
+        payload = _msg_to_dict(msg, current_user_id=user_id)
+        if client_id:
+            payload["_client_id"] = client_id
+        return payload
 
     @database_sync_to_async
-    def _get_last_messages(self, room_id, limit=50):
+    def _get_last_messages(self, room_id, user_id, limit=50):
         msgs = list(
             Message.objects.filter(room_id=room_id)
-            .select_related("sender")
-            .prefetch_related("reactions")
+            .select_related(
+                "sender",
+                "reply_to",
+                "reply_to__sender",
+                "forwarded_from",
+                "forwarded_from__sender",
+                "pinned_by",
+            )
+            .prefetch_related(
+                "reactions",
+                Prefetch(
+                    "user_meta",
+                    queryset=MessageUserMeta.objects.filter(user_id=user_id),
+                    to_attr="meta_for_user",
+                ),
+            )
             .order_by("-created_at")[:limit]
         )
         sys = list(SystemMessage.objects.filter(room_id=room_id).order_by("-created_at")[:limit])
 
         # serialize and sort by created_at
-        payload = [_msg_to_dict(m) for m in msgs] + [_sys_to_dict(s) for s in sys]
+        payload = []
+        for m in msgs:
+            meta_list = getattr(m, "meta_for_user", None) or []
+            if meta_list and getattr(meta_list[0], "deleted_for_me", False):
+                continue
+            payload.append(_msg_to_dict(m, current_user_id=user_id))
+        payload.extend([_sys_to_dict(s) for s in sys])
         payload.sort(key=lambda x: x["created_at"])
         return payload[-limit:]
 

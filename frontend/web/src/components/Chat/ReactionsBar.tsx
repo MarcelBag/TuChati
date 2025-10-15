@@ -2,7 +2,7 @@
 import React from 'react'
 import './Reactions.css'
 
-export const REACTION_SET = ['👍','❤️','😂','😮','😢','🙏','🔥','👏','💯','😡']
+export const REACTION_SET = ['👍','❤️','😂','😮','😢','🙏','🔥','👏','💯','😡','🤗','🤩','😎','😴','🤔','🙌','🥳','🤯','🫶','💥','✨']
 
 export default function ReactionsBar({
   x, y, onPick, onClose,

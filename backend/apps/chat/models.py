@@ -62,6 +62,13 @@ class Message(models.Model):
     reply_to = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="replies")
     forwarded_from = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="forwards")
     pinned = models.BooleanField(default=False)
+    pinned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pinned_messages",
+    )
     expires_at = models.DateTimeField(blank=True, null=True)
     is_system = models.BooleanField(default=False)
 
@@ -117,3 +124,34 @@ class MessageReaction(models.Model):
 
     def __str__(self):
         return f"{self.user} reacted {self.emoji} to {self.message.id}"
+
+
+class MessageUserMeta(models.Model):
+    """Per-user metadata for a message (star, notes, deleted-for-me)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name="user_meta",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="message_meta",
+    )
+    starred = models.BooleanField(default=False)
+    note = models.TextField(blank=True)
+    deleted_for_me = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("message", "user")
+        indexes = [
+            models.Index(fields=("user", "starred")),
+            models.Index(fields=("message", "deleted_for_me")),
+        ]
+
+    def __str__(self) -> str:
+        return f"Meta<{self.user_id}:{self.message_id}>"

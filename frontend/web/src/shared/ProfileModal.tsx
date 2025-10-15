@@ -2,6 +2,7 @@
 import React from 'react'
 import { apiFetch } from './api'
 import { useAuth } from '../context/AuthContext'
+import { usePreferences } from '../context/PreferencesContext'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeSwitcher from './ThemeSwitcher'
 import { getInitials } from './utils'
@@ -21,7 +22,8 @@ type SessionItem = {
 }
 
 export default function ProfileModal({ onClose }: { onClose: () => void }) {
-  const { user, token, setUser, logout } = useAuth()
+  const { user, token, setUser, logout } = useAuth() as any
+  const { prefs, update: updatePrefs, reset: resetPrefs } = usePreferences()
   const [tab, setTab] = React.useState<TabKey>('account')
   const [busy, setBusy] = React.useState(false)
   const [msg, setMsg] = React.useState<string | null>(null)
@@ -422,12 +424,81 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
               <div className="pref-row">
                 <div>
                   <h4>Notifications</h4>
-                  <p>Receive in-app notifications.</p>
+                  <p>Receive in-app alerts for new messages.</p>
                 </div>
                 <label className="switch">
-                  <input type="checkbox" defaultChecked />
+                  <input
+                    type="checkbox"
+                    checked={prefs.notificationsEnabled}
+                    onChange={(e) => updatePrefs({ notificationsEnabled: e.target.checked })}
+                  />
                   <span className="slider" />
                 </label>
+              </div>
+              <div className="pref-row">
+                <div>
+                  <h4>Sounds</h4>
+                  <p>Play a tone when you send or receive a message.</p>
+                  <div className="pref-inline">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={prefs.playSendSound}
+                        onChange={(e) => updatePrefs({ playSendSound: e.target.checked })}
+                      />
+                      <span>Send</span>
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={prefs.playReceiveSound}
+                        onChange={(e) => updatePrefs({ playReceiveSound: e.target.checked })}
+                      />
+                      <span>Receive</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="pref-row">
+                <div>
+                  <h4>Media auto-download</h4>
+                  <p>Choose whether media previews load automatically.</p>
+                  <div className="pref-media-grid">
+                    <label>
+                      <span>Images</span>
+                      <select
+                        value={prefs.autoDownloadImages}
+                        onChange={(e) => updatePrefs({ autoDownloadImages: e.target.value as any })}
+                      >
+                        <option value="stream">Auto preview</option>
+                        <option value="manual">Tap to download</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Videos</span>
+                      <select
+                        value={prefs.autoDownloadVideos}
+                        onChange={(e) => updatePrefs({ autoDownloadVideos: e.target.value as any })}
+                      >
+                        <option value="stream">Auto preview</option>
+                        <option value="manual">Tap to download</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>Audio</span>
+                      <select
+                        value={prefs.autoDownloadAudio}
+                        onChange={(e) => updatePrefs({ autoDownloadAudio: e.target.value as any })}
+                      >
+                        <option value="stream">Auto play</option>
+                        <option value="manual">Tap to play</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div className="pref-actions">
+                  <button type="button" className="btn" onClick={resetPrefs}>Reset</button>
+                </div>
               </div>
             </div>
           )}

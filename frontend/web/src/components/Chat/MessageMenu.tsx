@@ -1,28 +1,34 @@
-// frontend/web/src/components/MessageMenu.tsx
 import React from 'react'
 import './Reactions.css'
 
-export default function MessageMenu({
-  open, x, y, mine,
-  onClose, onCopy, onForward, onEdit, onDelete,
-}: {
-  open: boolean; x: number; y: number; mine: boolean
+export type MessageMenuAction = {
+  key: string
+  label: string
+  onClick: () => void
+  danger?: boolean
+  icon?: React.ReactNode
+  separatorBefore?: boolean
+  disabled?: boolean
+}
+
+type Props = {
+  open: boolean
+  x: number
+  y: number
+  actions: MessageMenuAction[]
   onClose: () => void
-  onCopy: () => void
-  onForward: () => void
-  onEdit: () => void
-  onDelete: () => void
-}) {
+}
+
+export default function MessageMenu({ open, x, y, actions, onClose }: Props) {
   React.useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    const onClick = () => onClose()
-    if (open) {
-      window.addEventListener('keydown', onEsc)
-      window.addEventListener('click', onClick)
-    }
+    if (!open) return
+    const handleKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
+    const handleClick = () => onClose()
+    window.addEventListener('keydown', handleKey)
+    window.addEventListener('click', handleClick)
     return () => {
-      window.removeEventListener('keydown', onEsc)
-      window.removeEventListener('click', onClick)
+      window.removeEventListener('keydown', handleKey)
+      window.removeEventListener('click', handleClick)
     }
   }, [open, onClose])
 
@@ -31,18 +37,28 @@ export default function MessageMenu({
   return (
     <div className="ctx-wrap" onClick={onClose}>
       <div
-        className="menu ctx"
+        className="menu ctx message-menu"
         style={{ left: x, top: y }}
-        onClick={e => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
-        <button className="menu-item">Info</button>
-        <button className="menu-item" onClick={onForward}>Forward</button>
-        <button className="menu-item" onClick={onCopy}>Copy</button>
-        {mine && <button className="menu-item">Reply</button>}
-        {mine && <button className="menu-item">Pin</button>}
-        {mine && <button className="menu-item">Star</button>}
-        {mine && <button className="menu-item">Add to notes</button>}
-        {mine && <button className="menu-item danger" onClick={onDelete}>Delete</button>}
+        {actions.map(action => (
+          <React.Fragment key={action.key}>
+            {action.separatorBefore && <div className="menu-separator" />}
+            <button
+              type="button"
+              className={`menu-item ${action.danger ? 'danger' : ''}`}
+              onClick={() => {
+                if (action.disabled) return
+                action.onClick()
+                onClose()
+              }}
+              disabled={action.disabled}
+            >
+              {action.icon && <span className="menu-icon">{action.icon}</span>}
+              <span>{action.label}</span>
+            </button>
+          </React.Fragment>
+        ))}
       </div>
     </div>
   )

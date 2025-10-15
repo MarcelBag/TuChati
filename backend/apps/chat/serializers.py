@@ -5,7 +5,8 @@
 from django.db.models import Max
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import ChatRoom, Message
+from .models import ChatRoom, Message, MessageUserMeta
+from .consumers import _msg_to_dict
 
 User = get_user_model()
 
@@ -100,8 +101,13 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = serializers.SerializerMethodField()
+    sender = serializers.SerializerMethodField(read_only=True)
     audio = serializers.FileField(source="voice_note", allow_null=True, required=False)
+    reply_to_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    forwarded_from_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    starred = serializers.BooleanField(write_only=True, required=False)
+    note = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    _client_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = Message
@@ -112,7 +118,16 @@ class MessageSerializer(serializers.ModelSerializer):
             "audio",
             "created_at",
             "sender",
+            "reply_to_id",
+            "forwarded_from_id",
+            "starred",
+            "note",
+            "_client_id",
         ]
+        extra_kwargs = {
+            "content": {"allow_blank": True, "required": False},
+            "attachment": {"required": False},
+        }
 
     def validate(self, attrs):
         max_bytes = 3 * 1024 * 1024
@@ -127,6 +142,57 @@ class MessageSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            raise serializers.ValidationError("Authentication required")
+
+        reply_to_id = validated_data.pop("reply_to_id", None)
+        forwarded_from_id = validated_data.pop("forwarded_from_id", None)
+        starred = validated_data.pop("starred", False)
+        note = validated_data.pop("note", "")
+        validated_data.pop("_client_id", None)
+
+        message = Message.objects.create(
+            reply_to_id=reply_to_id,
+            forwarded_from_id=forwarded_from_id,
+            **validated_data,
+        )
+
+        meta_obj = None
+        if note or starred:
+            meta_obj, _ = MessageUserMeta.objects.update_or_create(
+                message=message,
+                user=user,
+                defaults={
+                    "starred": starred,
+                    "note": note,
+                    "deleted_for_me": False,
+                },
+            )
+        else:
+            meta_obj = None
+
+        message.sender = user
+        message.meta_for_user = [meta_obj] if meta_obj else []
+
+        return message
+
+    def to_representation(self, instance: Message):
+        request = self.context.get("request")
+        current_user_id = None
+        if request and getattr(request, "user", None) and request.user.is_authenticated:
+            current_user_id = request.user.id
+            if not hasattr(instance, "meta_for_user"):
+                instance.meta_for_user = list(
+                    MessageUserMeta.objects.filter(message=instance, user_id=current_user_id)
+                )
+
+        data = _msg_to_dict(instance, current_user_id=current_user_id)
+        data["sender"] = self.get_sender(instance)
+        return data
 
     def get_sender(self, obj: Message):
         u = obj.sender

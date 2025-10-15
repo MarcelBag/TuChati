@@ -22,18 +22,26 @@ function getInitialTheme(): Theme {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = React.useState<Theme>(getInitialTheme)
 
+  const applyTheme = React.useCallback((next: Theme) => {
+    const root = document.documentElement
+    root.setAttribute('data-theme', next)
+    root.classList.toggle('light', next === 'light')
+    root.classList.toggle('dark', next === 'dark')
+    document.body.classList.toggle('light', next === 'light')
+    document.body.classList.toggle('dark', next === 'dark')
+  }, [])
+
   const setTheme = (t: Theme) => {
     setThemeState(t)
-    document.documentElement.setAttribute('data-theme', t)
+    applyTheme(t)
     localStorage.setItem(THEME_KEY, t)
   }
 
   const toggle = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
   React.useEffect(() => {
-    // ensure attribute is set on first render
-    document.documentElement.setAttribute('data-theme', theme)
-  }, []) // eslint-disable-line
+    applyTheme(theme)
+  }, [applyTheme, theme])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggle }}>

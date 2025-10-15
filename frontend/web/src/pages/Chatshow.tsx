@@ -15,10 +15,7 @@ import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
 import './ChatRoom.css'
 import ReactionsBar from '../components/Chat/ReactionsBar'
-import MessageMenu from '../components/Chat/MessageMenu'
 import VoiceMessage from '../components/Chat/VoiceMessage'
-
-type CtxState = { open: boolean; x: number; y: number; id: string | number | null; mine: boolean }
 
 function formatDayLabel(d: Date) {
   const now = new Date()
@@ -47,7 +44,6 @@ export default function ChatRoom() {
   const [showAttach, setShowAttach] = React.useState(false)
   const [isRecording, setIsRecording] = React.useState(false)
   const [uploading, setUploading] = React.useState(false)
-  const [ctx, setCtx] = React.useState<CtxState>({ open: false, x: 0, y: 0, id: null, mine: false })
   const [reactAnchor, setReactAnchor] = React.useState<{ id: string | number | null, x: number, y: number } | null>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
 
@@ -364,20 +360,6 @@ export default function ChatRoom() {
   const stopRecording = () => { mediaRecorderRef.current?.stop(); mediaRecorderRef.current = null; setIsRecording(false) }
 
   // ---- Context menu (3-dots) ----
-  const closeCtx = () => setCtx(s => ({ ...s, open: false }))
-  React.useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === 'Escape' && closeCtx()
-    const onClick = () => closeCtx()
-    if (ctx.open) { window.addEventListener('keydown', onEsc); window.addEventListener('click', onClick) }
-    return () => { window.removeEventListener('keydown', onEsc); window.removeEventListener('click', onClick) }
-  }, [ctx.open])
-
-  const doCopy = async () => {
-    const msg: any = messages.find((m: any) => (m.id ?? m._client_id) === ctx.id)
-    try { await navigator.clipboard.writeText(msg?.text ?? '') } catch {}
-    closeCtx()
-  }
-
   const isGroup = !!room?.is_group
   const isAdmin = !!room?.is_admin || (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
   const goInvite = () => navigate(`/chat/${roomId}/invite`)
@@ -556,19 +538,6 @@ export default function ChatRoom() {
           </div>
         </aside>
       )}
-
-      {/* context menu */}
-      <MessageMenu
-        open={ctx.open}
-        x={ctx.x}
-        y={ctx.y}
-        mine={ctx.mine}
-        onClose={() => setCtx(s => ({ ...s, open: false }))}
-        onCopy={doCopy}
-        onForward={() => setCtx(s => ({ ...s, open: false }))}
-        onEdit={() => setCtx(s => ({ ...s, open: false }))}
-        onDelete={() => setCtx(s => ({ ...s, open: false }))}
-      />
 
       {/* quick reactions popover */}
       {reactAnchor && (
