@@ -33,6 +33,8 @@ function formatDayLabel(d: Date) {
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const AUDIO_MIME_CANDIDATES = [
   { mime: 'audio/mp4;codecs=mp4a.40.2', ext: 'm4a' },
   { mime: 'audio/webm;codecs=opus', ext: 'webm' },
@@ -286,52 +288,58 @@ export default function ChatRoom() {
     setComposerContext({ type: 'forward', message })
   }, [])
 
+  const isServerId = React.useCallback((value: any) => typeof value === 'string' && UUID_PATTERN.test(value), [])
+
   const handleDelete = React.useCallback(async (message: any, scope: 'me' | 'all' = 'me') => {
     const targetId = message?.id ?? message?._client_id
     if (!targetId) return
-    // FIXED boolean op: and -> &&
-    if (!roomId || !message?.id || (scope === 'me' && !message?.id)) {
+
+    const serverId = isServerId(message?.id ? String(message.id) : '') ? String(message.id) : null
+    if (!roomId || !serverId) {
       removeMessagesLocal([String(targetId)])
       if (selectionMode) clearSelection()
       return
     }
+
     try {
-      await deleteMessage(roomId, message.id, scope)
+      await deleteMessage(roomId, serverId, scope)
       removeMessagesLocal([String(targetId)])
       if (selectionMode) clearSelection()
     } catch (error: any) {
       alert(error?.message || 'Failed to delete message')
     }
-  }, [clearSelection, removeMessagesLocal, roomId, selectionMode])
+  }, [clearSelection, isServerId, removeMessagesLocal, roomId, selectionMode])
 
   const handleBulkDelete = React.useCallback(async (scope: 'me' | 'all' = 'me') => {
     if (!roomId || selectedIds.length === 0) return
-    const realIds = selectedIds.filter(id => {
-      const msg = messages.find((m: any) => String(m.id) === id)
-      return !!msg
+
+    const serverIds: string[] = []
+    const localOnly: string[] = []
+
+    selectedIds.forEach((id) => {
+      const msg = messages.find((m: any) => String(m.id) === id || String(m._client_id) === id)
+      if (!msg) return
+      if (isServerId(msg.id)) serverIds.push(String(msg.id))
+      else localOnly.push(String(msg._client_id ?? msg.id))
     })
-    if (scope === 'all' && realIds.length === 0) {
-      alert('Only delivered messages can be removed for everyone.')
-      return
-    }
-    if (scope === 'me' && realIds.length === 0) {
-      removeMessagesLocal(selectedIds)
-      clearSelection()
-      return
-    }
+
     try {
       if (scope === 'all') {
-        await deleteMessages(roomId, realIds, 'all')
-        removeMessagesLocal(realIds)
+        if (serverIds.length === 0) {
+          alert('Only delivered messages can be deleted for everyone.')
+          return
+        }
+        await deleteMessages(roomId, serverIds, 'all')
+        removeMessagesLocal([...serverIds, ...localOnly])
       } else {
-        await deleteMessages(roomId, realIds, 'me')
-        removeMessagesLocal(selectedIds)
+        if (serverIds.length > 0) await deleteMessages(roomId, serverIds, 'me')
+        removeMessagesLocal([...serverIds, ...localOnly])
       }
       clearSelection()
     } catch (error: any) {
       alert(error?.message || 'Failed to delete messages')
     }
-  }, [clearSelection, messages, removeMessagesLocal, roomId, selectedIds])
+  }, [clearSelection, isServerId, messages, removeMessagesLocal, roomId, selectedIds])
 
   type AttachmentRender = {
     node: React.ReactNode | null
@@ -511,13 +519,28 @@ export default function ChatRoom() {
         return
       case 'reaction': {
         const { message_id, emoji, user_id, op } = data
+        const uid = String(user_id)
         setMessages(prev => prev.map((m: any) => {
           if ((m.id ?? m._client_id) !== message_id) return m
-          const current = { ...(m.reactions || {}) }
-          const arr = new Set<string>(current[emoji] || [])
-          op === 'remove' ? arr.delete(String(user_id)) : arr.add(String(user_id))
-          current[emoji] = Array.from(arr)
-          return { ...m, reactions: current }
+          const next: Record<string, string[]> = {}
+          let removedTarget = false
+          Object.entries(m.reactions || {}).forEach(([key, list]) => {
+            const filtered = (list || []).filter(id => id !== uid)
+            if (filtered.length) {
+              next[key] = filtered
+            }
+            if (key === emoji && filtered.length !== (list || []).length) {
+              removedTarget = true
+            }
+          })
+
+          const shouldAdd = op !== 'remove' && !removedTarget
+          if (shouldAdd) {
+            const set = new Set<string>(next[emoji] || [])
+            set.add(uid)
+            next[emoji] = Array.from(set)
+          }
+          return { ...m, reactions: next }
         }))
         return
       }
@@ -602,17 +625,33 @@ export default function ChatRoom() {
   // reactions (optimistic update + WS notify)
   const toggleReaction = (messageId: string | number, emoji: string) => {
     const uid = String(user?.id ?? 'me')
+    const target = messages.find((m: any) => (m.id ?? m._client_id) === messageId)
+    const previousEntry = Object.entries(target?.reactions || {}).find(([, list]) => Array.isArray(list) && list.includes(uid))
+    const previousEmoji = previousEntry ? previousEntry[0] : null
+    const sameEmoji = previousEmoji === emoji
+
     setMessages(prev => prev.map((m:any) => {
       if ((m.id ?? m._client_id) !== messageId) return m
-      const current = { ...(m.reactions || {}) }
-      const set = new Set<string>(current[emoji] || [])
-      const had = set.has(uid)
-      if (had) set.delete(uid); else set.add(uid)
-      current[emoji] = Array.from(set)
-      return { ...m, reactions: current }
+      const next: Record<string, string[]> = {}
+      Object.entries(m.reactions || {}).forEach(([key, list]) => {
+        const filtered = (list || []).filter(id => id !== uid)
+        if (filtered.length) next[key] = filtered
+      })
+      if (!sameEmoji) {
+        const set = new Set<string>(next[emoji] || [])
+        set.add(uid)
+        next[emoji] = Array.from(set)
+      }
+      return { ...m, reactions: next }
     }))
+
     try {
-      sendMessage({ type: 'reaction', message_id: messageId, emoji })
+      if (sameEmoji) {
+        sendMessage({ type: 'reaction', message_id: messageId, emoji })
+      } else {
+        if (previousEmoji) sendMessage({ type: 'reaction', message_id: messageId, emoji: previousEmoji })
+        sendMessage({ type: 'reaction', message_id: messageId, emoji })
+      }
     } catch {}
   }
 
@@ -829,9 +868,10 @@ export default function ChatRoom() {
     const message = menuState.message
     if (!menuState.open || !message) return []
     const mine = message.is_me || message.sender_id === user?.id
+    const hasServerId = isServerId(message?.id ? String(message.id) : '')
     const actions: MessageMenuAction[] = []
 
-    actions.push({ key: 'info', label: 'Info', onClick: () => handleInfo(message) })
+    actions.push({ key: 'info', label: 'Info', onClick: () => handleInfo(message), disabled: !hasServerId })
     actions.push({ key: 'reply', label: 'Reply', onClick: () => handleReply(message) })
     actions.push({ key: 'forward', label: 'Forward', onClick: () => handleForward(message) })
 
@@ -844,12 +884,14 @@ export default function ChatRoom() {
       label: message.starred ? 'Unstar' : 'Star',
       onClick: () => handleStarToggle(message),
       separatorBefore: true,
+      disabled: !hasServerId,
     })
 
     actions.push({
       key: 'note',
       label: message.note ? 'Edit note' : 'Add note',
       onClick: () => handleNoteEdit(message),
+      disabled: !hasServerId,
     })
 
     if (mine || isAdmin) {
@@ -857,6 +899,7 @@ export default function ChatRoom() {
         key: 'pin',
         label: message.pinned ? 'Unpin' : 'Pin',
         onClick: () => handlePinToggle(message),
+        disabled: !hasServerId,
       })
     }
 
@@ -880,6 +923,7 @@ export default function ChatRoom() {
         label: 'Delete for everyone',
         onClick: () => handleDelete(message, 'all'),
         danger: true,
+        disabled: !hasServerId,
       })
     }
 
@@ -894,6 +938,7 @@ export default function ChatRoom() {
     handleStarToggle,
     handleCopy,
     isAdmin,
+    isServerId,
     menuState.message,
     menuState.open,
     selectionMode,
