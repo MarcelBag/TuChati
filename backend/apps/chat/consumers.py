@@ -92,6 +92,9 @@ def _msg_to_dict(m: Message, *, current_user_id: str | None = None) -> dict:
             "name": _user_display(m.pinned_by),
         }
 
+    delivered_to = list(getattr(m, "delivered_to", []).all() if hasattr(m, "delivered_to") else [])
+    read_by = list(getattr(m, "read_by", []).all() if hasattr(m, "read_by") else [])
+
     payload = {
         "type": "message",
         "id": str(m.id),
@@ -113,6 +116,10 @@ def _msg_to_dict(m: Message, *, current_user_id: str | None = None) -> dict:
         "created_at": m.created_at.isoformat(),
         "reactions": _reactions_to_dict(m),
         "duration": getattr(m, "duration", None),
+        "delivered_to": [str(u.id) for u in delivered_to],
+        "delivered_at": getattr(m, "delivered_at", None).isoformat() if getattr(m, "delivered_at", None) else None,
+        "read_by": [str(u.id) for u in read_by],
+        "read_at": getattr(m, "read_at", None).isoformat() if getattr(m, "read_at", None) else None,
     }
     if include_meta:
         payload.update(
@@ -250,7 +257,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self._auto_mark_read(self.room_id, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {"type": "message_delivery", "status": "read", "user": self.user.username, "ids": []},
+                {
+                    "type": "message_delivery",
+                    "status": "read",
+                    "user": self.user.username,
+                    "user_id": self.user.id,
+                    "ids": [],
+                },
             )
             return
 
@@ -259,7 +272,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self._mark_delivered(ids, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {"type": "message_delivery", "status": "delivered", "user": self.user.username, "ids": ids},
+                {
+                    "type": "message_delivery",
+                    "status": "delivered",
+                    "user": self.user.username,
+                    "user_id": self.user.id,
+                    "ids": ids,
+                },
             )
             return
 
@@ -268,7 +287,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self._mark_read(ids, self.user.id)
             await self.channel_layer.group_send(
                 self.group_name,
-                {"type": "message_delivery", "status": "read", "user": self.user.username, "ids": ids},
+                {
+                    "type": "message_delivery",
+                    "status": "read",
+                    "user": self.user.username,
+                    "user_id": self.user.id,
+                    "ids": ids,
+                },
             )
             return
 
@@ -347,6 +372,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "delivery",
             "status": event["status"],
             "user": event["user"],
+            "user_id": event.get("user_id"),
             "ids": event["ids"],
         }))
 

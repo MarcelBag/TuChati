@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db.models import Q
 
 from .serializers import (
     RegisterSerializer,
@@ -122,3 +123,35 @@ class LogoutAllView(APIView):
         current_token = (request.META.get("HTTP_AUTHORIZATION") or "")[7:]  # strip "Bearer "
         DeviceSession.objects.filter(user=request.user, is_active=True).exclude(token=current_token).update(is_active=False)
         return Response({"detail": "Logged out from all other devices."}, status=status.HTTP_200_OK)
+
+
+class UserSearchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        query = (request.query_params.get('q') or '').strip()
+        if not query:
+            return Response([], status=status.HTTP_200_OK)
+
+        qs = (
+            User.objects.filter(
+                Q(username__icontains=query) |
+                Q(email__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query)
+            )
+            .exclude(id=request.user.id)
+            .order_by('username')[:25]
+        )
+
+        data = [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "name": (user.get_full_name() or user.username),
+            }
+            for user in qs
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)

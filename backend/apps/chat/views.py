@@ -367,6 +367,8 @@ class MessageListCreateViewSet(viewsets.ModelViewSet):
                 "name": _user_display(message.sender),
             },
             "created_at": message.created_at.isoformat(),
+            "delivered_at": message.delivered_at.isoformat() if message.delivered_at else None,
+            "read_at": message.read_at.isoformat() if message.read_at else None,
             "content": message.content,
             "attachment": message.attachment.url if message.attachment else None,
             "audio": message.voice_note.url if message.voice_note else None,

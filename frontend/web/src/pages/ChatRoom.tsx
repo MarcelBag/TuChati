@@ -16,9 +16,11 @@ import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
 import MessageMenu, { MessageMenuAction } from '../components/Chat/MessageMenu'
 import VoiceMessage from '../components/Chat/VoiceMessage'
 import MessageInfoModal from '../components/Chat/MessageInfoModal'
+import ForwardMessageModal from '../components/Chat/ForwardMessageModal'
+import InviteUsersModal from '../components/Chat/InviteUsersModal'
 import { useChatNotifications } from '../hooks/useChatNotifications'
-import { useMediaPreference } from '../context/PreferencesContext'
-import { deleteMessage, deleteMessages, fetchMessageInfo, saveNote, setPinned, setStarred } from '../api/chatActions'
+import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
+import { deleteMessage, deleteMessages, fetchMessageInfo, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
 
 function formatDayLabel(d: Date) {
   const now = new Date()
@@ -64,7 +66,20 @@ export default function ChatRoom() {
   const [composerContext, setComposerContext] = React.useState<{ type: 'reply' | 'forward'; message: any } | null>(null)
   const [infoState, setInfoState] = React.useState<{ open: boolean; loading: boolean; data?: any; messageId?: string }>({ open: false, loading: false })
   const [reactAnchor, setReactAnchor] = React.useState<{ id: string | number | null, x: number, y: number } | null>(null)
+  const [forwardOpen, setForwardOpen] = React.useState(false)
+  const [forwardMessageTarget, setForwardMessageTarget] = React.useState<any | null>(null)
+  const [forwardRooms, setForwardRooms] = React.useState<any[]>([])
+  const [forwardSelected, setForwardSelected] = React.useState<string[]>([])
+  const [forwardLoading, setForwardLoading] = React.useState(false)
+  const [forwardSubmitting, setForwardSubmitting] = React.useState(false)
+  const [inviteOpen, setInviteOpen] = React.useState(false)
+  const [inviteLoading, setInviteLoading] = React.useState(false)
+  const [inviteSubmitting, setInviteSubmitting] = React.useState(false)
+  const [inviteUsersOptions, setInviteUsersOptions] = React.useState<any[]>([])
+  const [inviteSelected, setInviteSelected] = React.useState<string[]>([])
   const listRef = React.useRef<HTMLDivElement>(null)
+  const deliveredAckRef = React.useRef<Set<string>>(new Set())
+  const readAckRef = React.useRef<Set<string>>(new Set())
 
   const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -89,6 +104,7 @@ export default function ChatRoom() {
   const audioCtxRef = React.useRef<AudioContext | null>(null)
   const imagePreference = useMediaPreference('images')
   const videoPreference = useMediaPreference('videos')
+  const { prefs } = usePreferences()
 
   const toggleSelection = React.useCallback((id: string | number | null) => {
     const value = String(id)
@@ -130,6 +146,11 @@ export default function ChatRoom() {
   React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
 
   React.useEffect(() => {
+    deliveredAckRef.current.clear()
+    readAckRef.current.clear()
+  }, [roomId])
+
+  React.useEffect(() => {
     if (!roomId || !token) return
     ;(async () => {
       const r = await apiFetch(`/api/chat/rooms/${roomId}/`, {
@@ -163,6 +184,9 @@ export default function ChatRoom() {
       }
     }
 
+    const deliveredTo = Array.isArray(raw.delivered_to) ? raw.delivered_to.map((v: any) => String(v)) : []
+    const readBy = Array.isArray(raw.read_by) ? raw.read_by.map((v: any) => String(v)) : []
+
     return {
       id: raw.id ?? raw.uuid ?? `${raw.created_at || Date.now()}-${Math.random()}`,
       _client_id: raw._client_id,
@@ -183,8 +207,45 @@ export default function ChatRoom() {
       note: raw.note ?? '',
       deleted_for_me: !!raw.deleted_for_me,
       duration: raw.duration ?? null,
+      delivered_to: deliveredTo,
+      delivered_at: raw.delivered_at ?? null,
+      read_by: readBy,
+      read_at: raw.read_at ?? null,
     } as any
   }, [user?.id])
+
+  const myId = React.useMemo(() => String(user?.id ?? ''), [user?.id])
+  const memberIdSet = React.useMemo(() => {
+    const source = (room?.members || (room as any)?.participants || []) as any[]
+    const set = new Set<string>()
+    source.forEach((entry) => {
+      if (!entry) return
+      const value = entry.id ?? entry.user_id ?? entry
+      if (value !== undefined && value !== null) set.add(String(value))
+    })
+    return set
+  }, [room])
+
+  const existingUsernames = React.useMemo(() => {
+    const members = (room?.members || (room as any)?.participants || []) as any[]
+    const set = new Set<string>()
+    members.forEach((entry) => {
+      const username = entry?.username
+      if (username) set.add(String(username))
+    })
+    return set
+  }, [room])
+
+  const computeStatus = React.useCallback((message: any): 'sent' | 'delivered' | 'read' | null => {
+    if (!message || !message.is_me) return null
+    const others = Array.from(memberIdSet).filter(id => id && id !== myId)
+    if (!others.length) return 'sent'
+    const read = (message.read_by || []).filter((id: string) => id !== myId)
+    if (read.length >= others.length) return 'read'
+    const delivered = (message.delivered_to || []).filter((id: string) => id !== myId)
+    if (delivered.length >= others.length) return 'delivered'
+    return 'sent'
+  }, [memberIdSet, myId])
 
   // --- mergeMessage must come BEFORE any callbacks that depend on it ---
   const mergeMessage = React.useCallback((payload: any) => {
@@ -193,6 +254,7 @@ export default function ChatRoom() {
     if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
       normalized.is_me = true
     }
+    normalized.status = computeStatus(normalized)
 
     if (normalized.deleted_for_me && normalized.id) {
       removeMessagesLocal([normalized.id])
@@ -221,6 +283,7 @@ export default function ChatRoom() {
         if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
           updated.is_me = true
         }
+        updated.status = computeStatus(updated)
         if (JSON.stringify(existing) !== JSON.stringify(updated)) {
           changed = true
         }
@@ -230,10 +293,11 @@ export default function ChatRoom() {
       }
 
       changed = true
-      return [...prev, normalized]
+      const nextItem = { ...normalized, status: computeStatus(normalized) }
+      return [...prev, nextItem]
     })
     return changed
-  }, [removeMessagesLocal, user?.id])
+  }, [computeStatus, removeMessagesLocal, user?.id])
 
   const handlePinToggle = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
@@ -285,7 +349,17 @@ export default function ChatRoom() {
   }, [])
 
   const handleForward = React.useCallback((message: any) => {
-    setComposerContext({ type: 'forward', message })
+    setForwardMessageTarget(message)
+    setForwardSelected([])
+    setForwardOpen(true)
+  }, [])
+
+  const closeForwardModal = React.useCallback(() => {
+    setForwardOpen(false)
+    setForwardMessageTarget(null)
+    setForwardSelected([])
+    setForwardLoading(false)
+    setForwardSubmitting(false)
   }, [])
 
   const isServerId = React.useCallback((value: any) => typeof value === 'string' && UUID_PATTERN.test(value), [])
@@ -544,6 +618,29 @@ export default function ChatRoom() {
         }))
         return
       }
+      case 'delivery': {
+        const { status: deliveryStatus, ids, user_id } = data
+        const actorId = user_id ? String(user_id) : null
+        if (!Array.isArray(ids) || ids.length === 0 || !actorId) return
+        setMessages(prev => prev.map((m: any) => {
+          const messageId = m.id ?? m._client_id
+          if (!ids.includes(messageId)) return m
+          const next = { ...m }
+          const deliveredSet = new Set<string>(Array.isArray(next.delivered_to) ? next.delivered_to : [])
+          const readSet = new Set<string>(Array.isArray(next.read_by) ? next.read_by : [])
+          if (deliveryStatus === 'delivered' || deliveryStatus === 'read') {
+            deliveredSet.add(actorId)
+            next.delivered_to = Array.from(deliveredSet)
+            if (deliveryStatus === 'read') {
+              readSet.add(actorId)
+              next.read_by = Array.from(readSet)
+            }
+          }
+          next.status = computeStatus(next)
+          return next
+        }))
+        return
+      }
       case 'message_update':
       case 'message_meta': {
         const payload = normalizeMsg(data.payload)
@@ -571,7 +668,7 @@ export default function ChatRoom() {
         return
       }
     }
-  }, [historyLoaded, mergeMessage, normalizeMsg, playReceive, removeMessagesLocal, user?.id])
+  }, [computeStatus, historyLoaded, mergeMessage, normalizeMsg, playReceive, removeMessagesLocal, user?.id])
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
@@ -654,6 +751,188 @@ export default function ChatRoom() {
       }
     } catch {}
   }
+
+  React.useEffect(() => {
+    if (!prefs.shareDeliveryReceipts && !prefs.shareReadReceipts) return
+    const deliverIds: string[] = []
+    const readIds: string[] = []
+    messages.forEach((m: any) => {
+      const serverId = isServerId(m?.id ? String(m.id) : '') ? String(m.id) : null
+      if (!serverId || m.is_me) return
+      if (prefs.shareDeliveryReceipts && !deliveredAckRef.current.has(serverId)) {
+        const delivered = Array.isArray(m.delivered_to) ? m.delivered_to : []
+        if (!delivered.includes(myId)) {
+          deliverIds.push(serverId)
+        } else {
+          deliveredAckRef.current.add(serverId)
+        }
+      }
+      if (prefs.shareReadReceipts && !readAckRef.current.has(serverId)) {
+        const read = Array.isArray(m.read_by) ? m.read_by : []
+        if (!read.includes(myId)) {
+          readIds.push(serverId)
+        } else {
+          readAckRef.current.add(serverId)
+        }
+      }
+    })
+
+    if (deliverIds.length) {
+      try {
+        sendMessage({ type: 'delivered', ids: deliverIds })
+        deliverIds.forEach(id => deliveredAckRef.current.add(id))
+      } catch {}
+    }
+    if (readIds.length) {
+      try {
+        sendMessage({ type: 'read', ids: readIds })
+        readIds.forEach(id => readAckRef.current.add(id))
+      } catch {}
+    }
+  }, [isServerId, messages, myId, prefs.shareDeliveryReceipts, prefs.shareReadReceipts, sendMessage])
+
+  React.useEffect(() => {
+    if (!forwardOpen) return
+    let cancelled = false
+    setForwardLoading(true)
+    listRooms()
+      .then((rooms) => {
+        if (cancelled) return
+        const normalized = Array.isArray(rooms) ? rooms : []
+        setForwardRooms(
+          normalized.map((room: any) => ({
+            id: String(room.id ?? room.uuid ?? ''),
+            name: room.name || room.title || 'Room',
+            is_group: room.is_group,
+          })).filter((room) => room.id),
+        )
+      })
+      .catch(() => {
+        if (cancelled) return
+        setForwardRooms([])
+      })
+      .finally(() => {
+        if (!cancelled) setForwardLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [forwardOpen])
+
+  const toggleForwardSelection = React.useCallback((id: string) => {
+    setForwardSelected(prev => (prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]))
+  }, [])
+
+  const openInviteModal = React.useCallback(() => {
+    setInviteOpen(true)
+    setInviteSelected([])
+    setInviteUsersOptions([])
+    setInviteLoading(false)
+    setInviteSubmitting(false)
+  }, [])
+
+  const closeInviteModal = React.useCallback(() => {
+    setInviteOpen(false)
+    setInviteSelected([])
+    setInviteUsersOptions([])
+    setInviteLoading(false)
+    setInviteSubmitting(false)
+  }, [])
+
+  const handleInviteSearch = React.useCallback((query: string) => {
+    if (!inviteOpen) return
+    if (!query) {
+      setInviteUsersOptions([])
+      return
+    }
+    setInviteLoading(true)
+    searchUsers(query)
+      .then((results) => {
+        const rows = Array.isArray(results) ? results : []
+        setInviteUsersOptions(rows.map((item: any) => ({
+          id: String(item.id ?? item.username ?? Math.random()),
+          username: item.username,
+          email: item.email,
+          name: item.name,
+        })).filter((user) => user.username && !existingUsernames.has(user.username)))
+      })
+      .catch(() => {
+        setInviteUsersOptions([])
+      })
+      .finally(() => setInviteLoading(false))
+  }, [existingUsernames, inviteOpen])
+
+  const toggleInviteSelection = React.useCallback((username: string) => {
+    setInviteSelected(prev => (prev.includes(username) ? prev.filter(item => item !== username) : [...prev, username]))
+  }, [])
+
+  const submitInvite = React.useCallback(async () => {
+    if (!roomId) return
+    if (inviteSelected.length === 0) {
+      alert('Select at least one user to invite.')
+      return
+    }
+    setInviteSubmitting(true)
+    try {
+      await inviteUsers(roomId, inviteSelected, [])
+      alert('Invitations sent.')
+      closeInviteModal()
+      try {
+        const res = await apiFetch(`/api/chat/rooms/${roomId}/`)
+        if (res.ok) {
+          const data = await res.json()
+          setRoom(data)
+        }
+      } catch {}
+    } catch (error: any) {
+      alert(error?.message || 'Unable to invite users')
+    } finally {
+      setInviteSubmitting(false)
+    }
+  }, [closeInviteModal, inviteSelected, roomId])
+
+  const submitForward = React.useCallback(async () => {
+    if (!forwardMessageTarget || !isServerId(forwardMessageTarget?.id ? String(forwardMessageTarget.id) : '')) {
+      alert('Message is not ready to forward yet.')
+      return
+    }
+    if (forwardSelected.length === 0) {
+      alert('Select at least one room to forward to.')
+      return
+    }
+    setForwardSubmitting(true)
+    try {
+      const results = await Promise.allSettled(
+        forwardSelected.map((room) => forwardMessage(room, String(forwardMessageTarget.id))),
+      )
+      const successes: Array<{ roomId: string; payload: any }> = []
+      const failures: Array<{ roomId: string; reason: any }> = []
+      results.forEach((result, index) => {
+        const destRoom = forwardSelected[index]
+        if (result.status === 'fulfilled') successes.push({ roomId: destRoom, payload: result.value })
+        else failures.push({ roomId: destRoom, reason: result.reason })
+      })
+
+      successes.forEach(({ roomId: targetRoomId, payload }) => {
+        if (roomId && targetRoomId === roomId) {
+          const normalized = normalizeMsg(payload)
+          mergeMessage(normalized)
+        }
+      })
+
+      if (failures.length === 0) {
+        alert('Message forwarded successfully.')
+        closeForwardModal()
+      } else if (failures.length === results.length) {
+        alert('Unable to forward the message. Please try again later.')
+      } else {
+        alert('Message forwarded to some rooms, but a few failed.')
+        closeForwardModal()
+      }
+    } catch (error: any) {
+      alert(error?.message || 'Failed to forward message')
+    } finally {
+      setForwardSubmitting(false)
+    }
+  }, [closeForwardModal, forwardMessageTarget, forwardSelected, isServerId, mergeMessage, normalizeMsg, roomId])
 
   // uploads
   const postFD = async (fd: FormData) => {
@@ -873,7 +1152,7 @@ export default function ChatRoom() {
 
     actions.push({ key: 'info', label: 'Info', onClick: () => handleInfo(message), disabled: !hasServerId })
     actions.push({ key: 'reply', label: 'Reply', onClick: () => handleReply(message) })
-    actions.push({ key: 'forward', label: 'Forward', onClick: () => handleForward(message) })
+    actions.push({ key: 'forward', label: 'Forward', onClick: () => handleForward(message), disabled: !hasServerId })
 
     if (message.text) {
       actions.push({ key: 'copy', label: 'Copy text', onClick: () => handleCopy(message) })
@@ -1023,6 +1302,7 @@ export default function ChatRoom() {
           const key = it.id || idx
           const messageId = it.id
           const reactionPairs = Object.entries(m.reactions || {}).filter(([, arr]) => Array.isArray(arr) && arr.length>0)
+          const status = m.status || null
           const attachment = renderAttachment(m)
           const hasAttachment = attachment.kind !== 'none'
           const hasText = !!m.text
@@ -1112,6 +1392,11 @@ export default function ChatRoom() {
 
                 <span className="time">
                   {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  {mine && status && (
+                    <span className={`status-icon status-${status}`} aria-label={`Message ${status}`}>
+                      {status === 'sent' ? '✓' : '✓✓'}
+                    </span>
+                  )}
                 </span>
 
                 {reactionPairs.length > 0 && (
@@ -1214,7 +1499,7 @@ export default function ChatRoom() {
                 </li>
               ))}
             </ul>
-            {isAdmin && <button className="btn small" onClick={() => navigate(`/chat/${roomId}/invite`)}>+ Invite</button>}
+            {isAdmin && <button className="btn small" onClick={openInviteModal}>+ Invite</button>}
           </div>
         </aside>
       )}
@@ -1232,6 +1517,30 @@ export default function ChatRoom() {
         loading={infoState.loading}
         data={infoState.data}
         onClose={() => setInfoState({ open: false, loading: false })}
+      />
+
+      <ForwardMessageModal
+        open={forwardOpen}
+        loading={forwardLoading}
+        submitting={forwardSubmitting}
+        rooms={forwardRooms}
+        selected={forwardSelected}
+        message={forwardMessageTarget}
+        onClose={closeForwardModal}
+        onToggle={toggleForwardSelection}
+        onSubmit={submitForward}
+      />
+
+      <InviteUsersModal
+        open={inviteOpen}
+        loading={inviteLoading}
+        submitting={inviteSubmitting}
+        users={inviteUsersOptions}
+        selected={inviteSelected}
+        onClose={closeInviteModal}
+        onSearch={handleInviteSearch}
+        onToggle={toggleInviteSelection}
+        onSubmit={submitInvite}
       />
 
       {reactAnchor && (

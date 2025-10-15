@@ -9,6 +9,8 @@ export type PreferencesState = {
   autoDownloadImages: MediaPreference
   autoDownloadVideos: MediaPreference
   autoDownloadAudio: MediaPreference
+  shareDeliveryReceipts: boolean
+  shareReadReceipts: boolean
 }
 
 type PreferencesContextValue = {
@@ -24,6 +26,8 @@ const DEFAULT_PREFS: PreferencesState = {
   autoDownloadImages: 'stream',
   autoDownloadVideos: 'manual',
   autoDownloadAudio: 'manual',
+  shareDeliveryReceipts: true,
+  shareReadReceipts: true,
 }
 
 const STORAGE_KEY = 'tuchati.preferences'

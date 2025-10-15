@@ -23,6 +23,18 @@ export default function MessageInfoModal({ open, data, loading, onClose }: Messa
               <dd>{data.sender?.name || 'Unknown'}</dd>
               <dt>Sent at</dt>
               <dd>{data.created_at ? new Date(data.created_at).toLocaleString() : '—'}</dd>
+              {data.delivered_at && (
+                <>
+                  <dt>Delivered</dt>
+                  <dd>{new Date(data.delivered_at).toLocaleString()}</dd>
+                </>
+              )}
+              {data.read_at && (
+                <>
+                  <dt>Read</dt>
+                  <dd>{new Date(data.read_at).toLocaleString()}</dd>
+                </>
+              )}
               {data.content && (
                 <>
                   <dt>Content</dt>

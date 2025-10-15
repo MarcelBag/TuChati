@@ -437,6 +437,30 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="pref-row">
                 <div>
+                  <h4>Privacy</h4>
+                  <p>Control the delivery and read receipts others see.</p>
+                  <div className="pref-inline">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={prefs.shareDeliveryReceipts}
+                        onChange={(e) => updatePrefs({ shareDeliveryReceipts: e.target.checked })}
+                      />
+                      <span>Send delivery receipts</span>
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={prefs.shareReadReceipts}
+                        onChange={(e) => updatePrefs({ shareReadReceipts: e.target.checked })}
+                      />
+                      <span>Send read receipts</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="pref-row">
+                <div>
                   <h4>Sounds</h4>
                   <p>Play a tone when you send or receive a message.</p>
                   <div className="pref-inline">

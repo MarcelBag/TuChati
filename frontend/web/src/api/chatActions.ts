@@ -27,6 +27,50 @@ export async function deleteMessages(roomId: string, messageIds: string[], scope
   return res.json().catch(() => ({ deleted: [] }))
 }
 
+export async function listRooms() {
+  const res = await apiFetch('/api/chat/rooms/')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to load rooms')
+  }
+  return res.json()
+}
+
+export async function forwardMessage(roomId: string, sourceMessageId: string) {
+  const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ forwarded_from_id: sourceMessageId }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to forward message')
+  }
+  return res.json()
+}
+
+export async function searchUsers(query: string) {
+  const res = await apiFetch(`/api/accounts/search/?q=${encodeURIComponent(query)}`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to search users')
+  }
+  return res.json()
+}
+
+export async function inviteUsers(roomId: string, usernames: string[], emails: string[]) {
+  const res = await apiFetch(`/api/chat/rooms/${roomId}/invite/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ usernames, emails }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to invite users')
+  }
+  return res.json()
+}
+
 export async function setPinned(roomId: string, messageId: string, pinned: boolean) {
   const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/${messageId}/pin/`, {
     method: 'POST',

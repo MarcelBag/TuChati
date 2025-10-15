@@ -9,6 +9,7 @@ from .views import (
     SessionsView,
     LogoutAllView,
     PresenceView,
+    UserSearchView,
 )
 from .views_jwt import CustomTokenObtainPairView
 
@@ -28,4 +29,5 @@ urlpatterns = [
     path("sessions/", SessionsView.as_view(), name="sessions"),
     path("sessions/<uuid:session_id>/", SessionsView.as_view(), name="session-detail"),
     path("logout-all/", LogoutAllView.as_view(), name="logout-all"),
+    path("search/", UserSearchView.as_view(), name="user-search"),
 ]

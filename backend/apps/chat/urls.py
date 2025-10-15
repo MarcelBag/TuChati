@@ -32,4 +32,34 @@ urlpatterns = [
         MessageListCreateViewSet.as_view({"get": "list", "post": "create"}),
         name="chat_room_messages",
     ),
+    path(
+        "rooms/<uuid:room_id>/messages/bulk-delete/",
+        MessageListCreateViewSet.as_view({"post": "bulk_delete"}),
+        name="chat_room_messages_bulk_delete",
+    ),
+    path(
+        "rooms/<uuid:room_id>/messages/<uuid:pk>/delete/",
+        MessageListCreateViewSet.as_view({"post": "delete_message"}),
+        name="chat_room_message_delete",
+    ),
+    path(
+        "rooms/<uuid:room_id>/messages/<uuid:pk>/pin/",
+        MessageListCreateViewSet.as_view({"post": "pin"}),
+        name="chat_room_message_pin",
+    ),
+    path(
+        "rooms/<uuid:room_id>/messages/<uuid:pk>/star/",
+        MessageListCreateViewSet.as_view({"post": "star"}),
+        name="chat_room_message_star",
+    ),
+    path(
+        "rooms/<uuid:room_id>/messages/<uuid:pk>/note/",
+        MessageListCreateViewSet.as_view({"post": "note"}),
+        name="chat_room_message_note",
+    ),
+    path(
+        "rooms/<uuid:room_id>/messages/<uuid:pk>/info/",
+        MessageListCreateViewSet.as_view({"get": "info"}),
+        name="chat_room_message_info",
+    ),
 ]
