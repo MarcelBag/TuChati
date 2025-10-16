@@ -185,3 +185,22 @@
   text-align: center;
   margin: 4px 0;
 }
+
+.auth-info {
+  color: var(--am-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 4px 0;
+}
+
+.auth-info.small {
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}

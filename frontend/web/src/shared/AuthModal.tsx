@@ -136,11 +136,11 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         throw new Error(data?.detail || 'Could not start reset flow.')
       }
 
-      setInfo(data?.detail || 'Reset instructions sent.')
       if (data?.uid) setResetUid(String(data.uid))
       if (data?.token) setResetToken(String(data.token))
-      if (!resetIdentifier) setResetIdentifier(data?.email || '')
+      if (data?.email) setResetIdentifier(String(data.email))
       switchMode('reset-confirm')
+      setInfo(data?.detail || 'Reset instructions sent. Paste the code below to finish.')
     } catch (err: any) {
       setError(err.message || 'Could not start reset flow.')
     } finally {
@@ -173,14 +173,22 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         const msg = data?.password?.[0] || data?.detail || 'Unable to reset password.'
         throw new Error(msg)
       }
-      setInfo('Password updated! You can log in with your new password now.')
       setLoginIdentifier(resetIdentifier || loginIdentifier)
       switchMode('reset-success')
+      setInfo('Password updated! You can log in with your new password now.')
     } catch (err: any) {
       setError(err.message || 'Unable to reset password.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const titleMap: Record<Mode, string> = {
+    login: 'Login',
+    signup: 'Create account',
+    'reset-request': 'Forgot password',
+    'reset-confirm': 'Set a new password',
+    'reset-success': 'Password updated',
   }
 
   return (
@@ -192,89 +200,124 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="auth-header">
-          <h3>{mode === 'login' ? 'Login' : 'Create account'}</h3>
+          <h3>{titleMap[mode]}</h3>
           <button className="icon-btn" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <>
-              <label>
-                Username
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="choose a username"
-                  autoComplete="username"
-                />
-              </label>
-
-              <label>
-                Email
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@tuunganes.com"
-                  autoComplete="email"
-                />
-              </label>
-            </>
-          )}
-
-          {mode === 'login' && (
+        {mode === 'login' && (
+          <form className="auth-form" onSubmit={handleLogin}>
             <label>
               Username or Email
               <input
                 type="text"
-                value={username || email}
-                onChange={(e) => {
-                  setUsername(e.target.value)
-                  setEmail(e.target.value)
-                }}
+                value={loginIdentifier}
+                onChange={(e) => setLoginIdentifier(e.target.value)}
                 required
                 placeholder="your username or email"
                 autoComplete="username"
               />
             </label>
-          )}
 
-          <label>
-            Password
-            <div className="pwd-wrap">
-              <input
-                type={showPwd ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              />
+            <label>
+              Password
+              <div className="pwd-wrap">
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowPwd(v => !v)}
+                  aria-label={showPwd ? 'Hide password' : 'Show password'}
+                  title={showPwd ? 'Hide password' : 'Show password'}
+                >
+                  {showPwd ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </label>
+
+            {error && <p className="auth-error">{error}</p>}
+            {info && <p className="auth-info">{info}</p>}
+
+            <button className="btn primary" type="submit" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+
+            <div className="auth-links">
               <button
                 type="button"
-                className="pwd-toggle"
-                onClick={() => setShowPwd(v => !v)}
-                aria-label={showPwd ? 'Hide password' : 'Show password'}
-                title={showPwd ? 'Hide password' : 'Show password'}
+                className="link-btn"
+                onClick={() => switchMode('reset-request')}
               >
-                {showPwd ? '🙈' : '👁️'}
+                Forgot password?
               </button>
             </div>
-          </label>
+          </form>
+        )}
 
-          {mode === 'signup' && (
+        {mode === 'signup' && (
+          <form className="auth-form" onSubmit={handleSignup}>
+            <label>
+              Username
+              <input
+                type="text"
+                value={signupUsername}
+                onChange={(e) => setSignupUsername(e.target.value)}
+                required
+                placeholder="choose a username"
+                autoComplete="username"
+              />
+            </label>
+
+            <label>
+              Email
+              <input
+                type="email"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                required
+                placeholder="you@tuunganes.com"
+                autoComplete="email"
+              />
+            </label>
+
+            <label>
+              Password
+              <div className="pwd-wrap">
+                <input
+                  type={showSignupPwd ? 'text' : 'password'}
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowSignupPwd(v => !v)}
+                  aria-label={showSignupPwd ? 'Hide password' : 'Show password'}
+                  title={showSignupPwd ? 'Hide password' : 'Show password'}
+                >
+                  {showSignupPwd ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </label>
+
             <label>
               Confirm Password
               <div className="pwd-wrap">
                 <input
-                  type={showPwd2 ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  type={showSignupPwd2 ? 'text' : 'password'}
+                  value={signupConfirmPassword}
+                  onChange={(e) => setSignupConfirmPassword(e.target.value)}
                   required
                   placeholder="Repeat password"
                   autoComplete="new-password"
@@ -282,39 +325,165 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   className="pwd-toggle"
-                  onClick={() => setShowPwd2(v => !v)}
-                  aria-label={showPwd2 ? 'Hide password' : 'Show password'}
-                  title={showPwd2 ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowSignupPwd2(v => !v)}
+                  aria-label={showSignupPwd2 ? 'Hide password' : 'Show password'}
+                  title={showSignupPwd2 ? 'Hide password' : 'Show password'}
                 >
-                  {showPwd2 ? '🙈' : '👁️'}
+                  {showSignupPwd2 ? '🙈' : '👁️'}
                 </button>
               </div>
             </label>
-          )}
 
-          {error && (
-            <p className="auth-error">{error}</p>
-          )}
+            {error && <p className="auth-error">{error}</p>}
+            {info && <p className="auth-info">{info}</p>}
 
-          <button className="btn primary" type="submit" disabled={loading}>
-            {loading
-              ? mode === 'login'
-                ? 'Logging in...'
-                : 'Creating account...'
-              : mode === 'login'
-              ? 'Login'
-              : 'Create account'}
-          </button>
-        </form>
+            <button className="btn primary" type="submit" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
+          </form>
+        )}
+
+        {mode === 'reset-request' && (
+          <form className="auth-form" onSubmit={handleResetRequest}>
+            <p className="auth-info small">
+              Enter the email or username linked to your TuChati account. We’ll generate a reset code for you.
+            </p>
+            <label>
+              Email or Username
+              <input
+                type="text"
+                value={resetIdentifier}
+                onChange={(e) => setResetIdentifier(e.target.value)}
+                required
+                placeholder="you@example.com"
+              />
+            </label>
+
+            {error && <p className="auth-error">{error}</p>}
+            {info && <p className="auth-info">{info}</p>}
+
+            <button className="btn primary" type="submit" disabled={loading}>
+              {loading ? 'Sending reset link...' : 'Send reset link'}
+            </button>
+          </form>
+        )}
+
+        {mode === 'reset-confirm' && (
+          <form className="auth-form" onSubmit={handleResetConfirm}>
+            <p className="auth-info small">
+              Paste the reset code you received. For testing, we also display the latest code returned by the server.
+            </p>
+            <label>
+              Account ID (uid)
+              <input
+                type="text"
+                value={resetUid}
+                onChange={(e) => setResetUid(e.target.value)}
+                required
+                placeholder="Paste uid"
+              />
+            </label>
+            <label>
+              Reset token
+              <input
+                type="text"
+                value={resetToken}
+                onChange={(e) => setResetToken(e.target.value)}
+                required
+                placeholder="Paste token"
+              />
+            </label>
+            <label>
+              New password
+              <div className="pwd-wrap">
+                <input
+                  type={showResetPwd ? 'text' : 'password'}
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  required
+                  placeholder="New password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowResetPwd(v => !v)}
+                  aria-label={showResetPwd ? 'Hide password' : 'Show password'}
+                  title={showResetPwd ? 'Hide password' : 'Show password'}
+                >
+                  {showResetPwd ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </label>
+            <label>
+              Confirm new password
+              <div className="pwd-wrap">
+                <input
+                  type={showResetPwd2 ? 'text' : 'password'}
+                  value={resetPasswordConfirm}
+                  onChange={(e) => setResetPasswordConfirm(e.target.value)}
+                  required
+                  placeholder="Repeat new password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="pwd-toggle"
+                  onClick={() => setShowResetPwd2(v => !v)}
+                  aria-label={showResetPwd2 ? 'Hide password' : 'Show password'}
+                  title={showResetPwd2 ? 'Hide password' : 'Show password'}
+                >
+                  {showResetPwd2 ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </label>
+
+            {error && <p className="auth-error">{error}</p>}
+            {info && <p className="auth-info">{info}</p>}
+
+            <button className="btn primary" type="submit" disabled={loading}>
+              {loading ? 'Updating password...' : 'Update password'}
+            </button>
+          </form>
+        )}
+
+        {mode === 'reset-success' && (
+          <div className="auth-form">
+            {info && <p className="auth-info">{info}</p>}
+            <button className="btn primary" type="button" onClick={() => switchMode('login')}>
+              Back to login
+            </button>
+          </div>
+        )}
 
         <div className="auth-switch">
-          {mode === 'login' ? (
-            <button className="link-btn" onClick={() => setMode('signup')}>
+          {mode === 'login' && (
+            <button className="link-btn" onClick={() => switchMode('signup')}>
               Need an account? Sign up
             </button>
-          ) : (
-            <button className="link-btn" onClick={() => setMode('login')}>
+          )}
+
+          {mode === 'signup' && (
+            <button className="link-btn" onClick={() => switchMode('login')}>
               Have an account? Login
+            </button>
+          )}
+
+          {mode === 'reset-request' && (
+            <button className="link-btn" onClick={() => switchMode('login')}>
+              Back to login
+            </button>
+          )}
+
+          {mode === 'reset-confirm' && (
+            <button className="link-btn" onClick={() => switchMode('reset-request')}>
+              Need a new code?
+            </button>
+          )}
+
+          {mode === 'reset-success' && (
+            <button className="link-btn" onClick={() => switchMode('login')}>
+              Return to login
             </button>
           )}
         </div>
