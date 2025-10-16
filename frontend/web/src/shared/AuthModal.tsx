@@ -5,54 +5,179 @@ import { useNavigate } from 'react-router-dom'
 import './AuthModal.css'
 import { apiFetch } from './api'
 
+type Mode = 'login' | 'signup' | 'reset-request' | 'reset-confirm' | 'reset-success'
+
 export default function AuthModal({ onClose }: { onClose: () => void }) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
+  const [mode, setMode] = useState<Mode>('login')
+
+  const [loginIdentifier, setLoginIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
-  const [showPwd2, setShowPwd2] = useState(false)
+
+  const [signupUsername, setSignupUsername] = useState('')
+  const [signupEmail, setSignupEmail] = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('')
+  const [showSignupPwd, setShowSignupPwd] = useState(false)
+  const [showSignupPwd2, setShowSignupPwd2] = useState(false)
+
+  const [resetIdentifier, setResetIdentifier] = useState('')
+  const [resetUid, setResetUid] = useState('')
+  const [resetToken, setResetToken] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState('')
+  const [showResetPwd, setShowResetPwd] = useState(false)
+  const [showResetPwd2, setShowResetPwd2] = useState(false)
+
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  const resetNotices = () => {
     setError('')
+    setInfo('')
+    setLoading(false)
+  }
+
+  const switchMode = (next: Mode) => {
+    resetNotices()
+    setMode(next)
+
+    if (next === 'login') {
+      setPassword('')
+      setShowPwd(false)
+    }
+    if (next === 'reset-request') {
+      setResetIdentifier(loginIdentifier || '')
+      setResetUid('')
+      setResetToken('')
+      setResetPassword('')
+      setResetPasswordConfirm('')
+      setShowResetPwd(false)
+      setShowResetPwd2(false)
+    }
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    resetNotices()
     setLoading(true)
 
     try {
-      if (mode === 'signup') {
-        const res = await apiFetch('/api/accounts/register/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username,
-            email,
-            password,
-            password2: confirmPassword || password,
-          }),
-        })
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          const msg =
-            data?.password2?.[0] ||
-            data?.email?.[0] ||
-            data?.username?.[0] ||
-            data?.detail ||
-            'Registration failed.'
-          throw new Error(msg)
-        }
-      }
-
-      await login(username || email, password)
+      await login(loginIdentifier, password)
       onClose()
       navigate('/chat')
     } catch (err: any) {
       setError(err.message || 'Authentication failed.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    resetNotices()
+    setLoading(true)
+
+    try {
+      const res = await apiFetch('/api/accounts/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: signupUsername,
+          email: signupEmail,
+          password: signupPassword,
+          password2: signupConfirmPassword || signupPassword,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const msg =
+          data?.password2?.[0] ||
+          data?.email?.[0] ||
+          data?.username?.[0] ||
+          data?.detail ||
+          'Registration failed.'
+        throw new Error(msg)
+      }
+
+      await login(signupEmail || signupUsername, signupPassword)
+      onClose()
+      navigate('/chat')
+    } catch (err: any) {
+      setError(err.message || 'Unable to create account.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetRequest(e: React.FormEvent) {
+    e.preventDefault()
+    resetNotices()
+    setLoading(true)
+    try {
+      const payload = {
+        email: resetIdentifier,
+        username: resetIdentifier,
+        identifier: resetIdentifier,
+      }
+      const res = await apiFetch('/api/accounts/password/reset/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        skipAuth: true,
+      })
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Could not start reset flow.')
+      }
+
+      setInfo(data?.detail || 'Reset instructions sent.')
+      if (data?.uid) setResetUid(String(data.uid))
+      if (data?.token) setResetToken(String(data.token))
+      if (!resetIdentifier) setResetIdentifier(data?.email || '')
+      switchMode('reset-confirm')
+    } catch (err: any) {
+      setError(err.message || 'Could not start reset flow.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetConfirm(e: React.FormEvent) {
+    e.preventDefault()
+    resetNotices()
+
+    if (resetPassword !== resetPasswordConfirm) {
+      setError('Passwords do not match.')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await apiFetch('/api/accounts/password/reset/confirm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: resetUid,
+          token: resetToken,
+          new_password: resetPassword,
+        }),
+        skipAuth: true,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const msg = data?.password?.[0] || data?.detail || 'Unable to reset password.'
+        throw new Error(msg)
+      }
+      setInfo('Password updated! You can log in with your new password now.')
+      setLoginIdentifier(resetIdentifier || loginIdentifier)
+      switchMode('reset-success')
+    } catch (err: any) {
+      setError(err.message || 'Unable to reset password.')
     } finally {
       setLoading(false)
     }

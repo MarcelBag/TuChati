@@ -94,7 +94,6 @@ html.light {
   font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238aa0b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: 16px center;
   background-size: 18px;
@@ -179,15 +178,19 @@ html.light {
 .room-item.unread { background: rgba(59, 130, 246, 0.10); }
 .room-item.unread .room-name { font-weight: 600; color: var(--text); }
 .room-item.unread .room-last { font-weight: 600; color: var(--text); }
+/* color to unread message count date*/
 .room-item.unread .room-date { color: #ff4d4f; font-weight: 600; }
 .room-item.unread .room-unread {
   background: #15c72c;
   color: #fff;
   border-color: #0da250;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.75);
+  
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.75);
+  
 }
-html.light .room-item.unread { background: rgba(255, 77, 79, 0.18); }
-
+/*
+html.light .room-item.unread { background: rgba(5, 154, 62, 0.18); }
+*/
 /* Avatar badge */
 .avatar-badge {
   width: 50px;
@@ -197,7 +200,8 @@ html.light .room-item.unread { background: rgba(255, 77, 79, 0.18); }
   background: linear-gradient(135deg, #3b82f6, #06b6d4);
   display: grid;
   place-items: center;
-  color: #fff;                /* ensure initials visible in light mode */
+  /* ensuring initials visible in light mode */
+  color: #fff;               
   font-weight: 700;
   font-size: 20px;
   text-transform: uppercase;

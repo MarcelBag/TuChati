@@ -7,6 +7,11 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Q
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.exceptions import ValidationError
+from django.contrib.auth import password_validation
 
 from .serializers import (
     RegisterSerializer,
@@ -99,6 +104,70 @@ class PasswordChangeView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response({"detail": "Password changed."}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        identifier = (request.data.get("email") or request.data.get("username") or request.data.get("identifier") or "").strip()
+        if not identifier:
+            return Response({"detail": "Provide your email or username."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if "@" in identifier:
+                user = User.objects.get(email__iexact=identifier)
+            else:
+                user = User.objects.get(username__iexact=identifier)
+        except User.DoesNotExist:
+            # Always return success to avoid leaking which emails exist.
+            return Response({"detail": "If that account exists, we sent reset instructions."}, status=status.HTTP_200_OK)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        # In a real deployment you'd send an email here. For the prototype we
+        # return the token so the frontend can guide the user through the flow.
+        return Response(
+            {
+                "detail": "Password reset link generated.",
+                "uid": uid,
+                "token": token,
+                "email": user.email,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        uid = request.data.get("uid")
+        token = request.data.get("token")
+        password = request.data.get("password") or request.data.get("new_password")
+
+        if not uid or not token or not password:
+            return Response({"detail": "uid, token, and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            pk = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=pk)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({"detail": "Invalid or expired reset token."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            password_validation.validate_password(password, user=user)
+        except ValidationError as exc:
+            return Response({"password": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(password)
+        user.save(update_fields=["password"])
+
+        return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 
 class SessionsView(APIView):
