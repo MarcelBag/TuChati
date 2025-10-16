@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import random
 from datetime import timedelta
-from email.utils import parseaddr
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -19,18 +18,13 @@ from rest_framework.views import APIView
 
 from ..models import EmailVerificationCode
 from ..utils import DEFAULT_FROM
+from .email_templates import APP_NAME, render_verification_email, render_welcome_email
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 VERIFICATION_TTL_SECONDS = 60
 POST_VERIFY_TTL_SECONDS = 300
-
-APP_NAME = getattr(settings, "APP_BRAND_NAME", "TuChati")
-APP_URL = getattr(settings, "APP_BRAND_URL", "https://tuchati.tuunganes.com")
-APP_SUPPORT = getattr(settings, "APP_SUPPORT_EMAIL", DEFAULT_FROM)
-APP_SUPPORT_ADDR = parseaddr(APP_SUPPORT)[1] or APP_SUPPORT
-
 
 def _generate_code() -> str:
     return f"{random.randint(0, 999999):06d}"
@@ -48,98 +42,6 @@ def _send_email(email: str, subject: str, text: str, html: str | None = None) ->
         return False
 
 
-def _build_email_shell(inner_html: str) -> str:
-    return f"""<!DOCTYPE html>
-<html lang='en'>
-  <head>
-    <meta charset='utf-8'/>
-    <meta name='viewport' content='width=device-width, initial-scale=1'/>
-    <title>{APP_NAME}</title>
-  </head>
-  <body style="margin:0;background:#0f172a;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0;">
-    <table role='presentation' cellpadding='0' cellspacing='0' width='100%' style='padding:32px 0;'>
-      <tr>
-        <td align='center'>
-          <table role='presentation' width='560' cellpadding='0' cellspacing='0' style='width:560px;max-width:100%;background:#0b1222;border-radius:24px;box-shadow:0 18px 60px rgba(15,23,42,0.35);overflow:hidden;border:1px solid rgba(148,163,184,0.12);'>
-            <tr>
-              <td style='padding:32px 40px;'>
-                {inner_html}
-              </td>
-            </tr>
-          </table>
-          <p style='margin:24px 0 0;font-size:12px;color:#64748b;'>© {APP_NAME}. All rights reserved.</p>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>"""
-
-
-def _format_code_email(username: str, code: str, purpose: str) -> tuple[str, str]:
-    greeting = f"Hi {username}," if username else "Hello,"
-    plain = (
-        f"{APP_NAME}\n{APP_URL}\n\n"
-        f"{greeting}\n\n"
-        f"Here is your {APP_NAME} verification code to {purpose}:\n\n"
-        f"{code}\n\n"
-        "This code expires in 60 seconds.\n\n"
-        "If this wasn’t you, please reset your password immediately.\n\n"
-        "If you didn’t request this, you can safely ignore this email.\n"
-        f"— Your {APP_NAME} team"
-    )
-
-    html_inner = f"""
-      <div style='display:flex;align-items:center;gap:12px;margin-bottom:28px;'>
-        <div style='background:linear-gradient(135deg,#22d3ee,#6366f1);width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#0b1222;'>{APP_NAME[:2].upper()}</div>
-        <div>
-          <p style='margin:0;font-weight:700;font-size:20px;letter-spacing:-0.01em;color:#f8fafc;'>{APP_NAME}</p>
-          <a href='{APP_URL}' style='color:#38bdf8;text-decoration:none;font-size:14px;'>{APP_URL}</a>
-        </div>
-      </div>
-      <p style='margin:0 0 8px;font-size:16px;color:#cbd5f5;'>{greeting}</p>
-      <p style='margin:0 0 24px;font-size:16px;color:#a5b4fc;line-height:1.6;'>Here is your verification code to {purpose}. Enter it in the TuChati window—this code expires in <strong>60 seconds</strong>.</p>
-      <div style='background:#111b33;border:1px solid rgba(148,163,184,0.18);border-radius:18px;padding:20px 12px;margin:24px 0;text-align:center;letter-spacing:0.6rem;font-size:32px;font-weight:700;color:#f8fafc;'>{code}</div>
-      <p style='margin:0 0 16px;font-size:15px;color:#94a3b8;line-height:1.6;'>If this wasn’t you, <a href='{APP_URL}/settings/account' style='color:#38bdf8;'>reset your password</a> immediately.</p>
-      <p style='margin:0 0 32px;font-size:13px;color:#64748b;line-height:1.6;'>Need help? Contact us at <a href='mailto:{APP_SUPPORT_ADDR}' style='color:#38bdf8;'>{APP_SUPPORT_ADDR}</a>.</p>
-      <p style='margin:0;font-size:13px;color:#4f6b95;'>— Your {APP_NAME} team</p>
-    """
-
-    return plain, _build_email_shell(html_inner)
-
-
-def _format_welcome_email(username: str) -> tuple[str, str]:
-    greeting = f"Welcome, {username}!" if username else "Welcome!"
-    plain = (
-        f"{APP_NAME}\n{APP_URL}\n\n"
-        f"{greeting}\n\n"
-        "Your account is ready. Here are a few quick tips to get started:\n"
-        "• Add your profile photo and bio so teammates recognise you.\n"
-        "• Invite teammates to your rooms and keep conversations organised.\n"
-        "• Turn on two-factor protections to stay secure.\n\n"
-        f"We’re excited to have you onboard.\n— The {APP_NAME} team"
-    )
-
-    html_inner = f"""
-      <div style='display:flex;align-items:center;gap:12px;margin-bottom:28px;'>
-        <div style='background:linear-gradient(135deg,#6366f1,#8b5cf6);width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#f8fafc;'>{APP_NAME[:2].upper()}</div>
-        <div>
-          <p style='margin:0;font-weight:700;font-size:20px;letter-spacing:-0.01em;color:#f8fafc;'>{APP_NAME}</p>
-          <a href='{APP_URL}' style='color:#c4b5fd;text-decoration:none;font-size:14px;'>{APP_URL}</a>
-        </div>
-      </div>
-      <h1 style='margin:0 0 16px;font-size:28px;color:#f8fafc;letter-spacing:-0.02em;'>{greeting}</h1>
-      <p style='margin:0 0 20px;font-size:16px;color:#cbd5f5;line-height:1.7;'>Your TuChati workspace is live. Here’s how to make the most of it:</p>
-      <ul style='margin:0 0 24px 20px;padding:0;color:#a5b4fc;font-size:15px;line-height:1.7;'>
-        <li>Add a profile photo so teammates recognise you.</li>
-        <li>Create or join rooms to stay in sync with your community.</li>
-        <li>Enable two-factor security to keep your account safe.</li>
-      </ul>
-      <a href='{APP_URL}' style='display:inline-block;padding:14px 28px;border-radius:12px;background:linear-gradient(135deg,#22d3ee,#6366f1);color:#0b1222;font-weight:700;text-decoration:none;letter-spacing:0.02em;'>Open TuChati</a>
-      <p style='margin:32px 0 0;font-size:13px;color:#64748b;'>We’re here if you need a hand—just reply to this email.</p>
-      <p style='margin:12px 0 0;font-size:13px;color:#4f6b95;'>— The {APP_NAME} team</p>
-    """
-
-    return plain, _build_email_shell(html_inner)
 
 
 class RegisterStartView(APIView):
@@ -179,7 +81,12 @@ class RegisterStartView(APIView):
             metadata={"username": username},
         )
 
-        text_body, html_body = _format_code_email(username or email, code, "finish creating your TuChati account")
+        text_body, html_body = render_verification_email(
+            username or email,
+            code,
+            "finish creating your TuChati account",
+            VERIFICATION_TTL_SECONDS,
+        )
         sent = _send_email(email, f"{APP_NAME} verification code", text_body, html_body)
         if not sent and not getattr(settings, "DEBUG", False):
             record.delete()
@@ -286,7 +193,7 @@ class RegisterCompleteView(APIView):
 
         record.mark_used()
 
-        welcome_text, welcome_html = _format_welcome_email(username)
+        welcome_text, welcome_html = render_welcome_email(username)
         if not _send_email(email, f"Welcome to {APP_NAME}", welcome_text, welcome_html):
             logger.warning("Account created for %s but welcome email failed", email)
 
@@ -327,10 +234,11 @@ class PasswordResetStartView(APIView):
             metadata={'user_id': user.id},
         )
 
-        text_body, html_body = _format_code_email(
+        text_body, html_body = render_verification_email(
             user.username or user.email,
             code,
             "reset your password",
+            VERIFICATION_TTL_SECONDS,
         )
         sent = _send_email(user.email, f"{APP_NAME} password reset", text_body, html_body)
         if not sent and not getattr(settings, "DEBUG", False):
