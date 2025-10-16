@@ -560,7 +560,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className="pref-row">
                 <div>
-                  <h4>Privacy</h4>
+                  <h4>Message delivery</h4>
                   <p>Control the delivery and read receipts others see.</p>
                   <div className="pref-inline">
                     <label>
