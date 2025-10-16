@@ -176,6 +176,17 @@ html.light {
 .room-item:hover { background: var(--hover); }
 .room-item:active { background: var(--active); }
 .room-item.active { background: var(--active); }
+.room-item.unread { background: rgba(59, 130, 246, 0.10); }
+.room-item.unread .room-name { font-weight: 600; color: var(--text); }
+.room-item.unread .room-last { font-weight: 600; color: var(--text); }
+.room-item.unread .room-date { color: #ff4d4f; font-weight: 600; }
+.room-item.unread .room-unread {
+  background: #ff4d4f;
+  color: #fff;
+  border-color: #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.75);
+}
+html.light .room-item.unread { background: rgba(255, 77, 79, 0.18); }
 
 /* Avatar badge */
 .avatar-badge {
@@ -212,22 +223,31 @@ button.avatar-badge:focus-visible {
 }
 
 .room-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 2px; }
-.room-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.room-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.room-header { align-items: center; }
+.room-meta { display: inline-flex; align-items: center; gap: 8px; }
 .room-name { font-weight: 500; font-size: 16px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.room-unread {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid #ff4d4f;
+  background: rgba(255, 77, 79, 0.12);
+  color: #ff4d4f;
+}
+html.light .room-unread {
+  background: rgba(255, 77, 79, 0.18);
+  color: #c53030;
+}
 .room-date { font-size: 12px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .room-row.dim { color: var(--muted); font-size: 14px; margin-top: 2px; }
 .room-last { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; line-height: 1.4; }
-
-.badge {
-  background: #22c55e;
-  color: #fff;
-  border-radius: 12px;
-  font-size: 11px;
-  padding: 2px 8px;
-  font-weight: 600;
-  min-width: 20px;
-  text-align: center;
-}
 
 /* Right side - chat pane */
 .chat-pane {

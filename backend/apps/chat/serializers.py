@@ -19,6 +19,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     admin_ids = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()     # computed, not a model field
     last_message = serializers.SerializerMethodField()   # compact preview object
+    unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
@@ -33,6 +34,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             "last_message",
             "updated_at",          # computed
             "created_at",          # only if your model has it; otherwise remove this line
+            "unread_count",
         ]
 
     # ---- helpers used by the UI ----
@@ -120,6 +122,18 @@ class ChatRoomSerializer(serializers.ModelSerializer):
                 "name": (getattr(m.sender, "get_full_name", lambda: "")() or m.sender.username),
             },
         }
+
+    def get_unread_count(self, obj: ChatRoom) -> int:
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return 0
+        return (
+            Message.objects.filter(room=obj)
+            .exclude(sender=user)
+            .exclude(read_by=user)
+            .count()
+        )
 
 
 class MessageSerializer(serializers.ModelSerializer):

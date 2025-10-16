@@ -327,12 +327,13 @@ export default function ChatPage() {
             const roomName = r.name || otherMember?.name || otherMember?.username || 'Room'
             const avatarInitials = otherMember?.initials || (roomName || 'R').slice(0, 2)
             const avatarSrc = otherMember?.avatar || (r as any)?.avatar || null
-            const unread = (r as any)?.unread_count ?? 0
+            const unread = Number((r as any)?.unread_count ?? 0)
+            const hasUnread = unread > 0
 
             return (
               <li
                 key={r.id}
-                className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''}`}
+                className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''} ${hasUnread ? 'unread' : ''}`}
                 onClick={() => navigate(`/chat/${r.id}`)}
               >
                 <AvatarBubble
@@ -345,13 +346,19 @@ export default function ChatPage() {
                   ariaLabel={r.is_group ? `${roomName} room` : `${roomName} profile`}
                 />
                 <div className="room-main">
-                  <div className="room-row">
+                  <div className="room-row room-header">
                     <span className="room-name">{roomName}</span>
-                    <span className="room-date">{formatDate((r as any)?.updated_at || (r as any)?.created_at)}</span>
+                    <div className="room-meta">
+                      {hasUnread && (
+                        <span className="room-unread" aria-label={`${unread} unread messages`}>
+                          {unread}
+                        </span>
+                      )}
+                      <span className="room-date">{formatDate((r as any)?.updated_at || (r as any)?.created_at)}</span>
+                    </div>
                   </div>
                   <div className="room-row dim">
                     <span className="room-last">{preview(r)}</span>
-                    {unread > 0 && <span className="badge">{unread}</span>}
                   </div>
                 </div>
               </li>
