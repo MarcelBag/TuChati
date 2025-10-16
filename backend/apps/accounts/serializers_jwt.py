@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from .utils import record_device_session
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
@@ -64,6 +66,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         parent_attrs = {username_field: lookup_value, "password": password}
         data = super().validate(parent_attrs)
+
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        access_token = data.get('access') or data.get('token') or data.get('access_token')
+        record_device_session(self.user, request=request, token=access_token)
 
         data["user"] = {
             "id": self.user.id,

@@ -282,6 +282,36 @@ html.light .pm-privacy-hint {
 
 /* Sessions */
 .pm-sessions p { margin: 8px 0 16px; }
+.pm-session-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.03); }
+.pm-session-table { width: 100%; border-collapse: collapse; min-width: 520px; }
+.pm-session-table thead { background: rgba(255,255,255,.04); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em; }
+.pm-session-table th,
+.pm-session-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: left; vertical-align: top; }
+.pm-session-table tr:last-child td { border-bottom: none; }
+.pm-session-table tr.current { background: rgba(124,184,255,.12); }
+.pm-session-table tr.current td { border-bottom-color: rgba(124,184,255,.18); }
+.pm-session-device { display: flex; flex-direction: column; gap: 4px; }
+.pm-session-device span:first-child { font-weight: 600; }
+.pm-session-actions { text-align: right; }
+.pm-session-actions .btn { padding: 4px 10px; font-size: 0.85rem; }
+html.light .pm-session-table-wrap { background: rgba(15,23,42,.03); border-color: rgba(15,23,42,.12); }
+html.light .pm-session-table tr.current { background: rgba(59,130,246,.12); }
+.pm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  background: rgba(124,184,255,.25);
+  color: #dbeafe;
+}
+html.light .pm-tag {
+  background: rgba(59,130,246,.15);
+  color: #1d4ed8;
+}
 
 /* ---------- Avatar initials: always readable ---------- */
 .avatar-initials {

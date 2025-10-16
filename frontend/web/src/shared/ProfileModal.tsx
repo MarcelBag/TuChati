@@ -17,6 +17,7 @@ type SessionItem = {
   user_agent?: string
   created_at?: string
   last_seen?: string
+  last_active?: string
   current?: boolean
   device?: string
   location?: string
@@ -261,6 +262,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           user_agent: s.user_agent ?? s.ua,
           created_at: s.created_at ?? s.created ?? s.start ?? s.started_at,
           last_seen: s.last_seen ?? s.updated_at ?? s.last_activity,
+          last_active: s.last_active ?? s.last_seen ?? s.updated_at ?? s.last_activity,
           current: !!(s.current ?? s.is_current ?? s.this_device),
           device: s.device ?? guessDevice(s.user_agent),
           location: s.location ?? s.geo,
@@ -656,32 +658,49 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
               {!sessionsLoading && (!sessions || sessions.length === 0) && <p>No active sessions.</p>}
 
               {!sessionsLoading && sessions && sessions.length > 0 && (
-                <ul className="pm-session-list">
-                  {sessions.map(s => (
-                    <li key={String(s.id)} className={`pm-session ${s.current ? 'current' : ''}`}>
-                      <div className="pm-session-main">
-                        <strong>{s.device || s.user_agent || 'Unknown device'}</strong>
-                        {s.current && <span className="pm-tag">This device</span>}
-                      </div>
-                      <div className="pm-session-meta">
-                        {s.ip && <span>IP: {s.ip}</span>}
-                        {s.location && <span> · {s.location}</span>}
-                        {(s.last_seen || s.created_at) && (
-                          <span> · Last seen: {niceDate(s.last_seen || s.created_at)}</span>
-                        )}
-                      </div>
-                      {!s.current && (
-                        <button
-                          className="btn danger ghost"
-                          onClick={() => revokeSession(s.id)}
-                          disabled={busy}
-                        >
-                          Revoke
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <div className="pm-session-table-wrap">
+                  <table className="pm-session-table">
+                    <thead>
+                      <tr>
+                        <th>Device</th>
+                        <th>IP address</th>
+                        <th>Last active</th>
+                        <th>Location</th>
+                        <th aria-label="Session actions" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sessions.map((s) => {
+                        const deviceLabel = s.device || guessDevice(s.user_agent) || 'Unknown device'
+                        const lastActive = niceDate(s.last_active || s.last_seen || s.created_at)
+                        return (
+                          <tr key={String(s.id)} className={s.current ? 'current' : undefined}>
+                            <td>
+                              <div className="pm-session-device" title={s.user_agent || undefined}>
+                                <span>{deviceLabel}</span>
+                                {s.current && <span className="pm-tag">This device</span>}
+                              </div>
+                            </td>
+                            <td>{s.ip || '—'}</td>
+                            <td>{lastActive || '—'}</td>
+                            <td>{s.location || '—'}</td>
+                            <td className="pm-session-actions">
+                              {!s.current && (
+                                <button
+                                  className="btn danger ghost"
+                                  onClick={() => revokeSession(s.id)}
+                                  disabled={busy}
+                                >
+                                  Revoke
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
 
               <div className="pm-actions">
