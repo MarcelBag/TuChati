@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 from datetime import timedelta
 
@@ -9,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.utils import timezone
+from django.conf import settings
 from rest_framework import permissions, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -18,6 +20,7 @@ from ..models import EmailVerificationCode
 from ..utils import DEFAULT_FROM
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 VERIFICATION_TTL_SECONDS = 60
 POST_VERIFY_TTL_SECONDS = 300
@@ -27,8 +30,13 @@ def _generate_code() -> str:
     return f"{random.randint(0, 999999):06d}"
 
 
-def _send_email(email: str, subject: str, message: str) -> None:
-    send_mail(subject, message, DEFAULT_FROM, [email], fail_silently=False)
+def _send_email(email: str, subject: str, message: str) -> bool:
+    try:
+        send_mail(subject, message, DEFAULT_FROM, [email], fail_silently=False)
+        return True
+    except Exception:
+        logger.exception("Failed to send %s email to %s", subject, email)
+        return False
 
 
 def _format_code_email(username: str, code: str) -> str:
@@ -91,7 +99,15 @@ class RegisterStartView(APIView):
         )
 
         message = _format_code_email(username or email, code)
-        _send_email(email, "TuChati verification code", message)
+        sent = _send_email(email, "TuChati verification code", message)
+        if not sent and not getattr(settings, "DEBUG", False):
+            record.delete()
+            return Response(
+                {"detail": "Unable to send verification email. Please try again later."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        if not sent:
+            logger.warning("Verification email send failed for %s but continuing because DEBUG is True", email)
 
         return Response(
             {
@@ -190,7 +206,8 @@ class RegisterCompleteView(APIView):
         record.mark_used()
 
         welcome_msg = _format_welcome_email(username)
-        _send_email(email, "Welcome to TuChati", welcome_msg)
+        if not _send_email(email, "Welcome to TuChati", welcome_msg):
+            logger.warning("Account created for %s but welcome email failed", email)
 
         return Response({"detail": "Account created. You can now log in."}, status=status.HTTP_201_CREATED)
 
@@ -230,7 +247,15 @@ class PasswordResetStartView(APIView):
         )
 
         message = _format_code_email(user.username or user.email, code)
-        _send_email(user.email, "TuChati password reset", message)
+        sent = _send_email(user.email, "TuChati password reset", message)
+        if not sent and not getattr(settings, "DEBUG", False):
+            record.delete()
+            return Response(
+                {"detail": "Unable to send verification email. Please try again later."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        if not sent:
+            logger.warning("Password reset email send failed for %s but continuing because DEBUG is True", user.email)
 
         return Response(
             {

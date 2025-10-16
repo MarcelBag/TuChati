@@ -16,7 +16,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
         <img src="/images/TuChati.png" alt="TuChati Logo" className="auth-logo" />
         <h1>{title || 'Welcome to TuChati'}</h1>
         <p className="auth-subtitle">
-          {subtitle || 'Connect, chat, and share with communities across Africa — even with low internet.'}
+          {subtitle || 'Connect, chat, and share with communities across Africa even with low internet.'}
         </p>
         <div className="auth-content">
           {children}

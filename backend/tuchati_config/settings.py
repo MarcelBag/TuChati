@@ -126,6 +126,43 @@ USE_I18N = True
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# -------------------------------------------
+# EMAIL CONFIGURATION
+# -------------------------------------------
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
+def _bool_env(name: str, default: str = "0") -> bool:
+    value = os.getenv(name)
+    if value is None:
+        value = default
+    value = value.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    # fall back to Python truthiness for unexpected values
+    return bool(value)
+
+
+EMAIL_USE_TLS = _bool_env("EMAIL_USE_TLS", "0")
+EMAIL_USE_SSL = _bool_env("EMAIL_USE_SSL", "0")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+# Prefer provided default-from, otherwise fallback to host user or a generic sender
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER or "TuChati <no-reply@tuchati.tuunganes.com>",
+)
+
+if EMAIL_USE_TLS and EMAIL_USE_SSL:
+    # Django will raise if both enabled; normalise here to avoid config mistakes
+    EMAIL_USE_SSL = False
+
 
 # -------------------------------------------
 # STATIC & MEDIA FILES
