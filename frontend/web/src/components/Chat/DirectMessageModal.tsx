@@ -48,8 +48,8 @@ export default function DirectMessageModal({
   if (typeof document === 'undefined') return null
 
   return createPortal(
-    <div className="ctx-wrap" onClick={onClose}>
-      <div className="menu ctx forward-modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-wrap" onClick={onClose}>
+      <div className="modal-surface forward-modal" onClick={(event) => event.stopPropagation()}>
         <header className="forward-head">
           <div>
             <h4>Start Conversation</h4>

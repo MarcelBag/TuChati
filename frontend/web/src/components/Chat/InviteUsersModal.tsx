@@ -55,8 +55,8 @@ export default function InviteUsersModal({
   const filtered = users
 
   return createPortal(
-    <div className="ctx-wrap" onClick={onClose}>
-      <div className="menu ctx invite-modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-wrap" onClick={onClose}>
+      <div className="modal-surface invite-modal" onClick={(event) => event.stopPropagation()}>
         <header className="forward-head">
           <div>
             <h4>Invite people</h4>

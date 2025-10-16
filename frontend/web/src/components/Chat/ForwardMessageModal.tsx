@@ -58,8 +58,8 @@ export default function ForwardMessageModal({
   })()
 
   return createPortal(
-    <div className="ctx-wrap" onClick={onClose}>
-      <div className="menu ctx forward-modal" onClick={(event) => event.stopPropagation()}>
+    <div className="modal-wrap" onClick={onClose}>
+      <div className="modal-surface forward-modal" onClick={(event) => event.stopPropagation()}>
         <header className="forward-head">
           <div>
             <h4>Forward message</h4>
