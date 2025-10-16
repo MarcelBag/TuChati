@@ -6,9 +6,10 @@ import { usePreferences } from '../context/PreferencesContext'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeSwitcher from './ThemeSwitcher'
 import { getInitials } from './utils'
+import ImagePreviewModal from './ImagePreviewModal'
 import './profileModal.css'
 
-type TabKey = 'account' | 'security' | 'preferences' | 'sessions'
+type TabKey = 'account' | 'security' | 'privacy' | 'preferences' | 'sessions'
 
 type SessionItem = {
   id: string | number
@@ -35,6 +36,12 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = React.useState(user?.email || '')
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(user?.avatar || null)
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = React.useState(false)
+  const [shareAvatar, setShareAvatar] = React.useState(!!user?.share_avatar)
+  const [shareContactInfo, setShareContactInfo] = React.useState(!!user?.share_contact_info)
+  const [shareBio, setShareBio] = React.useState(!!user?.share_bio)
+  const [shareLastSeen, setShareLastSeen] = React.useState(!!user?.share_last_seen)
+  const [shareStatusMessage, setShareStatusMessage] = React.useState(!!user?.share_status_message)
 
   // password state
   const [currentPwd, setCurrentPwd] = React.useState('')
@@ -44,6 +51,19 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   // sessions
   const [sessions, setSessions] = React.useState<SessionItem[] | null>(null)
   const [sessionsLoading, setSessionsLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    setFirstName(user?.first_name || '')
+    setLastName(user?.last_name || '')
+    setEmail(user?.email || '')
+    setAvatarPreview(user?.avatar || null)
+    setAvatarFile(null)
+    setShareAvatar(!!user?.share_avatar)
+    setShareContactInfo(!!user?.share_contact_info)
+    setShareBio(!!user?.share_bio)
+    setShareLastSeen(!!user?.share_last_seen)
+    setShareStatusMessage(!!user?.share_status_message)
+  }, [user])
 
   // close automatically if auth disappears
   React.useEffect(() => {
@@ -80,6 +100,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         first_name: firstName,
         last_name: lastName,
         email,
+        share_avatar: shareAvatar,
+        share_contact_info: shareContactInfo,
+        share_bio: shareBio,
+        share_last_seen: shareLastSeen,
+        share_status_message: shareStatusMessage,
       })
 
       // Try PATCH then PUT on the same endpoint, then a couple common fallbacks
@@ -304,9 +329,12 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     }
   }
 
+  const canPreviewAvatar = Boolean(avatarPreview)
+
   return (
-    <div className="pm-backdrop" onMouseDown={onClose} aria-modal="true" role="dialog">
-      <div className="pm-modal" onMouseDown={(e) => e.stopPropagation()} role="document">
+    <>
+      <div className="pm-backdrop" onMouseDown={onClose} aria-modal="true" role="dialog">
+        <div className="pm-modal" onMouseDown={(e) => e.stopPropagation()} role="document">
         {/* Header */}
         <header className="pm-header">
           <div className="pm-title">
@@ -320,6 +348,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         <nav className="pm-tabs" aria-label="Profile sections">
           <button className={tab === 'account' ? 'active' : ''} onClick={() => setTab('account')}>Account</button>
           <button className={tab === 'security' ? 'active' : ''} onClick={() => setTab('security')}>Security</button>
+          <button className={tab === 'privacy' ? 'active' : ''} onClick={() => setTab('privacy')}>Privacy</button>
           <button className={tab === 'preferences' ? 'active' : ''} onClick={() => setTab('preferences')}>Preferences</button>
           <button className={tab === 'sessions' ? 'active' : ''} onClick={() => setTab('sessions')}>Sessions</button>
         </nav>
@@ -331,7 +360,20 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
             <form className="pm-form" onSubmit={saveProfile}>
               <div className="pm-grid">
                 <div className="pm-avatar-col">
-                  <div className="pm-avatar">
+                  <div
+                    className={`pm-avatar${canPreviewAvatar ? ' clickable' : ''}`}
+                    role={canPreviewAvatar ? 'button' : undefined}
+                    tabIndex={canPreviewAvatar ? 0 : undefined}
+                    aria-label={canPreviewAvatar ? 'View avatar' : undefined}
+                    onClick={() => { if (canPreviewAvatar) setAvatarPreviewOpen(true) }}
+                    onKeyDown={(event) => {
+                      if (!canPreviewAvatar) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setAvatarPreviewOpen(true)
+                      }
+                    }}
+                  >
                     {avatarPreview ? (
                       <img src={avatarPreview} alt="Avatar" />
                     ) : (
@@ -403,6 +445,87 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                 </button>
               </div>
             </form>
+          )}
+
+          {tab === 'privacy' && (
+            <div className="pm-privacy">
+              <p className="pm-privacy-hint">Control what other people see when they view your profile.</p>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Profile photo</h4>
+                  <p>Allow others to view your avatar.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareAvatar}
+                    onChange={(event) => setShareAvatar(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Contact info</h4>
+                  <p>Share your email and phone with contacts.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareContactInfo}
+                    onChange={(event) => setShareContactInfo(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Bio</h4>
+                  <p>Display your About section in your public profile.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareBio}
+                    onChange={(event) => setShareBio(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Status message</h4>
+                  <p>Show your custom status to other users.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareStatusMessage}
+                    onChange={(event) => setShareStatusMessage(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Last seen</h4>
+                  <p>Display when you were last active.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareLastSeen}
+                    onChange={(event) => setShareLastSeen(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+            </div>
           )}
 
           {tab === 'preferences' && (
@@ -571,7 +694,14 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+      <ImagePreviewModal
+        open={avatarPreviewOpen && canPreviewAvatar}
+        src={canPreviewAvatar ? avatarPreview : undefined}
+        alt={`${user?.username || 'User'} avatar`}
+        onClose={() => setAvatarPreviewOpen(false)}
+      />
+    </>
   )
 }
 

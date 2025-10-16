@@ -160,6 +160,7 @@ class UserSearchView(APIView):
                 "email": user.email if user.share_contact_info or user == request.user else None,
                 "phone": user.phone if user.share_contact_info or user == request.user else None,
                 "name": (user.get_full_name() or user.username),
+                "avatar": user.avatar.url if user.avatar and (user.share_avatar or user == request.user) else None,
             }
             for user in qs
         ]

@@ -18,6 +18,8 @@ import VoiceMessage from '../components/Chat/VoiceMessage'
 import MessageInfoModal from '../components/Chat/MessageInfoModal'
 import ForwardMessageModal from '../components/Chat/ForwardMessageModal'
 import InviteUsersModal from '../components/Chat/InviteUsersModal'
+import ImagePreviewModal from '../shared/ImagePreviewModal'
+import AvatarBubble from '../shared/AvatarBubble'
 import { useChatNotifications } from '../hooks/useChatNotifications'
 import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
 import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
@@ -31,6 +33,45 @@ function formatDayLabel(d: Date) {
   if (diff === 0) return 'Today'
   if (diff === -1) return 'Yesterday'
   return d.toLocaleDateString()
+}
+
+function describeLastSeen(value?: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const now = new Date()
+  const minutes = Math.round((now.getTime() - date.getTime()) / 60000)
+  if (minutes < 1) return 'Last seen just now'
+  if (minutes < 60) return `Last seen ${minutes} min${minutes !== 1 ? 's' : ''} ago`
+
+  const sameDay = now.toDateString() === date.toDateString()
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+  if (sameDay) return `Last seen today at ${time}`
+  if (yesterday.toDateString() === date.toDateString()) return `Last seen yesterday at ${time}`
+
+  const day = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })
+  return `Last seen ${day} ${time}`
+}
+
+function formatStatus(status?: string | null) {
+  if (!status) return ''
+  const map: Record<string, string> = {
+    online: 'Online',
+    away: 'Away',
+    offline: 'Offline',
+    dnd: 'Do Not Disturb',
+  }
+  return map[status] || status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function describeField(value?: string | null, allowed?: boolean, empty = 'Not shared') {
+  if (value && value.trim().length > 0) return value
+  if (allowed === false) return 'Hidden by privacy'
+  return empty
 }
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
@@ -77,11 +118,46 @@ export default function ChatRoom() {
   const [inviteSubmitting, setInviteSubmitting] = React.useState(false)
   const [inviteUsersOptions, setInviteUsersOptions] = React.useState<any[]>([])
   const [inviteSelected, setInviteSelected] = React.useState<string[]>([])
+  const [directProfile, setDirectProfile] = React.useState<{ open: boolean; loading: boolean; data: any | null; error: string | null }>({ open: false, loading: false, data: null, error: null })
+  const [photoPreview, setPhotoPreview] = React.useState<{ open: boolean; src: string | null; alt: string }>({ open: false, src: null, alt: 'Profile photo' })
   const listRef = React.useRef<HTMLDivElement>(null)
   const deliveredAckRef = React.useRef<Set<string>>(new Set())
   const readAckRef = React.useRef<Set<string>>(new Set())
 
   const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds])
+
+  const directPartner = React.useMemo(() => {
+    if (!room || room?.is_group) return null
+    const meId = String(user?.id ?? '')
+    const members = (room?.members || (room as any)?.participants || []) as any[]
+    for (const entry of members) {
+      if (!entry) continue
+      const value = entry.id ?? entry.user_id ?? entry
+      if (value === undefined || value === null) continue
+      if (String(value) === meId) continue
+      const identifier = entry.uuid ?? entry.id ?? entry.user_id ?? entry.username
+      return {
+        identifier: identifier ? String(identifier) : String(entry.username || ''),
+        id: entry.id ?? entry.user_id ?? null,
+        username: entry.username ?? entry.name ?? '',
+        name: entry.name ?? entry.username ?? entry.email ?? 'User',
+        raw: entry,
+      }
+    }
+    return null
+  }, [room, user?.id])
+
+  const memberInfoMap = React.useMemo(() => {
+    const map = new Map<string, any>()
+    const members = (room?.members || (room as any)?.participants || []) as any[]
+    members.forEach((entry) => {
+      if (!entry) return
+      const value = entry.id ?? entry.user_id ?? entry
+      if (value === undefined || value === null) return
+      map.set(String(value), entry)
+    })
+    return map
+  }, [room])
 
   React.useEffect(() => {
     if (selectionMode && selectedIds.length === 0) {
@@ -102,6 +178,7 @@ export default function ChatRoom() {
   const dataArrayRef = React.useRef<Uint8Array | null>(null)
   const recordAnimationRef = React.useRef<number | null>(null)
   const audioCtxRef = React.useRef<AudioContext | null>(null)
+  const profileCacheRef = React.useRef<Record<string, any>>({})
   const imagePreference = useMediaPreference('images')
   const videoPreference = useMediaPreference('videos')
   const { prefs } = usePreferences()
@@ -143,6 +220,11 @@ export default function ChatRoom() {
     !!room?.is_admin ||
     (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
 
+  React.useEffect(() => {
+    setDirectProfile({ open: false, loading: false, data: null, error: null })
+    setPhotoPreview({ open: false, src: null, alt: 'Profile photo' })
+  }, [roomId, isGroup])
+
   React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
 
   React.useEffect(() => {
@@ -160,6 +242,43 @@ export default function ChatRoom() {
       else navigate('/chat')
     })()
   }, [roomId, token, navigate])
+
+  const loadDirectProfile = React.useCallback(() => {
+    if (!directPartner?.identifier) return
+    const partnerSnapshot = directPartner
+    const key = partnerSnapshot.identifier
+    const cached = profileCacheRef.current[key]
+    setDirectProfile({ open: true, loading: !cached, data: cached ?? null, error: null })
+    ;(async () => {
+      try {
+        const data = await fetchUserProfile(key)
+        profileCacheRef.current[key] = data
+        if (directPartner?.identifier !== partnerSnapshot.identifier) return
+        setDirectProfile({ open: true, loading: false, data, error: null })
+      } catch (error: any) {
+        if (directPartner?.identifier !== partnerSnapshot.identifier) return
+        setDirectProfile(prev => ({
+          open: true,
+          loading: false,
+          data: prev.data ?? cached ?? null,
+          error: error?.message || 'Failed to load profile',
+        }))
+      }
+    })()
+  }, [directPartner])
+
+  const handleHeaderClick = React.useCallback(() => {
+    if (isGroup) {
+      setShowInfo((prev) => !prev)
+      return
+    }
+    if (!directPartner) return
+    if (directProfile.open) {
+      setDirectProfile(prev => ({ ...prev, open: false }))
+      return
+    }
+    loadDirectProfile()
+  }, [directPartner, directProfile.open, isGroup, loadDirectProfile])
 
   // Normalizer
   const normalizeMsg = React.useCallback((raw: any) => {
@@ -1266,20 +1385,76 @@ export default function ChatRoom() {
     })
   })
 
+  const headerTitle = room?.name || directPartner?.name || 'Room'
+  const headerInitial = (headerTitle || 'R').slice(0, 1).toUpperCase()
+  const headerSubtitle = typingUser
+    ? `${typingUser} is typing…`
+    : (isGroup ? 'Group chat' : (directPartner?.username ? `@${directPartner.username}` : 'Direct chat'))
+
+  const profileData = directProfile.data
+  const partnerRaw = directPartner?.raw as any
+  const profilePrivacy = profileData?.privacy ?? {}
+  const headerInitials = partnerRaw?.initials || headerInitial
+  const headerAvatar = !isGroup ? (profileData?.avatar || partnerRaw?.avatar || null) : null
+  const profileAvatar = resolveUrl(profileData?.avatar || partnerRaw?.avatar || null)
+  const profileInitials = profileData?.initials || partnerRaw?.initials || headerInitial
+  const profileDisplayName = profileData?.display_name || directPartner?.name || headerTitle || 'User'
+  const profileUsername = profileData?.username || directPartner?.username || ''
+  const statusBadge = profileData ? (profileData.is_online ? 'Online now' : formatStatus(profileData.current_status)) : ''
+  const lastSeenLine = profileData
+    ? (profileData.is_online
+        ? 'Active now'
+        : profileData.last_seen
+          ? describeLastSeen(profileData.last_seen)
+          : profilePrivacy.share_last_seen === false
+            ? 'Last seen hidden by privacy'
+            : 'Last seen unavailable')
+    : ''
+  const statusMessageValue = profileData
+    ? (profileData.status_message && profileData.status_message.trim()
+        ? profileData.status_message.trim()
+        : profilePrivacy.share_status_message === false
+          ? 'Status hidden by privacy'
+          : '')
+    : ''
+  const bioValue = profileData
+    ? (profileData.bio && profileData.bio.trim()
+        ? profileData.bio.trim()
+        : profilePrivacy.share_bio === false
+          ? 'Bio hidden by privacy'
+          : '')
+    : ''
+  const emailValue = profileData ? describeField(profileData.email, profilePrivacy.share_contact_info, 'Not provided') : ''
+  const phoneValue = profileData ? describeField(profileData.phone, profilePrivacy.share_contact_info, 'Not provided') : ''
+  const privacySummary = `Avatar ${profilePrivacy.share_avatar === false ? 'hidden' : 'visible'} · Contact ${profilePrivacy.share_contact_info === false ? 'hidden' : 'visible'} · Status ${profilePrivacy.share_status_message === false ? 'hidden' : 'visible'} · Bio ${profilePrivacy.share_bio === false ? 'hidden' : 'visible'} · Last seen ${profilePrivacy.share_last_seen === false ? 'hidden' : 'visible'}`
+
   if (!token) return null
 
   return (
     <>
       <header className="chat-hd">
         <div className="title">
-          <div className="avatar-badge lg">{(room?.name || 'R').slice(0,1).toUpperCase()}</div>
+          <AvatarBubble
+            src={headerAvatar}
+            name={headerTitle}
+            initials={headerInitials}
+            size="lg"
+            interactive={!isGroup && !!directPartner}
+            onClick={!isGroup && directPartner ? (event) => { event.preventDefault(); event.stopPropagation(); handleHeaderClick() } : undefined}
+            ariaLabel={isGroup ? `${headerTitle} room` : `${headerTitle} profile`}
+          />
           <div>
-            <div className="name" onClick={() => setShowInfo(s => !s)} style={{cursor:isGroup?'pointer':undefined}}>
-              {room?.name || 'Room'} {isGroup && <span className="ri-tip">(tap for info)</span>}
+            <div
+              className="name"
+              onClick={handleHeaderClick}
+              style={{ cursor: (isGroup || directPartner) ? 'pointer' : undefined }}
+            >
+              {headerTitle}{' '}
+              {(isGroup || directPartner) && (
+                <span className="ri-tip">{isGroup ? '(tap for info)' : '(tap for profile)'}</span>
+              )}
             </div>
-            <div className="sub">
-              {typingUser ? `${typingUser} is typing…` : (isGroup ? 'Group chat' : 'Direct chat')}
-            </div>
+            <div className="sub">{headerSubtitle}</div>
           </div>
         </div>
       </header>
@@ -1306,6 +1481,10 @@ export default function ChatRoom() {
           const { m, mine, showAvatar, showTail, selected } = it
           const key = it.id || idx
           const messageId = it.id
+          const senderInfo = m.sender_id ? memberInfoMap.get(String(m.sender_id)) : null
+          const senderInitials = senderInfo?.initials || (m.sender_name || 'U').slice(0, 2)
+          const senderAvatar = senderInfo?.avatar || null
+          const senderName = senderInfo?.name || m.sender_name || 'User'
           const reactionPairs = Object.entries(m.reactions || {}).filter(([, arr]) => Array.isArray(arr) && arr.length>0)
           const status = m.status || null
           const attachment = renderAttachment(m)
@@ -1333,7 +1512,13 @@ export default function ChatRoom() {
           return (
             <div key={key} className={`row ${mine ? 'right' : 'left'}`} onContextMenu={handleContextMenu}>
               {!mine && showAvatar && (
-                <div className="avatar-badge sm">{(m.sender_name || 'U').slice(0,1).toUpperCase()}</div>
+                <AvatarBubble
+                  src={senderAvatar}
+                  name={senderName}
+                  initials={senderInitials}
+                  size="sm"
+                  ariaLabel={`${senderName} avatar`}
+                />
               )}
 
               {selectionMode && (
@@ -1483,6 +1668,99 @@ export default function ChatRoom() {
         )}
       </footer>
 
+      {!isGroup && (
+        <aside className={`room-info ${directProfile.open ? 'open' : ''}`}>
+          <div className="room-info-hd direct">
+            <div
+              className={`ri-profile-avatar ${profileAvatar ? 'has-image' : ''}`}
+              role={profileAvatar ? 'button' : undefined}
+              tabIndex={profileAvatar ? 0 : undefined}
+              aria-label={profileAvatar ? 'View profile photo' : undefined}
+              onClick={() => {
+                if (!profileAvatar) return
+                setPhotoPreview({ open: true, src: profileAvatar, alt: `${profileDisplayName} avatar` })
+              }}
+              onKeyDown={(event) => {
+                if (!profileAvatar) return
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setPhotoPreview({ open: true, src: profileAvatar, alt: `${profileDisplayName} avatar` })
+                }
+              }}
+            >
+              {profileAvatar ? (
+                <img src={profileAvatar} alt={`${profileDisplayName} avatar`} />
+              ) : (
+                <span>{profileInitials}</span>
+              )}
+            </div>
+            <div className="ri-meta">
+              <h4>{profileDisplayName}</h4>
+              {profileUsername && <p className="ri-username">@{profileUsername}</p>}
+              {(statusBadge || lastSeenLine) && (
+                <div className="ri-status-block">
+                  {statusBadge && (
+                    <span className={`ri-status-badge ${profileData?.is_online ? 'online' : ''}`}>
+                      {statusBadge}
+                    </span>
+                  )}
+                  {lastSeenLine && !profileData?.is_online && (
+                    <span className="ri-status-sub">{lastSeenLine}</span>
+                  )}
+                </div>
+              )}
+            </div>
+            <button className="ri-close" onClick={() => setDirectProfile(prev => ({ ...prev, open: false }))}>✕</button>
+          </div>
+
+          <div className="ri-section">
+            {directProfile.loading && !profileData && <p className="ri-loading">Loading profile…</p>}
+            {directProfile.error && <p className="ri-error">{directProfile.error}</p>}
+
+            {profileData && (
+              <div className="ri-profile">
+                {statusMessageValue && (
+                  <p className={`ri-status-message ${statusMessageValue === 'Status hidden by privacy' ? 'muted' : ''}`}>
+                    {statusMessageValue}
+                  </p>
+                )}
+
+                {bioValue && (
+                  <p className={`ri-bio ${bioValue === 'Bio hidden by privacy' ? 'muted' : ''}`}>
+                    {bioValue}
+                  </p>
+                )}
+
+                <div className="ri-profile-details">
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">Email</span>
+                    <span className={`ri-detail-value ${profileData?.email ? '' : 'muted'}`}>{emailValue}</span>
+                  </div>
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">Phone</span>
+                    <span className={`ri-detail-value ${profileData?.phone ? '' : 'muted'}`}>{phoneValue}</span>
+                  </div>
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">Last seen</span>
+                    <span className={`ri-detail-value ${(!profileData?.is_online && !profileData?.last_seen) ? 'muted' : ''}`}>
+                      {profileData?.is_online ? 'Active now' : lastSeenLine}
+                    </span>
+                  </div>
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">Privacy</span>
+                    <span className="ri-detail-value muted">{privacySummary}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!directProfile.loading && !directProfile.error && !profileData && (
+              <p className="ri-empty">Profile details not available.</p>
+            )}
+          </div>
+        </aside>
+      )}
+
       {/* group info */}
       {isGroup && (
         <aside className={`room-info ${showInfo ? 'open' : ''}`}>
@@ -1499,7 +1777,9 @@ export default function ChatRoom() {
             <ul className="ri-list">
               {room?.members?.map((m: any) => (
                 <li key={m.id}>
-                  <span className="ri-avatar">{(m.name || m.username || 'U').slice(0, 1)}</span>
+                  <span className={`ri-avatar ${m.avatar ? 'has-image' : ''}`}>
+                    {m.avatar ? <img src={resolveUrl(m.avatar)} alt={`${m.name || m.username || 'User'} avatar`} /> : (m.initials || (m.name || m.username || 'U').slice(0, 1))}
+                  </span>
                   <span className="ri-name">{m.name || m.username || m.email}</span>
                 </li>
               ))}
@@ -1559,6 +1839,13 @@ export default function ChatRoom() {
         onSearch={handleInviteSearch}
         onToggle={toggleInviteSelection}
         onSubmit={submitInvite}
+      />
+
+      <ImagePreviewModal
+        open={photoPreview.open && !!photoPreview.src}
+        src={photoPreview.src ?? undefined}
+        alt={photoPreview.alt}
+        onClose={() => setPhotoPreview({ open: false, src: null, alt: 'Profile photo' })}
       />
 
       {reactAnchor && (

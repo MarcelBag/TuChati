@@ -133,6 +133,14 @@
   display: grid; place-items: center;
   background: rgba(255,255,255,.04);
 }
+.pm-avatar.clickable {
+  cursor: zoom-in;
+  position: relative;
+}
+.pm-avatar.clickable:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+}
 .pm-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .pm-avatar-fallback {
   width: 100%; height: 100%;
@@ -190,6 +198,19 @@
 .pm-preferences {
   display: grid;
   gap: 16px;
+}
+
+.pm-privacy {
+  display: grid;
+  gap: 16px;
+}
+.pm-privacy-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,.7);
+}
+html.light .pm-privacy-hint {
+  color: rgba(15,23,42,.7);
 }
 .pref-row {
   display: flex;

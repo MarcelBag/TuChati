@@ -1,6 +1,17 @@
 // src/types/chat.ts
 import { UserMini } from './user'
 
+export interface RoomMember {
+  id: string | number
+  uuid?: string | null
+  username: string
+  name: string
+  email?: string | null
+  avatar?: string | null
+  initials?: string
+  is_self?: boolean
+}
+
 export interface ChatMessage {
   id: string
   room: string
@@ -17,6 +28,7 @@ export interface ChatRoom {
   is_group: boolean
   is_pending?: boolean
   participants: UserMini[]
+  members?: RoomMember[]
   created_at: string
   last_message?: ChatMessage | null
 }
@@ -31,11 +43,13 @@ export interface DirectChatRequest {
     id: string
     username: string
     name?: string
+    avatar?: string | null
   }
   to_user: {
     id: string
     username: string
     name?: string
+    avatar?: string | null
   }
   room?: {
     id: string

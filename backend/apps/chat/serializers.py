@@ -40,21 +40,43 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         return obj.participants.count()
 
     def get_members(self, obj: ChatRoom):
-        rows = obj.participants.all().values(
-            "id", "username", "email", "first_name", "last_name"
-        )
-        out = []
-        for r in rows:
-            full = ((r.get("first_name") or "") + " " + (r.get("last_name") or "")).strip()
-            out.append(
+        request = self.context.get("request")
+        viewer = getattr(request, "user", None) if request else None
+
+        def _initials(user: User) -> str:
+            first = (user.first_name or "").strip()[:1]
+            last = (user.last_name or "").strip()[:1]
+            if first or last:
+                return (first + last).upper()
+            return (user.username or "?")[:2].upper()
+
+        members = []
+        for participant in obj.participants.all():
+            is_self = bool(viewer and viewer.is_authenticated and viewer.id == participant.id)
+            show_contact = is_self or participant.share_contact_info
+            show_avatar = is_self or participant.share_avatar
+            display_name = (participant.get_full_name() or "").strip() or participant.username
+            avatar_url = None
+            if show_avatar and participant.avatar:
+                try:
+                    avatar_url = participant.avatar.url
+                except ValueError:
+                    avatar_url = None
+
+            members.append(
                 {
-                    "id": r["id"],
-                    "username": r["username"],
-                    "name": full or r["username"],
-                    "email": r.get("email"),
+                    "id": participant.id,
+                    "uuid": str(getattr(participant, "uuid", "")) or None,
+                    "username": participant.username,
+                    "name": display_name,
+                    "email": participant.email if show_contact else None,
+                    "avatar": avatar_url,
+                    "initials": _initials(participant),
+                    "is_self": is_self,
                 }
             )
-        return out
+
+        return members
 
     def get_is_admin(self, obj: ChatRoom) -> bool:
         request = self.context.get("request")
@@ -222,17 +244,25 @@ class DirectChatRequestSerializer(serializers.ModelSerializer):
         ]
 
     def get_from_user(self, obj: DirectChatRequest):
+        viewer = self.context.get("request").user if self.context.get("request") else None
+        user = obj.from_user
+        can_share_avatar = user.share_avatar or (viewer and viewer == user)
         return {
             "id": obj.from_user_id,
-            "username": obj.from_user.username,
-            "name": (getattr(obj.from_user, "get_full_name", lambda: "")() or obj.from_user.username),
+            "username": user.username,
+            "name": (getattr(user, "get_full_name", lambda: "")() or user.username),
+            "avatar": user.avatar.url if user.avatar and can_share_avatar else None,
         }
 
     def get_to_user(self, obj: DirectChatRequest):
+        viewer = self.context.get("request").user if self.context.get("request") else None
+        user = obj.to_user
+        can_share_avatar = user.share_avatar or (viewer and viewer == user)
         return {
             "id": obj.to_user_id,
-            "username": obj.to_user.username,
-            "name": (getattr(obj.to_user, "get_full_name", lambda: "")() or obj.to_user.username),
+            "username": user.username,
+            "name": (getattr(user, "get_full_name", lambda: "")() or user.username),
+            "avatar": user.avatar.url if user.avatar and can_share_avatar else None,
         }
 
     def get_room(self, obj: DirectChatRequest):

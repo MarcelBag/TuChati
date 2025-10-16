@@ -1,12 +1,13 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import './Reactions.css'
+import AvatarBubble from '../../shared/AvatarBubble'
 
 type DirectMessageModalProps = {
   open: boolean
   loading: boolean
   submitting: boolean
-  users: Array<{ id: string; username: string; name?: string; email?: string }>
+  users: Array<{ id: string; username: string; name?: string; email?: string; avatar?: string | null }>
   selectedUser: string | null
   message: string
   onClose: () => void
@@ -87,6 +88,12 @@ export default function DirectMessageModal({
                         name="direct-user"
                         checked={checked}
                         onChange={() => onSelect(user.id)}
+                      />
+                      <AvatarBubble
+                        src={user.avatar}
+                        name={user.name || user.username}
+                        initials={((user.name || user.username || 'U').trim() || 'U').slice(0, 2).toUpperCase()}
+                        size="sm"
                       />
                       <span className="forward-room-name">
                         {user.name || user.username}

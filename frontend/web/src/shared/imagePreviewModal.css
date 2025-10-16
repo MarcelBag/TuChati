@@ -1,0 +1,63 @@
+/* frontend/web/src/shared/imagePreviewModal.css */
+.ipm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 24px;
+}
+
+.ipm-modal {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: #0b0f14;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.light .ipm-modal {
+  background: #ffffff;
+}
+
+.ipm-modal img {
+  max-width: 80vw;
+  max-height: 80vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.ipm-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+}
+
+html.light .ipm-close {
+  background: rgba(15, 23, 42, 0.15);
+  color: #0b1220;
+}
+
+.ipm-close:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+html.light .ipm-close:hover {
+  background: rgba(15, 23, 42, 0.25);
+}

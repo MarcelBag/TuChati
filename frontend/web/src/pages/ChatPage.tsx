@@ -5,7 +5,9 @@ import { apiFetch } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { ChatRoom as Room, DirectChatRequest } from '../types'
 import DirectMessageModal from '../components/Chat/DirectMessageModal'
-import { createDirectRequest, decideDirectRequest, fetchDirectRequests, searchUsers } from '../api/chatActions'
+import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchUserProfile, searchUsers } from '../api/chatActions'
+import UserProfileModal from '../components/Chat/UserProfileModal'
+import AvatarBubble from '../shared/AvatarBubble'
 import './ChatPage.css'
 
 export default function ChatPage() {
@@ -16,11 +18,13 @@ export default function ChatPage() {
   const [directRequests, setDirectRequests] = React.useState<{ incoming: DirectChatRequest[]; outgoing: DirectChatRequest[] }>({ incoming: [], outgoing: [] })
   const [requestLoading, setRequestLoading] = React.useState(false)
   const [dmOpen, setDmOpen] = React.useState(false)
-  const [dmUsers, setDmUsers] = React.useState<Array<{ id: string; username: string; name?: string; email?: string }>>([])
+  const [dmUsers, setDmUsers] = React.useState<Array<{ id: string; username: string; name?: string; email?: string; avatar?: string | null }>>([])
   const [dmLoading, setDmLoading] = React.useState(false)
   const [dmSubmitting, setDmSubmitting] = React.useState(false)
   const [dmSelected, setDmSelected] = React.useState<string | null>(null)
   const [dmMessage, setDmMessage] = React.useState('')
+  const [profileViewer, setProfileViewer] = React.useState<{ open: boolean; loading: boolean; profile: any; target: string | null; error: string | null }>({ open: false, loading: false, profile: null, target: null, error: null })
+  const myId = React.useMemo(() => (currentUser?.id != null ? String(currentUser.id) : ''), [currentUser?.id])
   const navigate = useNavigate()
 
   // is a room open?
@@ -138,6 +142,7 @@ export default function ChatPage() {
           username: item.username,
           name: item.name,
           email: item.email,
+          avatar: item.avatar,
         })).filter((user) => user.username && String(user.id) !== String(currentUser?.id)))
       })
       .catch(() => setDmUsers([]))
@@ -179,6 +184,23 @@ export default function ChatPage() {
       alert(error?.message || 'Unable to update request')
     }
   }, [loadDirectRequests, loadRooms, navigate])
+
+  const openUserProfile = React.useCallback((identifier: string) => {
+    if (!identifier) return
+    const target = String(identifier)
+    setProfileViewer({ open: true, loading: true, profile: null, target, error: null })
+    fetchUserProfile(target)
+      .then((data) => {
+        setProfileViewer(prev => (prev.target === target ? { ...prev, loading: false, profile: data, error: null } : prev))
+      })
+      .catch((error: any) => {
+        setProfileViewer(prev => (prev.target === target ? { ...prev, loading: false, error: error?.message || 'Unable to load profile' } : prev))
+      })
+  }, [])
+
+  const closeUserProfile = React.useCallback(() => {
+    setProfileViewer({ open: false, loading: false, profile: null, target: null, error: null })
+  }, [])
 
   return (
     <div className="chat-shell">
@@ -236,8 +258,16 @@ export default function ChatPage() {
                   {directRequests.incoming.map(req => (
                     <li key={req.id}>
                       <div className="direct-meta">
-                        <strong>{req.from_user.name || req.from_user.username}</strong>
-                        <span>{new Date(req.created_at).toLocaleString()}</span>
+                        <AvatarBubble
+                          src={(req.from_user as any)?.avatar}
+                          name={req.from_user.name || req.from_user.username}
+                          initials={(req.from_user.name || req.from_user.username || 'U').slice(0, 2).toUpperCase()}
+                          size="sm"
+                        />
+                        <div className="direct-meta-text">
+                          <strong>{req.from_user.name || req.from_user.username}</strong>
+                          <span className="direct-meta-time">{new Date(req.created_at).toLocaleString()}</span>
+                        </div>
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
                       <div className="direct-actions">
@@ -256,8 +286,16 @@ export default function ChatPage() {
                   {directRequests.outgoing.map(req => (
                     <li key={req.id}>
                       <div className="direct-meta">
-                        <strong>{req.to_user.name || req.to_user.username}</strong>
-                        <span>{new Date(req.created_at).toLocaleString()}</span>
+                        <AvatarBubble
+                          src={(req.to_user as any)?.avatar}
+                          name={req.to_user.name || req.to_user.username}
+                          initials={(req.to_user.name || req.to_user.username || 'U').slice(0, 2).toUpperCase()}
+                          size="sm"
+                        />
+                        <div className="direct-meta-text">
+                          <strong>{req.to_user.name || req.to_user.username}</strong>
+                          <span className="direct-meta-time">{new Date(req.created_at).toLocaleString()}</span>
+                        </div>
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
                       <span className="direct-status">Waiting for approval</span>
@@ -272,25 +310,53 @@ export default function ChatPage() {
         <ul className="rooms-list">
           {loading && <li className="hint">Loading…</li>}
           {!loading && rooms.length === 0 && <li className="hint">No rooms yet</li>}
-          {rooms.map(r => (
-            <li
-              key={r.id}
-              className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''}`}
-              onClick={() => navigate(`/chat/${r.id}`)}
-            >
-              <div className="avatar-badge">{(r.name || 'R').slice(0,1).toUpperCase()}</div>
-              <div className="room-main">
-                <div className="room-row">
-                  <span className="room-name">{r.name || 'Room'}</span>
-                  <span className="room-date">{formatDate((r as any)?.updated_at || (r as any)?.created_at)}</span>
+          {rooms.map(r => {
+            const members = (r?.members || (r as any)?.participants || []) as any[]
+            const otherMember = !r.is_group ? members.find((entry: any) => {
+              if (entry?.is_self) return false
+              const value = entry?.id ?? entry?.user_id ?? entry
+              if (value === undefined || value === null) return false
+              return String(value) !== myId
+            }) : null
+            const otherId = otherMember ? String(otherMember.uuid || otherMember.id || otherMember.user_id || otherMember.username || '') : null
+            const handleAvatarClick = (event: React.MouseEvent) => {
+              event.preventDefault()
+              event.stopPropagation()
+              if (otherId) openUserProfile(otherId)
+            }
+            const roomName = r.name || otherMember?.name || otherMember?.username || 'Room'
+            const avatarInitials = otherMember?.initials || (roomName || 'R').slice(0, 2)
+            const avatarSrc = otherMember?.avatar || (r as any)?.avatar || null
+            const unread = (r as any)?.unread_count ?? 0
+
+            return (
+              <li
+                key={r.id}
+                className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''}`}
+                onClick={() => navigate(`/chat/${r.id}`)}
+              >
+                <AvatarBubble
+                  src={avatarSrc}
+                  name={roomName}
+                  initials={avatarInitials}
+                  size="lg"
+                  interactive={!r.is_group && !!otherId}
+                  onClick={!r.is_group && otherId ? handleAvatarClick : undefined}
+                  ariaLabel={r.is_group ? `${roomName} room` : `${roomName} profile`}
+                />
+                <div className="room-main">
+                  <div className="room-row">
+                    <span className="room-name">{roomName}</span>
+                    <span className="room-date">{formatDate((r as any)?.updated_at || (r as any)?.created_at)}</span>
+                  </div>
+                  <div className="room-row dim">
+                    <span className="room-last">{preview(r)}</span>
+                    {unread > 0 && <span className="badge">{unread}</span>}
+                  </div>
                 </div>
-                <div className="room-row dim">
-                  <span className="room-last">{preview(r)}</span>
-                  {(r as any)?.unread_count > 0 && <span className="badge">{(r as any).unread_count}</span>}
-                </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       </aside>
 
@@ -318,6 +384,14 @@ export default function ChatPage() {
         onSelect={(id) => setDmSelected(id)}
         onMessageChange={(value) => setDmMessage(value)}
         onSubmit={handleDirectSubmit}
+      />
+
+      <UserProfileModal
+        open={profileViewer.open}
+        loading={profileViewer.loading}
+        profile={profileViewer.profile}
+        error={profileViewer.error}
+        onClose={closeUserProfile}
       />
     </div>
   )
