@@ -106,6 +106,15 @@ export async function decideDirectRequest(requestId: string, decision: 'accept' 
   return res.json()
 }
 
+export async function fetchUserProfile(identifier: string) {
+  const res = await apiFetch(`/api/accounts/users/${identifier}/profile/`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to load user profile')
+  }
+  return res.json()
+}
+
 export async function setPinned(roomId: string, messageId: string, pinned: boolean) {
   const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/${messageId}/pin/`, {
     method: 'POST',

@@ -18,10 +18,22 @@ import { apiFetch, loadTokensFromStorage, setTokens } from '../shared/api'
 
 type User = {
   id: number
+  uuid?: string
   username?: string
   email?: string
+  first_name?: string
+  last_name?: string
   name?: string
   avatar?: string | null
+  phone?: string | null
+  bio?: string | null
+  status_message?: string | null
+  share_avatar?: boolean
+  share_contact_info?: boolean
+  share_bio?: boolean
+  share_last_seen?: boolean
+  share_status_message?: boolean
+  [key: string]: any
 } | null
 
 type AuthContextType = {
@@ -30,6 +42,8 @@ type AuthContextType = {
   loading: boolean
   login: (usernameOrEmail: string, password: string) => Promise<void>
   logout: () => void
+  setUser: React.Dispatch<React.SetStateAction<User>>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -156,9 +170,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   )
 
+  const refreshUser = useMemo(
+    () => async () => {
+      const res = await apiFetch('/api/accounts/me/')
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data)
+      }
+    },
+    []
+  )
+
   const value = useMemo<AuthContextType>(
-    () => ({ user, token, loading, login, logout }),
-    [user, token, loading, login, logout]
+    () => ({ user, token, loading, login, logout, setUser, refreshUser }),
+    [user, token, loading, login, logout, refreshUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

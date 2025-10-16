@@ -1,5 +1,6 @@
 # backend/apps/accounts/views.py
 from rest_framework import generics, permissions, status
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -16,6 +17,14 @@ from .serializers import (
 from .models import DeviceSession
 
 User = get_user_model()
+
+
+def initials(first_name: str, last_name: str, username: str) -> str:
+    a = (first_name or '').strip()[:1]
+    b = (last_name or '').strip()[:1]
+    if a or b:
+        return (a + b).upper()
+    return (username or '?')[:2].upper()
 
 
 class RegisterView(generics.CreateAPIView):
@@ -148,10 +157,72 @@ class UserSearchView(APIView):
             {
                 "id": user.id,
                 "username": user.username,
-                "email": user.email,
+                "email": user.email if user.share_contact_info or user == request.user else None,
+                "phone": user.phone if user.share_contact_info or user == request.user else None,
                 "name": (user.get_full_name() or user.username),
             }
             for user in qs
         ]
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+class UserProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _resolve_user(self, identifier: str):
+        try:
+            return User.objects.get(uuid=identifier)
+        except (User.DoesNotExist, ValueError):
+            pass
+        if identifier.isdigit():
+            try:
+                return User.objects.get(id=int(identifier))
+            except User.DoesNotExist:
+                pass
+        try:
+            return User.objects.get(username=identifier)
+        except User.DoesNotExist:
+            return get_object_or_404(User, username=identifier)
+
+    def get(self, request, identifier: str):
+        user = self._resolve_user(identifier)
+        viewer = request.user
+        is_self = viewer == user
+
+        def allow(field: str) -> bool:
+            return is_self or getattr(user, field)
+
+        avatar_url = user.avatar.url if user.avatar and allow('share_avatar') else None
+        bio = user.bio if allow('share_bio') else ''
+        status_message = user.status_message if allow('share_status_message') else ''
+        current_status = user.current_status if allow('share_status_message') else ''
+        email = user.email if allow('share_contact_info') else ''
+        phone = user.phone if allow('share_contact_info') else ''
+        last_seen = user.last_seen if allow('share_last_seen') else None
+
+        payload = {
+            "id": user.id,
+            "uuid": str(user.uuid),
+            "username": user.username,
+            "display_name": user.get_full_name() or user.username,
+            "initials": initials(user.first_name, user.last_name, user.username),
+            "avatar": avatar_url,
+            "bio": bio,
+            "status_message": status_message,
+            "current_status": current_status,
+            "last_seen": last_seen,
+            "phone": phone,
+            "email": email,
+            "is_online": user.is_online,
+            "privacy": {
+                "share_avatar": user.share_avatar,
+                "share_contact_info": user.share_contact_info,
+                "share_bio": user.share_bio,
+                "share_last_seen": user.share_last_seen,
+                "share_status_message": user.share_status_message,
+            },
+            "viewer_is_self": is_self,
+        }
+
+        return Response(payload, status=status.HTTP_200_OK)

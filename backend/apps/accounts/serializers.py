@@ -30,6 +30,7 @@ class UserSerializer(serializers.ModelSerializer):
             # presence / profile
             "is_online", "current_status", "last_seen", "device_type",
             "phone", "bio", "status_message", "status_updated_at", "user_timezone",
+            "share_avatar", "share_contact_info", "share_bio", "share_last_seen", "share_status_message",
         ]
         read_only_fields = ["id", "username", "is_online", "uuid", "last_seen", "status_updated_at"]
 
@@ -44,7 +45,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """Used by PATCH/PUT /me/ and avatar upload (partial)."""
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email", "avatar", "phone", "bio", "status_message", "user_timezone"]
+        fields = [
+            "first_name", "last_name", "email", "avatar", "phone", "bio", "status_message", "user_timezone",
+            "share_avatar", "share_contact_info", "share_bio", "share_last_seen", "share_status_message",
+        ]
 
 
 class PasswordChangeSerializer(serializers.Serializer):

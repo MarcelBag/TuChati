@@ -20,7 +20,7 @@ import ForwardMessageModal from '../components/Chat/ForwardMessageModal'
 import InviteUsersModal from '../components/Chat/InviteUsersModal'
 import { useChatNotifications } from '../hooks/useChatNotifications'
 import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
-import { deleteMessage, deleteMessages, fetchMessageInfo, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
+import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
 
 function formatDayLabel(d: Date) {
   const now = new Date()

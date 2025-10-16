@@ -56,6 +56,13 @@ class User(AbstractUser):
     )
     end_to_end_key = models.TextField(blank=True, null=True)
 
+    # Privacy controls
+    share_avatar = models.BooleanField(default=True)
+    share_contact_info = models.BooleanField(default=True)
+    share_bio = models.BooleanField(default=True)
+    share_last_seen = models.BooleanField(default=True)
+    share_status_message = models.BooleanField(default=True)
+
     def mark_online(self, device="web"):
         self.is_online = True
         self.device_type = device
