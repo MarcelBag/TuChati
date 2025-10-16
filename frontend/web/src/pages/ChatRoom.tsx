@@ -6,11 +6,12 @@
 // (Fixed TDZ/ReferenceError: menuActions; boolean op; ordering)
 // ============================================================
 import React from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { apiFetch, resolveUrl } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
 import { ChatRoom as Room } from '../types'
+import type { ChatOutletContext } from './ChatPage'
 import './ChatRoom.css'
 import ReactionsBar, { REACTION_SET } from '../components/Chat/ReactionsBar'
 import MessageMenu, { MessageMenuAction } from '../components/Chat/MessageMenu'
@@ -88,6 +89,8 @@ const AUDIO_MIME_CANDIDATES = [
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
+  const outletContext = useOutletContext<ChatOutletContext | null>()
+  const updateRoomUnread = outletContext?.updateRoomUnread
   const navigate = useNavigate()
   const { playSend, playReceive } = useChatNotifications()
 
@@ -334,6 +337,16 @@ export default function ChatRoom() {
   }, [user?.id])
 
   const myId = React.useMemo(() => String(user?.id ?? ''), [user?.id])
+
+  React.useEffect(() => {
+    if (!updateRoomUnread || !roomId) return
+    updateRoomUnread(roomId, 0)
+  }, [roomId, updateRoomUnread])
+
+  React.useEffect(() => {
+    if (!updateRoomUnread || !roomId) return
+    updateRoomUnread(roomId, 0)
+  }, [messages, roomId, updateRoomUnread])
   const memberIdSet = React.useMemo(() => {
     const source = (room?.members || (room as any)?.participants || []) as any[]
     const set = new Set<string>()
@@ -403,6 +416,12 @@ export default function ChatRoom() {
           updated.is_me = true
         }
         updated.status = computeStatus(updated)
+        if (!isGroup && updated.sender_id !== user?.id && Array.isArray(updated.read_by)) {
+          const filtered = updated.read_by.filter((id: string) => String(id) !== myId)
+          if (filtered.length !== updated.read_by.length) {
+            updated.read_by = filtered
+          }
+        }
         if (JSON.stringify(existing) !== JSON.stringify(updated)) {
           changed = true
         }
@@ -412,7 +431,10 @@ export default function ChatRoom() {
       }
 
       changed = true
-      const nextItem = { ...normalized, status: computeStatus(normalized) }
+      const nextItem: any = { ...normalized, status: computeStatus(normalized) }
+      if (!isGroup && nextItem.sender_id !== user?.id && Array.isArray(nextItem.read_by)) {
+        nextItem.read_by = nextItem.read_by.filter((id: string) => String(id) !== myId)
+      }
       return [...prev, nextItem]
     })
     return changed

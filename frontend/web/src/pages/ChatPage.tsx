@@ -185,6 +185,13 @@ export default function ChatPage() {
     }
   }, [loadDirectRequests, loadRooms, navigate])
 
+  const updateRoomUnread = React.useCallback((roomId: string | number, unread: number) => {
+    setRooms(prev => prev.map(room => {
+      if (String(room.id) !== String(roomId)) return room
+      return { ...room, unread_count: unread }
+    }))
+  }, [])
+
   const openUserProfile = React.useCallback((identifier: string) => {
     if (!identifier) return
     const target = String(identifier)
@@ -370,7 +377,7 @@ export default function ChatPage() {
       {/* Messages area fills the rest */}
       <section className={`chat-pane ${hasRoomOpen ? 'has-room' : 'empty'}`}>
         {hasRoomOpen ? (
-          <Outlet />
+          <Outlet context={{ updateRoomUnread }} />
         ) : (
           <div className="empty-inner">
             <h3>Select a room or create a new one.</h3>
@@ -402,4 +409,8 @@ export default function ChatPage() {
       />
     </div>
   )
+}
+
+export type ChatOutletContext = {
+  updateRoomUnread?: (roomId: string | number, unread: number) => void
 }

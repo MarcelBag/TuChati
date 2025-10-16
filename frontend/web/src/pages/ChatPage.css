@@ -181,9 +181,9 @@ html.light {
 .room-item.unread .room-last { font-weight: 600; color: var(--text); }
 .room-item.unread .room-date { color: #ff4d4f; font-weight: 600; }
 .room-item.unread .room-unread {
-  background: #ff4d4f;
+  background: #15c72c;
   color: #fff;
-  border-color: #ff4d4f;
+  border-color: #0da250;
   box-shadow: 0 0 0 2px rgba(255,255,255,0.75);
 }
 html.light .room-item.unread { background: rgba(255, 77, 79, 0.18); }
