@@ -31,43 +31,55 @@ export function VerificationCodeForm({
     if (!loading) onSubmit()
   }
 
+  const helper = info && !error ? info : null
+
   return (
-    <form className="twofa-form" onSubmit={handleSubmit}>
-      <label htmlFor="twofa-code">Verification code</label>
-      <input
-        id="twofa-code"
-        type="text"
-        inputMode="numeric"
-        maxLength={6}
-        value={code}
-        onChange={(e) => onChange(e.target.value.replace(/\D+/g, '').slice(0, 6))}
-        placeholder="123456"
-        autoFocus
-      />
+    <div className="twofa-card">
+      <div className="twofa-card-head">
+        <div className="twofa-badge">Tu</div>
+        <div>
+          <h3>Check your inbox</h3>
+          <p>We sent a 6-digit code to your email address.</p>
+        </div>
+      </div>
 
-      {countdown && (
-        <p className="twofa-countdown">
-          {countdownLabel}: <span>{countdown}</span>
-        </p>
-      )}
+      <form className="twofa-form" onSubmit={handleSubmit}>
+        <label htmlFor="twofa-code">Enter your verification code</label>
+        <input
+          id="twofa-code"
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          value={code}
+          onChange={(e) => onChange(e.target.value.replace(/\D+/g, '').slice(0, 6))}
+          placeholder="123456"
+          autoFocus
+        />
 
-      {error && <p className="twofa-error">{error}</p>}
-      {info && !error && <p className="twofa-info">{info}</p>}
+        <div className="twofa-meta">
+          {countdown && (
+            <span className="twofa-countdown">{countdownLabel}: <strong>{countdown}</strong></span>
+          )}
+          {helper && <span className="twofa-helper">{helper}</span>}
+        </div>
 
-      <button type="submit" disabled={loading || code.length !== 6}>
-        {loading ? 'Checking…' : 'Verify code'}
-      </button>
+        {error && <p className="twofa-error">{error}</p>}
 
-      {onResend && (
-        <button
-          type="button"
-          className="twofa-resend"
-          disabled={!allowResend || loading}
-          onClick={() => onResend()}
-        >
-          Resend code
+        <button type="submit" className="twofa-submit" disabled={loading || code.length !== 6}>
+          {loading ? 'Checking…' : 'Verify code'}
         </button>
-      )}
-    </form>
+
+        {onResend && (
+          <button
+            type="button"
+            className="twofa-resend"
+            disabled={!allowResend || loading}
+            onClick={() => onResend()}
+          >
+            Resend code
+          </button>
+        )}
+      </form>
+    </div>
   )
 }

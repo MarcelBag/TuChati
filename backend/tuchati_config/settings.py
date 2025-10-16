@@ -163,6 +163,11 @@ if EMAIL_USE_TLS and EMAIL_USE_SSL:
     # Django will raise if both enabled; normalise here to avoid config mistakes
     EMAIL_USE_SSL = False
 
+# Brand theming for notifications / emails
+APP_BRAND_NAME = os.getenv("APP_BRAND_NAME", "TuChati")
+APP_BRAND_URL = os.getenv("APP_BRAND_URL", "https://tuchati.tuunganes.com")
+APP_SUPPORT_EMAIL = os.getenv("APP_SUPPORT_EMAIL", EMAIL_HOST_USER or DEFAULT_FROM_EMAIL)
+
 
 # -------------------------------------------
 # STATIC & MEDIA FILES
