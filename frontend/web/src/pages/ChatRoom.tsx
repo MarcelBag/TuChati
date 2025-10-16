@@ -126,6 +126,7 @@ export default function ChatRoom() {
   const listRef = React.useRef<HTMLDivElement>(null)
   const deliveredAckRef = React.useRef<Set<string>>(new Set())
   const readAckRef = React.useRef<Set<string>>(new Set())
+  const stickToBottomRef = React.useRef(true)
 
   const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -847,8 +848,29 @@ export default function ChatRoom() {
   }, [scrollToBottom])
 
   React.useEffect(() => {
-    scrollToBottom('smooth')
-  }, [messages, scrollToBottom])
+    stickToBottomRef.current = true
+  }, [roomId])
+
+  React.useEffect(() => {
+    const last = messages[messages.length - 1]
+    const lastIsMine = !!last && (last.is_me || last.sender_id === user?.id)
+    if (stickToBottomRef.current || lastIsMine) {
+      scrollToBottom(lastIsMine ? 'smooth' : 'auto')
+    }
+  }, [messages, scrollToBottom, user?.id])
+
+  React.useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const handleScroll = () => {
+      const threshold = 120
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+      stickToBottomRef.current = distance <= threshold
+    }
+    handleScroll()
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [roomId])
 
   // send text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
