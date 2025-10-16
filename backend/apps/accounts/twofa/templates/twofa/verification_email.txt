@@ -1,0 +1,17 @@
+{{ app_name }}
+{{ app_url }}
+
+{{ greeting }}
+
+Here is your {{ app_name }} verification code to {{ purpose }}:
+
+    {{ code }}
+
+This code expires in {{ expires_display }}.
+
+If this wasn’t you, please reset your password immediately.
+If you didn’t request this, you can safely ignore this email.
+
+Need assistance? Contact us at {{ support_email }}.
+
+— The {{ app_name }} team

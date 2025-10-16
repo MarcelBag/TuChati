@@ -1,0 +1,13 @@
+{{ app_name }}
+{{ app_url }}
+
+{{ greeting }}
+
+Your workspace is live and ready. Here are a few quick wins:
+• Personalise your profile so teammates recognise you.
+• Create rooms for your projects and invite collaborators.
+• Enable two-factor protection to keep your account safe.
+
+Need a hand? Contact us at {{ support_email }}.
+
+— The {{ app_name }} team

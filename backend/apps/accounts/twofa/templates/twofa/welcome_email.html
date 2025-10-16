@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }}</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        background: #050712;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #e2e8f0;
+      }
+      a { color: #a855f7; }
+      .shell { padding: 36px 16px; }
+      .panel {
+        margin: 0 auto;
+        max-width: 620px;
+        border-radius: 36px;
+        overflow: hidden;
+        background: linear-gradient(160deg, rgba(99, 102, 241, 0.22), rgba(14, 116, 144, 0.16));
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow: 0 35px 95px rgba(12, 18, 34, 0.55);
+      }
+      .hero {
+        padding: 44px 48px 34px;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(99, 102, 241, 0.35));
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: 32px;
+        letter-spacing: -0.03em;
+        color: #f8fafc;
+      }
+      .hero p {
+        margin: 20px 0 0;
+        font-size: 17px;
+        line-height: 1.75;
+        color: #dbeafe;
+      }
+      .body {
+        padding: 38px 48px 44px;
+        background: rgba(9, 13, 27, 0.95);
+      }
+      .body ul {
+        margin: 0 0 26px 22px;
+        padding: 0;
+        color: #cbd5f5;
+        line-height: 1.8;
+        font-size: 15px;
+      }
+      .body p {
+        margin: 0 0 22px;
+        color: #cbd5f5;
+        line-height: 1.75;
+        font-size: 15px;
+      }
+      .cta {
+        display: inline-block;
+        padding: 15px 32px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #f8fafc;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .footer {
+        max-width: 620px;
+        margin: 24px auto 0;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(148, 163, 184, 0.75);
+      }
+      @media (max-width: 640px) {
+        .hero, .body { padding: 32px 24px; }
+        .hero h1 { font-size: 28px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="panel">
+        <div class="hero">
+          <h1>{{ greeting }}</h1>
+          <p>Your {{ app_name }} workspace is ready. Here’s how to make the most of it.</p>
+        </div>
+        <div class="body">
+          <p>Here are a few quick wins to get you started today:</p>
+          <ul>
+            <li>Personalise your profile so teammates recognise you.</li>
+            <li>Create rooms for your projects and invite collaborators.</li>
+            <li>Turn on two-factor protection and keep your account secure.</li>
+          </ul>
+          <a class="cta" href="{{ app_url }}">Open {{ app_name }}</a>
+          <p>Need a hand? Reply to this email or reach us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+          <p style="margin:32px 0 0;color:#94a3b8;">Stay connected. Collaborate faster. Welcome to {{ app_name }}.</p>
+        </div>
+      </div>
+      <p class="footer">© {{ app_name }} · <a href="{{ app_url }}">{{ app_url }}</a></p>
+    </div>
+  </body>
+</html>
