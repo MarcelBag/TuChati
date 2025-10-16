@@ -121,14 +121,7 @@ html.light .bubble .time { opacity: .55; }
 .bubble.me .time .status-icon.status-read{color:#dbeafe}
 
 /* Bubble tails */
-.bubble.other::after,
-.bubble.me::after {
-  content: ""; position: absolute; bottom: 0; width: 12px; height: 12px;
-  background: inherit;
-  clip-path: polygon(0 0, 100% 100%, 0 100%);
-}
-.bubble.other::after { left: -5px; transform: translateY(-1px); }
-.bubble.me::after { right: -5px; transform: translateY(-1px) scaleX(-1); }
+.bubble::after { display: none; }
 
 /* Composer */
 .composer {
@@ -327,10 +320,8 @@ html:not(.light) .day-sep span{background:rgba(255,255,255,.08)}
 .bubble .time{position:absolute;right:12px;bottom:6px;font-size:11px;color:currentColor;opacity:.6;white-space:nowrap}
 .bubble.me .time{color:rgba(255,255,255,.85)}
 
-/* tails only for last-in-block */
-.bubble.tail::after{content:"";position:absolute;bottom:0;width:12px;height:12px;background:inherit;clip-path:polygon(0 0,100% 100%,0 100%)}
-.row.left .bubble.tail::after{left:-5px;transform:translateY(-1px)}
-.row.right .bubble.tail::after{right:-5px;transform:translateY(-1px) scaleX(-1)}
+/* tails removed for rounded look */
+.bubble.tail::after{display:none}
 
 /* kebab button */
 .bubble .more{

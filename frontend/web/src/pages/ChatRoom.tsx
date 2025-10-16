@@ -685,6 +685,30 @@ export default function ChatRoom() {
     return { node: null, kind: 'none' }
   }, [imagePreference, videoPreference])
 
+  React.useEffect(() => {
+    if (!roomId || !token) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!res.ok) return
+        const data = await res.json().catch(() => [])
+        if (cancelled) return
+        const items = Array.isArray(data) ? data : (data?.results ?? data?.items ?? [])
+        const list = items
+          .map((item: any) => normalizeMsg(item))
+          .filter(Boolean)
+        setMessages(list as any[])
+        setHistoryLoaded(true)
+      } catch {
+        /* ignore network failure here; websocket history will recover */
+      }
+    })()
+    return () => { cancelled = true }
+  }, [normalizeMsg, roomId, token])
+
   const openMenu = React.useCallback((message: any, event: React.MouseEvent) => {
     event.stopPropagation()
     setMenuState({ open: true, x: event.clientX, y: event.clientY, message })
@@ -812,9 +836,19 @@ export default function ChatRoom() {
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
+  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = 'auto') => {
+    const el = listRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior })
+  }, [])
+
   React.useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
-  }, [messages])
+    scrollToBottom('auto')
+  }, [scrollToBottom])
+
+  React.useEffect(() => {
+    scrollToBottom('smooth')
+  }, [messages, scrollToBottom])
 
   // send text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
