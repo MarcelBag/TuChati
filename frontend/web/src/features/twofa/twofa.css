@@ -1,0 +1,54 @@
+.twofa-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.twofa-form label {
+  font-weight: 600;
+}
+
+.twofa-form input {
+  font-size: 1.1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  letter-spacing: 0.35rem;
+  text-align: center;
+}
+
+.twofa-form button {
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary-color, #2563eb);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.twofa-form button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.twofa-resend {
+  background: transparent;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+}
+
+.twofa-countdown {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.twofa-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.twofa-info {
+  color: #047857;
+  font-size: 0.9rem;
+}

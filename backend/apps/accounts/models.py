@@ -8,6 +8,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 
+
 def generate_uuid():
     return uuid.uuid4()
 
@@ -124,3 +125,43 @@ class DeviceSession(models.Model):
 
     def __str__(self):
         return f"{self.user.username} [{self.device_type}] ({self.connection_status})"
+
+
+class EmailVerificationCode(models.Model):
+    PURPOSE_SIGNUP = "signup"
+    PURPOSE_PASSWORD_RESET = "password_reset"
+
+    PURPOSE_CHOICES = (
+        (PURPOSE_SIGNUP, "Signup"),
+        (PURPOSE_PASSWORD_RESET, "Password reset"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField()
+    username = models.CharField(max_length=150, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="verification_codes")
+    purpose = models.CharField(max_length=32, choices=PURPOSE_CHOICES)
+    code = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    used = models.BooleanField(default=False)
+    attempts = models.IntegerField(default=0)
+    metadata = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("email", "purpose")),
+            models.Index(fields=("user", "purpose")),
+        ]
+
+    def __str__(self):
+        return f"Code<{self.email}:{self.purpose}:{self.code}>"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expires_at
+
+    def mark_used(self):
+        self.used = True
+        self.save(update_fields=["used"])

@@ -6,19 +6,28 @@ from .views import (
     MeView,
     AvatarUploadView,
     PasswordChangeView,
-    PasswordResetRequestView,
-    PasswordResetConfirmView,
     SessionsView,
     LogoutAllView,
     PresenceView,
     UserSearchView,
     UserProfileView,
 )
+from .twofa import (
+    RegisterStartView,
+    RegisterVerifyView,
+    RegisterCompleteView,
+    PasswordResetStartView,
+    PasswordResetVerifyView,
+    PasswordResetCompleteView,
+)
 from .views_jwt import CustomTokenObtainPairView
 
 urlpatterns = [
     # Auth
     path("register/", RegisterView.as_view(), name="register"),
+    path("register/start/", RegisterStartView.as_view(), name="register-start"),
+    path("register/verify/", RegisterVerifyView.as_view(), name="register-verify"),
+    path("register/complete/", RegisterCompleteView.as_view(), name="register-complete"),
     path("token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
@@ -27,8 +36,9 @@ urlpatterns = [
     path("me/presence/", PresenceView.as_view(), name="me-presence"),
     path("avatar/", AvatarUploadView.as_view(), name="avatar-upload"),
     path("password/change/", PasswordChangeView.as_view(), name="password-change"),
-    path("password/reset/", PasswordResetRequestView.as_view(), name="password-reset"),
-    path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
+    path("password/reset/", PasswordResetStartView.as_view(), name="password-reset"),
+    path("password/reset/verify/", PasswordResetVerifyView.as_view(), name="password-reset-verify"),
+    path("password/reset/confirm/", PasswordResetCompleteView.as_view(), name="password-reset-confirm"),
 
     # Sessions
     path("sessions/", SessionsView.as_view(), name="sessions"),

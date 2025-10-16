@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 
 from .models import DeviceSession
 
 
-def record_device_session(user, request=None, token: Optional[str] = None):
-    """Persist or refresh a device session for the given user."""
+DEFAULT_FROM = getattr(settings, 'DEFAULT_FROM_EMAIL', 'TuChati <no-reply@tuchati.tuunganes.com>')
+
+
+def record_device_session(user, request=None, token: Optional[str] = None) -> Tuple[Optional[DeviceSession], bool]:
+    """Persist/refresh a session and email when a new device signs in."""
     if not user or not token:
-        return
+        return None, False
 
     token_str = str(token)
     device_type = 'web'
@@ -19,7 +24,7 @@ def record_device_session(user, request=None, token: Optional[str] = None):
     app_version = ''
 
     if request is not None:
-        device_type = request.headers.get('X-Device-Type', 'web')
+        device_type = request.headers.get('X-Device-Type', 'web') or 'web'
         ip_address = request.META.get('REMOTE_ADDR')
         device_name = request.headers.get('X-Device-Name', '')
         app_version = request.headers.get('X-App-Version', '')
@@ -28,8 +33,8 @@ def record_device_session(user, request=None, token: Optional[str] = None):
         user=user,
         token=token_str,
         defaults={
-            'device_type': device_type or 'web',
-            'device_name': device_name or device_type or 'web',
+            'device_type': device_type,
+            'device_name': device_name or device_type,
             'ip_address': ip_address,
             'app_version': app_version,
             'connection_status': 'online',
@@ -56,3 +61,25 @@ def record_device_session(user, request=None, token: Optional[str] = None):
             session.save(update_fields=fields_to_update)
 
     session.touch()
+
+    if created:
+        email = getattr(user, 'email', None)
+        if email:
+            try:
+                username = getattr(user, 'username', '') or getattr(user, 'email', '') or 'there'
+                message = (
+                    "TuChati\n"
+                    "tuchati.tuunganes.com\n\n"
+                    f"Hi {username},\n\n"
+                    "A new device just signed in to your TuChati account.\n"
+                    f"Device: {device_name or device_type}\n"
+                    f"IP address: {ip_address or 'Unknown'}\n\n"
+                    "If this wasn’t you, please reset your password immediately.\n\n"
+                    "If you didn’t request this, you can safely ignore this email.\n"
+                    "— Your TuChati team"
+                )
+                send_mail('New TuChati login', message, DEFAULT_FROM, [email], fail_silently=True)
+            except Exception:
+                pass
+
+    return session, created
