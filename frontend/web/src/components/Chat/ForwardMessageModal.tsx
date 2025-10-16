@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import './Reactions.css'
 
 type RoomOption = {
@@ -41,6 +42,8 @@ export default function ForwardMessageModal({
 
   if (!open) return null
 
+  if (typeof document === 'undefined') return null
+
   const lower = query.trim().toLowerCase()
   const filtered = lower
     ? rooms.filter((room) => room.name.toLowerCase().includes(lower))
@@ -54,7 +57,7 @@ export default function ForwardMessageModal({
     return 'Message'
   })()
 
-  return (
+  return createPortal(
     <div className="ctx-wrap" onClick={onClose}>
       <div className="menu ctx forward-modal" onClick={(event) => event.stopPropagation()}>
         <header className="forward-head">
@@ -72,6 +75,7 @@ export default function ForwardMessageModal({
             type="search"
             placeholder="Search rooms"
             value={query}
+            name="forward-room-search"
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
@@ -119,5 +123,5 @@ export default function ForwardMessageModal({
         </footer>
       </div>
     </div>
-  )
+  , document.body)
 }

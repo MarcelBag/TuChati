@@ -13,8 +13,10 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .consumers import _msg_to_dict, _user_display
 
-from .models import ChatRoom, Message, SystemMessage, MessageUserMeta
-from .serializers import ChatRoomSerializer, MessageSerializer
+from django.db import transaction
+from django.db.models import Q
+from .models import ChatRoom, Message, SystemMessage, MessageUserMeta, DirectChatRequest
+from .serializers import ChatRoomSerializer, MessageSerializer, DirectChatRequestSerializer
 from .utils import get_or_create_direct_room
 
 User = get_user_model()
@@ -404,3 +406,102 @@ class MessageListCreateViewSet(viewsets.ModelViewSet):
         data["note"] = meta.note if meta else ""
 
         return Response(data)
+
+
+class DirectChatRequestViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        incoming = DirectChatRequest.objects.filter(
+            to_user=request.user,
+            status=DirectChatRequest.STATUS_PENDING,
+        ).select_related('from_user', 'to_user', 'room')
+
+        outgoing = DirectChatRequest.objects.filter(
+            from_user=request.user,
+            status=DirectChatRequest.STATUS_PENDING,
+        ).select_related('from_user', 'to_user', 'room')
+
+        return Response({
+            "incoming": DirectChatRequestSerializer(incoming, many=True, context={"request": request}).data,
+            "outgoing": DirectChatRequestSerializer(outgoing, many=True, context={"request": request}).data,
+        })
+
+    def create(self, request):
+        to_user_id = request.data.get('to_user') or request.data.get('to_user_id')
+        message = request.data.get('message', '').strip()
+        if not to_user_id:
+            return Response({"detail": "to_user is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            to_user = User.objects.get(id=to_user_id)
+        except User.DoesNotExist:
+            try:
+                to_user = User.objects.get(username=to_user_id)
+            except User.DoesNotExist:
+                return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if to_user == request.user:
+            return Response({"detail": "You cannot message yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing = DirectChatRequest.objects.filter(
+            Q(from_user=request.user, to_user=to_user) | Q(from_user=to_user, to_user=request.user),
+            status__in=[DirectChatRequest.STATUS_PENDING, DirectChatRequest.STATUS_ACCEPTED],
+        ).select_related('room').first()
+
+        if existing:
+            serializer = DirectChatRequestSerializer(existing, context={"request": request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        with transaction.atomic():
+            room_name = f"{request.user.username} ↔ {to_user.username}"
+            room = ChatRoom.objects.create(name=room_name, is_group=False, is_pending=True)
+            room.participants.add(request.user)
+
+            direct_request = DirectChatRequest.objects.create(
+                room=room,
+                from_user=request.user,
+                to_user=to_user,
+                initial_message=message,
+            )
+
+            if message:
+                Message.objects.create(room=room, sender=request.user, content=message)
+
+        serializer = DirectChatRequestSerializer(direct_request, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='decision')
+    def decision(self, request, pk=None):
+        try:
+            direct_request = DirectChatRequest.objects.select_related('room').get(id=pk)
+        except DirectChatRequest.DoesNotExist:
+            return Response({"detail": "Request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        decision = request.data.get('decision')
+        if direct_request.status != DirectChatRequest.STATUS_PENDING:
+            return Response({"detail": "Request already handled."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if decision not in ('accept', 'decline'):
+            return Response({"detail": "decision must be 'accept' or 'decline'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if decision == 'accept':
+            if direct_request.to_user != request.user:
+                return Response({"detail": "Only the recipient can accept."}, status=status.HTTP_403_FORBIDDEN)
+            direct_request.room.participants.add(direct_request.to_user)
+            direct_request.room.is_pending = False
+            direct_request.room.save(update_fields=['is_pending'])
+            direct_request.mark(DirectChatRequest.STATUS_ACCEPTED)
+            SystemMessage.objects.create(
+                room=direct_request.room,
+                content=f"{request.user.username} accepted the chat request.",
+            )
+        else:
+            if direct_request.to_user != request.user:
+                return Response({"detail": "Only the recipient can decline."}, status=status.HTTP_403_FORBIDDEN)
+            direct_request.mark(DirectChatRequest.STATUS_DECLINED)
+            direct_request.room.is_pending = True
+            direct_request.room.save(update_fields=['is_pending'])
+
+        serializer = DirectChatRequestSerializer(direct_request, context={"request": request})
+        return Response(serializer.data)

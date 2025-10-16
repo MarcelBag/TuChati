@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import './Reactions.css'
 
 type UserOption = {
@@ -49,9 +50,11 @@ export default function InviteUsersModal({
 
   if (!open) return null
 
+  if (typeof document === 'undefined') return null
+
   const filtered = users
 
-  return (
+  return createPortal(
     <div className="ctx-wrap" onClick={onClose}>
       <div className="menu ctx invite-modal" onClick={(event) => event.stopPropagation()}>
         <header className="forward-head">
@@ -69,6 +72,7 @@ export default function InviteUsersModal({
             type="search"
             placeholder="Search users"
             value={query}
+            name="invite-user-search"
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
@@ -119,5 +123,5 @@ export default function InviteUsersModal({
         </footer>
       </div>
     </div>
-  )
+  , document.body)
 }

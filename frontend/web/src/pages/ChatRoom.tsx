@@ -597,17 +597,13 @@ export default function ChatRoom() {
         setMessages(prev => prev.map((m: any) => {
           if ((m.id ?? m._client_id) !== message_id) return m
           const next: Record<string, string[]> = {}
-          let previousWasSame = false
           Object.entries(m.reactions || {}).forEach(([key, list]) => {
             const set = new Set<string>(list || [])
-            if (set.has(uid)) {
-              if (key === emoji) previousWasSame = true
-              set.delete(uid)
-            }
+            if (set.has(uid)) set.delete(uid)
             if (set.size) next[key] = Array.from(set)
           })
 
-          const shouldAdd = op !== 'remove' && !previousWasSame
+          const shouldAdd = op !== 'remove'
           if (shouldAdd) {
             const set = new Set<string>(next[emoji] || [])
             set.add(uid)
@@ -733,29 +729,27 @@ export default function ChatRoom() {
     setMessages(prev => prev.map((m:any) => {
       if ((m.id ?? m._client_id) !== messageId) return m
       const next: Record<string, string[]> = {}
-      let previousWasSame = false
       Object.entries(m.reactions || {}).forEach(([key, list]) => {
         const set = new Set<string>(list || [])
-        if (set.has(uid)) {
-          if (key === emoji) previousWasSame = true
-          set.delete(uid)
-        }
+        if (set.has(uid)) set.delete(uid)
         if (set.size) next[key] = Array.from(set)
       })
-      if (!previousWasSame) {
+      if (!sameEmoji) {
         const set = new Set<string>(next[emoji] || [])
         set.add(uid)
         next[emoji] = Array.from(set)
       }
-      return { ...m, reactions: next }
+      const updated = { ...m, reactions: next }
+      if (updated.is_me) updated.status = computeStatus(updated)
+      return updated
     }))
 
     try {
       if (sameEmoji) {
-        sendMessage({ type: 'reaction', message_id: messageId, emoji })
+        sendMessage({ type: 'reaction', message_id: messageId, emoji, op: 'remove' })
       } else {
-        if (previousEmoji) sendMessage({ type: 'reaction', message_id: messageId, emoji: previousEmoji })
-        sendMessage({ type: 'reaction', message_id: messageId, emoji })
+        if (previousEmoji) sendMessage({ type: 'reaction', message_id: messageId, emoji: previousEmoji, op: 'remove' })
+        sendMessage({ type: 'reaction', message_id: messageId, emoji, op: 'add' })
       }
     } catch {}
   }
@@ -862,7 +856,7 @@ export default function ChatRoom() {
           username: item.username,
           email: item.email,
           name: item.name,
-        })).filter((user) => user.username && !existingUsernames.has(user.username)))
+        })).filter((user) => user.username))
       })
       .catch(() => {
         setInviteUsersOptions([])
@@ -1206,7 +1200,7 @@ export default function ChatRoom() {
       danger: true,
     })
 
-    if (mine || isAdmin) {
+    if (room?.is_group && (mine || isAdmin)) {
       actions.push({
         key: 'delete-all',
         label: 'Delete for everyone',
@@ -1231,6 +1225,7 @@ export default function ChatRoom() {
     menuState.message,
     menuState.open,
     selectionMode,
+    room?.is_group,
     user?.id,
   ])
 
@@ -1516,6 +1511,7 @@ export default function ChatRoom() {
                 onClick={(event) => {
                   event.preventDefault()
                   event.stopPropagation()
+                  console.debug('[UI] Invite modal open triggered')
                   openInviteModal()
                 }}
               >

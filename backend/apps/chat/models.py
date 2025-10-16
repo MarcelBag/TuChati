@@ -16,6 +16,7 @@ class ChatRoom(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, blank=True, default="")
     is_group = models.BooleanField(default=False)
+    is_pending = models.BooleanField(default=False)
     description = models.TextField(blank=True)
     icon = models.ImageField(upload_to="chat_icons/", blank=True, null=True)
 
@@ -155,3 +156,36 @@ class MessageUserMeta(models.Model):
 
     def __str__(self) -> str:
         return f"Meta<{self.user_id}:{self.message_id}>"
+
+
+class DirectChatRequest(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_DECLINED = "declined"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_ACCEPTED, "Accepted"),
+        (STATUS_DECLINED, "Declined"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    room = models.OneToOneField(ChatRoom, on_delete=models.CASCADE, related_name="direct_request")
+    from_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="direct_requests_sent")
+    to_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="direct_requests_received")
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    initial_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        unique_together = ("from_user", "to_user", "status")
+
+    def mark(self, status: str):
+        self.status = status
+        self.responded_at = timezone.now()
+        self.save(update_fields=["status", "responded_at"])
+
+    def __str__(self):
+        return f"DirectRequest({self.from_user}->{self.to_user} : {self.status})"

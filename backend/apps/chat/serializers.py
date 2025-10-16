@@ -5,7 +5,7 @@
 from django.db.models import Max
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import ChatRoom, Message, MessageUserMeta
+from .models import ChatRoom, Message, MessageUserMeta, DirectChatRequest
 from .consumers import _msg_to_dict
 
 User = get_user_model()
@@ -201,3 +201,45 @@ class MessageSerializer(serializers.ModelSerializer):
             "username": u.username,
             "name": (getattr(u, "get_full_name", lambda: "")() or u.username),
         }
+
+
+class DirectChatRequestSerializer(serializers.ModelSerializer):
+    from_user = serializers.SerializerMethodField()
+    to_user = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DirectChatRequest
+        fields = [
+            "id",
+            "status",
+            "initial_message",
+            "created_at",
+            "responded_at",
+            "from_user",
+            "to_user",
+            "room",
+        ]
+
+    def get_from_user(self, obj: DirectChatRequest):
+        return {
+            "id": obj.from_user_id,
+            "username": obj.from_user.username,
+            "name": (getattr(obj.from_user, "get_full_name", lambda: "")() or obj.from_user.username),
+        }
+
+    def get_to_user(self, obj: DirectChatRequest):
+        return {
+            "id": obj.to_user_id,
+            "username": obj.to_user.username,
+            "name": (getattr(obj.to_user, "get_full_name", lambda: "")() or obj.to_user.username),
+        }
+
+    def get_room(self, obj: DirectChatRequest):
+        if obj.room:
+            return {
+                "id": str(obj.room_id),
+                "is_group": obj.room.is_group,
+                "is_pending": obj.room.is_pending,
+            }
+        return None

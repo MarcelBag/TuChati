@@ -241,6 +241,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # reaction passthrough
         if msg_type == "reaction":
+            op = data.get("op", "toggle")
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -248,7 +249,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "message_id": data.get("message_id"),
                     "emoji": data.get("emoji"),
                     "user_id": self.user.id,
-                    "op": "toggle",
+                    "op": op,
                 },
             )
             return

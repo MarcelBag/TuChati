@@ -71,6 +71,41 @@ export async function inviteUsers(roomId: string, usernames: string[], emails: s
   return res.json()
 }
 
+export async function fetchDirectRequests() {
+  const res = await apiFetch('/api/chat/direct/requests/')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to load direct chat requests')
+  }
+  return res.json()
+}
+
+export async function createDirectRequest(toUserId: string, message: string) {
+  const res = await apiFetch('/api/chat/direct/requests/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to_user: toUserId, message }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to start direct chat')
+  }
+  return res.json()
+}
+
+export async function decideDirectRequest(requestId: string, decision: 'accept' | 'decline') {
+  const res = await apiFetch(`/api/chat/direct/requests/${requestId}/decision/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to update request')
+  }
+  return res.json()
+}
+
 export async function setPinned(roomId: string, messageId: string, pinned: boolean) {
   const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/${messageId}/pin/`, {
     method: 'POST',
