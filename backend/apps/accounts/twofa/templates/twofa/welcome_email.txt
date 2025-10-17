@@ -3,8 +3,9 @@
 
 {{ greeting }}
 
-Your workspace is live and ready. Here are a few quick wins:
-• Personalise your profile so teammates recognise you.
+Your acount is ready. 
+Here are a few quick wins:
+• Personalise your profile so your contacts recognise you.
 • Create rooms for your projects and invite collaborators.
 • Enable two-factor protection to keep your account safe.
 
