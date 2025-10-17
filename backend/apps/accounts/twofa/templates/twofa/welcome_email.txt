@@ -11,4 +11,4 @@ Here are a few quick wins:
 
 Need a hand? Contact us at {{ support_email }}.
 
-— The {{ app_name }} team
+The {{ app_name }} team
