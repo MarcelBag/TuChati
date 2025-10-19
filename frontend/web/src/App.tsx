@@ -114,7 +114,7 @@ function AppContent() {
       </main>
 
       <footer className="footer">
-        <small>© {new Date().getFullYear()} TuChati • Made for Africa</small>
+        <small>© {new Date().getFullYear()} TuChati • Made in Africa</small>
       </footer>
     </>
   )

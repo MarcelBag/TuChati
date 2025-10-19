@@ -101,18 +101,32 @@
       "unableProfile": "Haiwezekani kupakia wasifu"
     },
     "rooms": {
-      "title": "Vyumba",
-      "prompt": "Jina la chumba",
-      "newRoom": "+ Mpya",
-      "directRoom": "+ Moja kwa moja",
+    "title": "Vyumba",
+    "newGroup": "+ Kundi Jipya",
+    "directRoom": "+ Moja kwa moja",
       "searchPlaceholder": "Tafuta au anzisha gumzo jipya",
       "loading": "Inapakia…",
       "empty": "Bado hakuna vyumba",
       "fallbackName": "Chumba",
       "groupAria": "Chumba cha {{name}}",
       "profileAria": "Wasifu wa {{name}}",
-      "unreadAria": "{{count}} ujumbe ambao haujasomwa"
-    },
+    "unreadAria": "{{count}} ujumbe ambao haujasomwa"
+  },
+  "createRoom": {
+    "title": "Unda kundi",
+    "subtitle": "Weka jina la kundi na waalike watu waungane.",
+    "nameLabel": "Jina la kundi",
+    "namePlaceholder": "mf. Wapanga jamii",
+    "nameRequired": "Jina la kundi linahitajika",
+    "inviteLabel": "Alika watu",
+    "invitePlaceholder": "Majina ya watumiaji au barua pepe, zikitenganishwa na koma",
+    "inviteHint": "Tutatuma mialiko mara tu baada ya kundi kuundwa.",
+    "inviteError": "Kundi limeundwa, lakini hatukuweza kutuma mialiko. Unaweza kuwalika tena baadaye kupitia taarifa za kundi.",
+    "cancel": "Ghairi",
+    "create": "Unda kundi",
+    "creating": "Inaunda…",
+    "error": "Imeshindikana kuunda kundi"
+  },
     "filters": {
       "all": "Vyote",
       "unread": "Havijasomwa",
@@ -183,6 +197,8 @@
       "phone": "Simu",
       "lastSeenLabel": "Kuonekana mwisho",
       "timezoneLabel": "Saa za eneo",
+      "statusLabel": "Ujumbe wa hali",
+      "bioLabel": "Maelezo mafupi",
       "detailsHeading": "Maelezo ya profaili",
       "empty": "Maelezo ya wasifu hayapatikani.",
       "membersTitle": "Wanachama",

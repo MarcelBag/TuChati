@@ -5,6 +5,7 @@ import { apiFetch } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { ChatRoom as Room, DirectChatRequest } from '../types'
 import DirectMessageModal from '../components/Chat/DirectMessageModal'
+import CreateRoomModal from '../components/Chat/CreateRoomModal'
 import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchUserProfile, searchUsers } from '../api/chatActions'
 import UserProfileModal from '../components/Chat/UserProfileModal'
 import AvatarBubble from '../shared/AvatarBubble'
@@ -20,6 +21,7 @@ export default function ChatPage() {
   const [directRequests, setDirectRequests] = React.useState<{ incoming: DirectChatRequest[]; outgoing: DirectChatRequest[] }>({ incoming: [], outgoing: [] })
   const [requestLoading, setRequestLoading] = React.useState(false)
   const [dmOpen, setDmOpen] = React.useState(false)
+  const [createRoomOpen, setCreateRoomOpen] = React.useState(false)
   const [dmUsers, setDmUsers] = React.useState<Array<{ id: string; username: string; name?: string; email?: string; avatar?: string | null }>>([])
   const [dmLoading, setDmLoading] = React.useState(false)
   const [dmSubmitting, setDmSubmitting] = React.useState(false)
@@ -53,19 +55,13 @@ export default function ChatPage() {
     void loadRooms()
   }, [loadRooms, token])
 
-  const createRoom = async (name: string, is_group = true) => {
-    const nm = name.trim()
-    if (!nm) return
-    const r = await apiFetch('/api/chat/rooms/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name: nm, is_group }),
+  const handleRoomCreated = React.useCallback((room: Room) => {
+    setRooms(prev => {
+      const filtered = prev.filter((item) => String(item.id) !== String(room.id))
+      return [room, ...filtered]
     })
-    if (!r.ok) return
-    const room = await r.json()
-    setRooms(prev => [room, ...prev])
     navigate(`/chat/${room.id}`)
-  }
+  }, [navigate])
 
   const loadDirectRequests = React.useCallback(async () => {
     if (!token) return
@@ -224,12 +220,10 @@ export default function ChatPage() {
           <div className="rooms-actions">
             <button
               className="btn small"
-              onClick={() => {
-                const name = prompt(t('chatPage.rooms.prompt'))
-                if (name) createRoom(name)
-              }}
+              type="button"
+              onClick={() => setCreateRoomOpen(true)}
             >
-              {t('chatPage.rooms.newRoom')}
+              {t('chatPage.rooms.newGroup')}
             </button>
             <button
               className="btn small secondary"
@@ -406,6 +400,12 @@ export default function ChatPage() {
         onSelect={(id) => setDmSelected(id)}
         onMessageChange={(value) => setDmMessage(value)}
         onSubmit={handleDirectSubmit}
+      />
+
+      <CreateRoomModal
+        open={createRoomOpen}
+        onClose={() => setCreateRoomOpen(false)}
+        onRoomCreated={handleRoomCreated}
       />
 
       <UserProfileModal

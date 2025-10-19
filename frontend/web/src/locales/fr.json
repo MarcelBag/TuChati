@@ -101,18 +101,32 @@
       "unableProfile": "Impossible de charger le profil"
     },
     "rooms": {
-      "title": "Salons",
-      "prompt": "Nom du salon",
-      "newRoom": "+ Nouveau",
-      "directRoom": "+ Direct",
+    "title": "Salons",
+    "newGroup": "+ Nouveau groupe",
+    "directRoom": "+ Direct",
       "searchPlaceholder": "Rechercher ou démarrer une nouvelle discussion",
       "loading": "Chargement…",
       "empty": "Aucun salon pour le moment",
       "fallbackName": "Salon",
       "groupAria": "Salon {{name}}",
       "profileAria": "Profil {{name}}",
-      "unreadAria": "{{count}} messages non lus"
-    },
+    "unreadAria": "{{count}} messages non lus"
+  },
+  "createRoom": {
+    "title": "Créer un groupe",
+    "subtitle": "Donnez un nom à votre groupe et invitez des personnes.",
+    "nameLabel": "Nom du groupe",
+    "namePlaceholder": "ex. Planificateurs communautaires",
+    "nameRequired": "Le nom du groupe est obligatoire",
+    "inviteLabel": "Inviter des personnes",
+    "invitePlaceholder": "Pseudonymes ou e-mails, séparés par des virgules",
+    "inviteHint": "Nous enverrons les invitations dès que le groupe sera créé.",
+    "inviteError": "Groupe créé, mais l'envoi des invitations a échoué. Vous pourrez inviter des personnes plus tard depuis les informations du groupe.",
+    "cancel": "Annuler",
+    "create": "Créer le groupe",
+    "creating": "Création…",
+    "error": "Impossible de créer le groupe"
+  },
     "filters": {
       "all": "Tous",
       "unread": "Non lus",
@@ -183,6 +197,8 @@
       "phone": "Téléphone",
       "lastSeenLabel": "Dernière connexion",
       "timezoneLabel": "Fuseau horaire",
+      "statusLabel": "Message de statut",
+      "bioLabel": "Bio",
       "detailsHeading": "Détails du profil",
       "empty": "Détails du profil non disponibles.",
       "membersTitle": "Membres",

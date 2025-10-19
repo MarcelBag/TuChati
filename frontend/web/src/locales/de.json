@@ -101,18 +101,32 @@
       "unableProfile": "Profil kann nicht geladen werden"
     },
     "rooms": {
-      "title": "Räume",
-      "prompt": "Raumname",
-      "newRoom": "+ Neu",
-      "directRoom": "+ Direkt",
+    "title": "Räume",
+    "newGroup": "+ Neue Gruppe",
+    "directRoom": "+ Direkt",
       "searchPlaceholder": "Suche oder starte einen neuen Chat",
       "loading": "Wird geladen…",
       "empty": "Noch keine Räume",
       "fallbackName": "Raum",
       "groupAria": "{{name}} Raum",
       "profileAria": "{{name}} Profil",
-      "unreadAria": "{{count}} ungelesene Nachrichten"
-    },
+    "unreadAria": "{{count}} ungelesene Nachrichten"
+  },
+  "createRoom": {
+    "title": "Gruppe erstellen",
+    "subtitle": "Gib deiner Gruppe einen Namen und lade Personen ein.",
+    "nameLabel": "Gruppenname",
+    "namePlaceholder": "z. B. Community-Planer",
+    "nameRequired": "Ein Gruppenname ist erforderlich",
+    "inviteLabel": "Personen einladen",
+    "invitePlaceholder": "Benutzernamen oder E-Mails, durch Kommas getrennt",
+    "inviteHint": "Wir verschicken Einladungen sofort nach dem Erstellen der Gruppe.",
+    "inviteError": "Gruppe erstellt, aber die Einladungen konnten nicht gesendet werden. Du kannst später im Gruppeninfo-Bereich erneut einladen.",
+    "cancel": "Abbrechen",
+    "create": "Gruppe erstellen",
+    "creating": "Erstelle…",
+    "error": "Gruppe konnte nicht erstellt werden"
+  },
     "filters": {
       "all": "Alle",
       "unread": "Ungelesen",
@@ -183,6 +197,8 @@
       "phone": "Telefon",
       "lastSeenLabel": "Zuletzt online",
       "timezoneLabel": "Zeitzone",
+      "statusLabel": "Statusnachricht",
+      "bioLabel": "Bio",
       "detailsHeading": "Profildetails",
       "empty": "Profildetails nicht verfügbar.",
       "membersTitle": "Mitglieder",

@@ -101,18 +101,32 @@
       "unableProfile": "Profili ekoki te kokɔta"
     },
     "rooms": {
-      "title": "Ba salo ya lisolo",
-      "prompt": "Kombo ya salo",
-      "newRoom": "+ Sika",
-      "directRoom": "+ Moto na moto",
+    "title": "Ba salo ya lisolo",
+    "newGroup": "+ Groupe ya sika",
+    "directRoom": "+ Moto na moto",
       "searchPlaceholder": "Luka to banda lisolo ya sika",
       "loading": "Ezali kocharger…",
       "empty": "Ba salo nanu ezali te",
       "fallbackName": "Salo",
       "groupAria": "Salo {{name}}",
       "profileAria": "Profil ya {{name}}",
-      "unreadAria": "{{count}} nsango etángá te"
-    },
+    "unreadAria": "{{count}} nsango etángá te"
+  },
+  "createRoom": {
+    "title": "Sala groupe",
+    "subtitle": "Pesa groupe kombo mpe benga bato baye.",
+    "nameLabel": "Kombo ya groupe",
+    "namePlaceholder": "ndakisa Baplanificateur ya communauté",
+    "nameRequired": "Kombo ya groupe esengeli",
+    "inviteLabel": "Benga bato",
+    "invitePlaceholder": "Ba pseudonyme to ba email, bopanzi na koma",
+    "inviteHint": "Tokotinda ba invitation na mbala moko sima ya kosala groupe.",
+    "inviteError": "Groupe esalemi, kasi totindi ba invitation te. Okoki kobenga bato nsima na makambo ya groupe.",
+    "cancel": "Boya",
+    "create": "Sala groupe",
+    "creating": "Ezali kosala…",
+    "error": "Groupe esalemi te"
+  },
     "filters": {
       "all": "Nyonso",
       "unread": "Etángá te",
@@ -183,6 +197,8 @@
       "phone": "Téléfono",
       "lastSeenLabel": "Komonana ya suka",
       "timezoneLabel": "Heure ya etuka",
+      "statusLabel": "Nsango ya etat",
+      "bioLabel": "Bio",
       "detailsHeading": "Ba detay ya profíli",
       "empty": "Makambo ya profil ezangi.",
       "membersTitle": "Bato ya groupe",

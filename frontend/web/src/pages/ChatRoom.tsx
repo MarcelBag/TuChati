@@ -1508,20 +1508,21 @@ export default function ChatRoom() {
             ? t('chatRoom.lastSeen.hiddenByPrivacy')
             : t('chatRoom.lastSeen.unavailable'))
     : ''
-  const statusMessageValue = profileData
-    ? (profileData.status_message && profileData.status_message.trim()
-        ? profileData.status_message.trim()
-        : profilePrivacy.share_status_message === false
-          ? t('chatRoom.profile.statusHidden')
-          : '')
-    : ''
-  const bioValue = profileData
-    ? (profileData.bio && profileData.bio.trim()
-        ? profileData.bio.trim()
-        : profilePrivacy.share_bio === false
-          ? t('chatRoom.profile.bioHidden')
-          : '')
-    : ''
+  const rawStatus = profileData?.status_message?.trim() || ''
+  const statusDetailValue = rawStatus
+    ? rawStatus
+    : profilePrivacy.share_status_message === false
+      ? t('chatRoom.profile.statusHidden')
+      : t('chatRoom.profile.notProvided')
+  const statusMuted = !rawStatus
+
+  const rawBio = profileData?.bio?.trim() || ''
+  const bioDetailValue = rawBio
+    ? rawBio
+    : profilePrivacy.share_bio === false
+      ? t('chatRoom.profile.bioHidden')
+      : t('chatRoom.profile.notProvided')
+  const bioMuted = !rawBio
   const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const timezoneValue = profileData ? describeField(t, profileData.user_timezone, profilePrivacy.share_timezone, 'chatRoom.profile.notProvided') : ''
@@ -1842,20 +1843,16 @@ export default function ChatRoom() {
 
             {profileData && (
               <div className="ri-profile">
-                {statusMessageValue && (
-                  <p className={`ri-status-message ${statusMessageValue === t('chatRoom.profile.statusHidden') ? 'muted' : ''}`}>
-                    {statusMessageValue}
-                  </p>
-                )}
-
-                {bioValue && (
-                  <p className={`ri-bio ${bioValue === t('chatRoom.profile.bioHidden') ? 'muted' : ''}`}>
-                    {bioValue}
-                  </p>
-                )}
-
                 <div className="ri-detail-heading">{t('chatRoom.profile.detailsHeading')}</div>
                 <div className="ri-profile-details">
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">{t('chatRoom.profile.statusLabel')}</span>
+                    <span className={`ri-detail-value ${statusMuted ? 'muted' : ''}`}>{statusDetailValue}</span>
+                  </div>
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">{t('chatRoom.profile.bioLabel')}</span>
+                    <span className={`ri-detail-value ${bioMuted ? 'muted' : ''}`}>{bioDetailValue}</span>
+                  </div>
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.email')}</span>
                     <span className={`ri-detail-value ${profileData?.email ? '' : 'muted'}`}>{emailValue}</span>

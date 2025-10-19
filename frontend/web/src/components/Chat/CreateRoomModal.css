@@ -1,0 +1,118 @@
+.create-room-modal {
+  width: min(440px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create-room-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.create-room-head h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.create-room-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.create-room-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.create-room-close:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.create-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.create-room-field span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.create-room-field input,
+.create-room-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--elev);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.create-room-field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.create-room-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.create-room-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  font-size: 0.9rem;
+}
+
+.create-room-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.create-room-actions .btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--subtle);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.create-room-actions .btn.ghost {
+  background: transparent;
+}
+
+.create-room-actions .btn.primary {
+  background: var(--ring);
+  border-color: var(--ring);
+  color: #fff;
+}
+
+.create-room-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

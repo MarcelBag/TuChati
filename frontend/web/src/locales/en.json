@@ -100,19 +100,33 @@
       "unableUpdate": "Unable to update request",
       "unableProfile": "Unable to load profile"
     },
-    "rooms": {
-      "title": "Rooms",
-      "prompt": "Room name",
-      "newRoom": "+ New",
-      "directRoom": "+ Direct",
-      "searchPlaceholder": "Search or start a new chat",
-      "loading": "Loading…",
+  "rooms": {
+    "title": "Rooms",
+    "newGroup": "+ New Group",
+    "directRoom": "+ Direct",
+    "searchPlaceholder": "Search or start a new chat",
+    "loading": "Loading…",
       "empty": "No rooms yet",
       "fallbackName": "Room",
       "groupAria": "{{name}} room",
-      "profileAria": "{{name}} profile",
-      "unreadAria": "{{count}} unread messages"
-    },
+    "profileAria": "{{name}} profile",
+    "unreadAria": "{{count}} unread messages"
+  },
+  "createRoom": {
+    "title": "Create a group",
+    "subtitle": "Give your group a name and invite people to join.",
+    "nameLabel": "Group name",
+    "namePlaceholder": "e.g. Community planners",
+    "nameRequired": "Group name is required",
+    "inviteLabel": "Invite people",
+    "invitePlaceholder": "Usernames or emails, separated by commas",
+    "inviteHint": "We'll add invitations right after the group is created.",
+    "inviteError": "Group created, but we couldn't send the invites. You can invite people later from the group info.",
+    "cancel": "Cancel",
+    "create": "Create group",
+    "creating": "Creating…",
+    "error": "Unable to create group"
+  },
     "filters": {
       "all": "All",
       "unread": "Unread",
@@ -183,6 +197,8 @@
       "phone": "Phone",
       "lastSeenLabel": "Last seen",
       "timezoneLabel": "Time zone",
+      "statusLabel": "Status message",
+      "bioLabel": "Bio",
       "detailsHeading": "Profile details",
       "empty": "Profile details not available.",
       "membersTitle": "Members",
