@@ -17,12 +17,13 @@
 
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import ChatRoomViewSet, MessageListCreateViewSet, DirectChatRequestViewSet
+from .views import ChatRoomViewSet, MessageListCreateViewSet, DirectChatRequestViewSet, GroupInviteViewSet
 
 # Router handles all /rooms/ CRUD routes automatically
 router = DefaultRouter()
 router.register(r"rooms", ChatRoomViewSet, basename="chatroom")
 router.register(r"direct/requests", DirectChatRequestViewSet, basename="direct-request")
+router.register(r"group/invites", GroupInviteViewSet, basename="group-invite")
 
 urlpatterns = [
     path("", include(router.urls)),

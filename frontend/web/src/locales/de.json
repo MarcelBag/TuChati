@@ -120,7 +120,15 @@
     "nameRequired": "Ein Gruppenname ist erforderlich",
     "inviteLabel": "Personen einladen",
     "invitePlaceholder": "Benutzernamen oder E-Mails, durch Kommas getrennt",
-    "inviteHint": "Wir verschicken Einladungen sofort nach dem Erstellen der Gruppe.",
+    "inviteSearchLabel": "Teilnehmer einladen",
+    "inviteSearchPlaceholder": "Nach Benutzername oder E-Mail suchen",
+    "inviteSearchHint": "Wähle Personen aus, die jetzt eine Einladung erhalten. Sie müssen vor dem Beitritt zustimmen.",
+    "searching": "Suche…",
+    "noMatches": "Keine Treffer.",
+    "inviteSelected": "{{count}} ausgewählt",
+    "inviteManualLabel": "Per Benutzername oder E-Mail hinzufügen",
+    "inviteManualPlaceholder": "@benutzername, kollege@example.com",
+    "inviteManualHint": "Trenne mehrere Einträge mit Kommas oder Leerzeichen.",
     "inviteError": "Gruppe erstellt, aber die Einladungen konnten nicht gesendet werden. Du kannst später im Gruppeninfo-Bereich erneut einladen.",
     "cancel": "Abbrechen",
     "create": "Gruppe erstellen",
@@ -139,7 +147,12 @@
       "outgoing": "Gesendete Anfragen",
       "accept": "Annehmen",
       "decline": "Ablehnen",
-      "waiting": "Wartet auf Bestätigung"
+      "waiting": "Wartet auf Bestätigung",
+      "groupIncoming": "Gruppeneinladungen",
+      "groupOutgoing": "Gesendete Einladungen",
+      "invitedBy": "Eingeladen von {{name}}",
+      "sentTo": "Gesendet an {{name}}",
+      "none": "Derzeit keine offenen Anfragen."
     },
     "empty": {
       "title": "Wähle einen Raum oder erstelle einen neuen.",
@@ -206,7 +219,14 @@
       "memberCount_one": "{{count}} Mitglied",
       "memberCount_other": "{{count}} Mitglieder",
       "invite": "+ Einladen",
-      "avatarAlt": "{{name}} Avatar"
+      "avatarAlt": "{{name}} Avatar",
+      "privacy": {
+        "groupInvites": {
+          "title": "Gruppeneinladungen",
+          "hintOn": "Tritt Gruppen automatisch bei, wenn dich jemand einlädt.",
+          "hintOff": "Erfordere deine Zustimmung, bevor du einer Gruppe beitrittst. Einladungen erscheinen im Anfragebereich."
+        }
+      }
     },
     "selection": {
       "count": "{{count}} ausgewählt",
@@ -361,6 +381,13 @@
       "paris": "Paris (Europe/Paris)",
       "newYork": "New York (America/New_York)",
       "custom": "Benutzerdefinierte Zeitzone"
+    },
+    "privacy": {
+      "groupInvites": {
+        "title": "Gruppeneinladungen",
+        "hintOn": "Tritt Gruppen automatisch bei, wenn dich jemand einlädt.",
+        "hintOff": "Erfordere deine Zustimmung, bevor du einer Gruppe beitrittst. Einladungen erscheinen im Anfragebereich."
+      }
     }
   }
 }

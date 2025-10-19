@@ -120,7 +120,15 @@
     "nameRequired": "Le nom du groupe est obligatoire",
     "inviteLabel": "Inviter des personnes",
     "invitePlaceholder": "Pseudonymes ou e-mails, séparés par des virgules",
-    "inviteHint": "Nous enverrons les invitations dès que le groupe sera créé.",
+    "inviteSearchLabel": "Inviter des membres",
+    "inviteSearchPlaceholder": "Rechercher par pseudonyme ou e-mail",
+    "inviteSearchHint": "Sélectionnez les personnes à inviter maintenant. Elles devront accepter avant de rejoindre.",
+    "searching": "Recherche…",
+    "noMatches": "Aucun résultat.",
+    "inviteSelected": "{{count}} sélectionné(s)",
+    "inviteManualLabel": "Ajouter par pseudonyme ou e-mail",
+    "inviteManualPlaceholder": "@pseudonyme, collegue@example.com",
+    "inviteManualHint": "Séparez plusieurs entrées par des virgules ou des espaces.",
     "inviteError": "Groupe créé, mais l'envoi des invitations a échoué. Vous pourrez inviter des personnes plus tard depuis les informations du groupe.",
     "cancel": "Annuler",
     "create": "Créer le groupe",
@@ -139,7 +147,12 @@
       "outgoing": "Demandes envoyées",
       "accept": "Accepter",
       "decline": "Refuser",
-      "waiting": "En attente d'approbation"
+      "waiting": "En attente d'approbation",
+      "groupIncoming": "Invitations de groupe",
+      "groupOutgoing": "Invitations envoyées",
+      "invitedBy": "Invité par {{name}}",
+      "sentTo": "Envoyée à {{name}}",
+      "none": "Aucune demande en attente pour le moment."
     },
     "empty": {
       "title": "Sélectionnez un salon ou créez-en un nouveau.",
@@ -206,7 +219,14 @@
       "memberCount_one": "{{count}} membre",
       "memberCount_other": "{{count}} membres",
       "invite": "+ Inviter",
-      "avatarAlt": "Avatar de {{name}}"
+      "avatarAlt": "Avatar de {{name}}",
+      "privacy": {
+        "groupInvites": {
+          "title": "Invitations de groupe",
+          "hintOn": "Rejoindre automatiquement les groupes lorsque quelqu'un vous invite.",
+          "hintOff": "Exiger votre approbation avant de rejoindre un groupe. Les invitations apparaîtront dans le panneau des demandes."
+        }
+      }
     },
     "selection": {
       "count": "{{count}} sélectionnés",
@@ -361,6 +381,13 @@
       "paris": "Paris (Europe/Paris)",
       "newYork": "New York (America/New_York)",
       "custom": "Fuseau personnalisé"
+    },
+    "privacy": {
+      "groupInvites": {
+        "title": "Invitations de groupe",
+        "hintOn": "Rejoindre automatiquement les groupes lorsque quelqu'un vous invite.",
+        "hintOff": "Exiger votre approbation avant de rejoindre un groupe. Les invitations apparaîtront dans le panneau des demandes."
+      }
     }
   }
 }

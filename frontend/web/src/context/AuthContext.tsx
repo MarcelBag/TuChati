@@ -35,6 +35,7 @@ type User = {
   share_last_seen?: boolean
   share_status_message?: boolean
   share_timezone?: boolean
+  auto_accept_group_invites?: boolean
   [key: string]: any
 } | null
 

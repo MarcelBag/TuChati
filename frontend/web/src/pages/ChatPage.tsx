@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { ChatRoom as Room, DirectChatRequest } from '../types'
 import DirectMessageModal from '../components/Chat/DirectMessageModal'
 import CreateRoomModal from '../components/Chat/CreateRoomModal'
-import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchUserProfile, searchUsers } from '../api/chatActions'
+import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchGroupInvites, fetchUserProfile, searchUsers, decideGroupInvite } from '../api/chatActions'
 import UserProfileModal from '../components/Chat/UserProfileModal'
 import AvatarBubble from '../shared/AvatarBubble'
 import { useTranslation } from 'react-i18next'
@@ -20,6 +20,8 @@ export default function ChatPage() {
   const [activeFilter, setActiveFilter] = React.useState<'all'|'unread'|'favorites'|'groups'>('all')
   const [directRequests, setDirectRequests] = React.useState<{ incoming: DirectChatRequest[]; outgoing: DirectChatRequest[] }>({ incoming: [], outgoing: [] })
   const [requestLoading, setRequestLoading] = React.useState(false)
+  const [groupInvites, setGroupInvites] = React.useState<{ incoming: any[]; outgoing: any[] }>({ incoming: [], outgoing: [] })
+  const [groupInvitesLoading, setGroupInvitesLoading] = React.useState(false)
   const [dmOpen, setDmOpen] = React.useState(false)
   const [createRoomOpen, setCreateRoomOpen] = React.useState(false)
   const [dmUsers, setDmUsers] = React.useState<Array<{ id: string; username: string; name?: string; email?: string; avatar?: string | null }>>([])
@@ -61,7 +63,8 @@ export default function ChatPage() {
       return [room, ...filtered]
     })
     navigate(`/chat/${room.id}`)
-  }, [navigate])
+    loadGroupInvites()
+  }, [navigate, loadGroupInvites])
 
   const loadDirectRequests = React.useCallback(async () => {
     if (!token) return
@@ -83,6 +86,27 @@ export default function ChatPage() {
     if (!token) return
     void loadDirectRequests()
   }, [loadDirectRequests, token])
+
+  const loadGroupInvites = React.useCallback(async () => {
+    if (!token) return
+    setGroupInvitesLoading(true)
+    try {
+      const data = await fetchGroupInvites()
+      setGroupInvites({
+        incoming: Array.isArray(data?.incoming) ? data.incoming : [],
+        outgoing: Array.isArray(data?.outgoing) ? data.outgoing : [],
+      })
+    } catch {
+      setGroupInvites({ incoming: [], outgoing: [] })
+    } finally {
+      setGroupInvitesLoading(false)
+    }
+  }, [token])
+
+  React.useEffect(() => {
+    if (!token) return
+    void loadGroupInvites()
+  }, [loadGroupInvites, token])
 
   function formatDate(dateString?: string) {
     if (!dateString) return ''
@@ -187,6 +211,19 @@ export default function ChatPage() {
     }
   }, [loadDirectRequests, loadRooms, navigate])
 
+  const handleGroupInviteDecision = React.useCallback(async (inviteId: string, decision: 'accept' | 'decline') => {
+    try {
+      const response = await decideGroupInvite(inviteId, decision)
+      await loadGroupInvites()
+      if (decision === 'accept' && response?.room?.id) {
+        await loadRooms()
+        navigate(`/chat/${response.room.id}`)
+      }
+    } catch (error: any) {
+      alert(error?.message || t('chatPage.alerts.unableUpdate'))
+    }
+  }, [loadGroupInvites, loadRooms, navigate, t])
+
   const updateRoomUnread = React.useCallback((roomId: string | number, unread: number) => {
     setRooms(prev => prev.map(room => {
       if (String(room.id) !== String(roomId)) return room
@@ -211,6 +248,10 @@ export default function ChatPage() {
     setProfileViewer({ open: false, loading: false, profile: null, target: null, error: null })
   }, [])
 
+  const hasDirectRequests = directRequests.incoming.length > 0 || directRequests.outgoing.length > 0
+  const hasGroupInvites = groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0
+  const showRequestsPanel = requestLoading || groupInvitesLoading || hasDirectRequests || hasGroupInvites
+
   return (
     <div className="chat-shell">
       {/* Rooms (always visible on desktop) */}
@@ -226,7 +267,7 @@ export default function ChatPage() {
               {t('chatPage.rooms.newGroup')}
             </button>
             <button
-              className="btn small secondary"
+              className="btn small"
               type="button"
               onClick={(event) => {
                 event.preventDefault()
@@ -255,9 +296,12 @@ export default function ChatPage() {
           ))}
         </div>
 
-        {requestLoading && <div className="direct-requests"><p className="hint">{t('chatPage.requests.loading')}</p></div>}
-        {!requestLoading && (directRequests.incoming.length > 0 || directRequests.outgoing.length > 0) && (
+        {showRequestsPanel && (
           <div className="direct-requests">
+            {(requestLoading || groupInvitesLoading) && (
+              <p className="hint">{t('chatPage.requests.loading')}</p>
+            )}
+
             {directRequests.incoming.length > 0 && (
               <div className="direct-section">
                 <h4>{t('chatPage.requests.incoming')}</h4>
@@ -273,7 +317,7 @@ export default function ChatPage() {
                         />
                         <div className="direct-meta-text">
                           <strong>{req.from_user.name || req.from_user.username}</strong>
-                          <span className="direct-meta-time">{new Date(req.created_at).toLocaleString()}</span>
+                          <span className="direct-meta-time">{formatDate(req.created_at)}</span>
                         </div>
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
@@ -286,6 +330,7 @@ export default function ChatPage() {
                 </ul>
               </div>
             )}
+
             {directRequests.outgoing.length > 0 && (
               <div className="direct-section">
                 <h4>{t('chatPage.requests.outgoing')}</h4>
@@ -301,7 +346,7 @@ export default function ChatPage() {
                         />
                         <div className="direct-meta-text">
                           <strong>{req.to_user.name || req.to_user.username}</strong>
-                          <span className="direct-meta-time">{new Date(req.created_at).toLocaleString()}</span>
+                          <span className="direct-meta-time">{formatDate(req.created_at)}</span>
                         </div>
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
@@ -310,6 +355,69 @@ export default function ChatPage() {
                   ))}
                 </ul>
               </div>
+            )}
+
+            {groupInvites.incoming.length > 0 && (
+              <div className="direct-section">
+                <h4>{t('chatPage.requests.groupIncoming')}</h4>
+                <ul>
+                  {groupInvites.incoming.map((invite: any) => (
+                    <li key={invite.id}>
+                      <div className="direct-meta">
+                        <AvatarBubble
+                          src={invite.inviter?.avatar}
+                          name={invite.inviter?.name || invite.inviter?.username}
+                          initials={((invite.inviter?.name || invite.inviter?.username || 'U') as string).slice(0, 2).toUpperCase()}
+                          size="sm"
+                        />
+                        <div className="direct-meta-text">
+                          <strong>{invite.room?.name || t('chatPage.rooms.fallbackName')}</strong>
+                          <span>{t('chatPage.requests.invitedBy', { name: invite.inviter?.name || invite.inviter?.username })}</span>
+                        </div>
+                        <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
+                      </div>
+                      <div className="direct-actions">
+                        <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'accept')}>
+                          {t('chatPage.requests.accept')}
+                        </button>
+                        <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'decline')}>
+                          {t('chatPage.requests.decline')}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {groupInvites.outgoing.length > 0 && (
+              <div className="direct-section">
+                <h4>{t('chatPage.requests.groupOutgoing')}</h4>
+                <ul>
+                  {groupInvites.outgoing.map((invite: any) => (
+                    <li key={invite.id}>
+                      <div className="direct-meta">
+                        <AvatarBubble
+                          src={invite.invitee?.avatar}
+                          name={invite.invitee?.name || invite.invitee?.username}
+                          initials={((invite.invitee?.name || invite.invitee?.username || 'U') as string).slice(0, 2).toUpperCase()}
+                          size="sm"
+                        />
+                        <div className="direct-meta-text">
+                          <strong>{invite.room?.name || t('chatPage.rooms.fallbackName')}</strong>
+                          <span>{t('chatPage.requests.sentTo', { name: invite.invitee?.name || invite.invitee?.username })}</span>
+                        </div>
+                        <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
+                      </div>
+                      <span className="direct-status">{t('chatPage.requests.waiting')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {!requestLoading && !groupInvitesLoading && !hasDirectRequests && !hasGroupInvites && (
+              <p className="hint">{t('chatPage.requests.none')}</p>
             )}
           </div>
         )}

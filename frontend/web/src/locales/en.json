@@ -120,7 +120,15 @@
     "nameRequired": "Group name is required",
     "inviteLabel": "Invite people",
     "invitePlaceholder": "Usernames or emails, separated by commas",
-    "inviteHint": "We'll add invitations right after the group is created.",
+    "inviteSearchLabel": "Invite teammates",
+    "inviteSearchPlaceholder": "Search by username or email",
+    "inviteSearchHint": "Select people to send an invite now. They can accept before joining.",
+    "searching": "Searching…",
+    "noMatches": "No matches found.",
+    "inviteSelected": "{{count}} selected",
+    "inviteManualLabel": "Add by username or email",
+    "inviteManualPlaceholder": "@username, teammate@example.com",
+    "inviteManualHint": "Separate multiple entries with commas or spaces.",
     "inviteError": "Group created, but we couldn't send the invites. You can invite people later from the group info.",
     "cancel": "Cancel",
     "create": "Create group",
@@ -139,7 +147,12 @@
       "outgoing": "Pending sent",
       "accept": "Accept",
       "decline": "Decline",
-      "waiting": "Waiting for approval"
+      "waiting": "Waiting for approval",
+      "groupIncoming": "Group invitations",
+      "groupOutgoing": "Invites you sent",
+      "invitedBy": "Invited by {{name}}",
+      "sentTo": "Sent to {{name}}",
+      "none": "No pending requests right now."
     },
     "empty": {
       "title": "Select a room or create a new one.",
@@ -361,6 +374,13 @@
       "paris": "Paris (Europe/Paris)",
       "newYork": "New York (America/New_York)",
       "custom": "Custom time zone"
+    },
+    "privacy": {
+      "groupInvites": {
+        "title": "Group invitations",
+        "hintOn": "Automatically join groups when someone invites you.",
+        "hintOff": "Require your approval before joining a group. Invitations will appear in the requests panel."
+      }
     }
   }
 }

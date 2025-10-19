@@ -406,6 +406,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "timestamp": str(timezone.now()),
         }))
 
+    async def chat_group_invite(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "group_invite",
+            "invite_id": event.get("invite_id"),
+            "room_id": event.get("room_id"),
+            "room_name": event.get("room_name"),
+            "invited_by": event.get("invited_by"),
+            "message": event.get("message"),
+            "status": event.get("status"),
+            "timestamp": str(timezone.now()),
+        }))
+
     async def message_update(self, event):
         await self.send(text_data=json.dumps({
             "type": "message_update",

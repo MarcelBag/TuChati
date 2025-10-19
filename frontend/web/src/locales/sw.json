@@ -120,7 +120,15 @@
     "nameRequired": "Jina la kundi linahitajika",
     "inviteLabel": "Alika watu",
     "invitePlaceholder": "Majina ya watumiaji au barua pepe, zikitenganishwa na koma",
-    "inviteHint": "Tutatuma mialiko mara tu baada ya kundi kuundwa.",
+    "inviteSearchLabel": "Alika marafiki",
+    "inviteSearchPlaceholder": "Tafuta kwa jina la mtumiaji au barua pepe",
+    "inviteSearchHint": "Chagua watu wa kutumiwa mwaliko sasa. Watakubali kabla ya kujiunga.",
+    "searching": "Inatafuta…",
+    "noMatches": "Hakuna matokeo.",
+    "inviteSelected": "{{count}} wamechaguliwa",
+    "inviteManualLabel": "Ongeza kwa jina la mtumiaji au barua pepe",
+    "inviteManualPlaceholder": "@mtumiaji, mtu@example.com",
+    "inviteManualHint": "Tenganisha kila ingizo kwa koma au nafasi.",
     "inviteError": "Kundi limeundwa, lakini hatukuweza kutuma mialiko. Unaweza kuwalika tena baadaye kupitia taarifa za kundi.",
     "cancel": "Ghairi",
     "create": "Unda kundi",
@@ -134,13 +142,18 @@
       "groups": "Vikundi"
     },
     "requests": {
-      "loading": "Inapakia maombi…",
-      "incoming": "Maombi yanayoingia",
-      "outgoing": "Maombi yaliyotumwa",
-      "accept": "Kubali",
-      "decline": "Kataa",
-      "waiting": "Inasubiri idhini"
-    },
+    "loading": "Inapakia maombi…",
+    "incoming": "Maombi yanayoingia",
+    "outgoing": "Maombi yaliyotumwa",
+    "accept": "Kubali",
+    "decline": "Kataa",
+    "waiting": "Inasubiri idhini",
+    "groupIncoming": "Mialiko ya kundi",
+    "groupOutgoing": "Mialiko uliyotuma",
+    "invitedBy": "Umealikwa na {{name}}",
+    "sentTo": "Imetumwa kwa {{name}}",
+    "none": "Hakuna maombi yanayosubiri kwa sasa."
+  },
     "empty": {
       "title": "Chagua chumba au unda kipya.",
       "subtitle": "Ujumbe wako utaonekana hapa."
@@ -206,7 +219,14 @@
       "memberCount_one": "{{count}} mshiriki",
       "memberCount_other": "{{count}} washiriki",
       "invite": "+ Alika",
-      "avatarAlt": "Picha ya {{name}}"
+      "avatarAlt": "Picha ya {{name}}",
+      "privacy": {
+        "groupInvites": {
+          "title": "Mialiko ya kundi",
+          "hintOn": "Jiunge moja kwa moja na makundi unapopewa mwaliko.",
+          "hintOff": "Hitaji idhini yako kabla ya kujiunga na kundi. Mialiko itaonekana kwenye sehemu ya maombi."
+        }
+      }
     },
     "selection": {
       "count": "{{count}} zimechaguliwa",
@@ -361,6 +381,13 @@
       "paris": "Paris (Europe/Paris)",
       "newYork": "New York (America/New_York)",
       "custom": "Saa maalum"
+    },
+    "privacy": {
+      "groupInvites": {
+        "title": "Mialiko ya kundi",
+        "hintOn": "Jiunge moja kwa moja na makundi unapopewa mwaliko.",
+        "hintOff": "Hitaji idhini yako kabla ya kujiunga na kundi. Mialiko itaonekana kwenye sehemu ya maombi."
+      }
     }
   }
 }

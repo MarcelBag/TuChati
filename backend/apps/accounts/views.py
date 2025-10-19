@@ -221,6 +221,7 @@ class UserProfileView(APIView):
                 "share_last_seen": user.share_last_seen,
                 "share_status_message": user.share_status_message,
                 "share_timezone": user.share_timezone,
+                "auto_accept_group_invites": user.auto_accept_group_invites,
             },
             "viewer_is_self": is_self,
         }

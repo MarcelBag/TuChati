@@ -15,8 +15,8 @@ from .consumers import _msg_to_dict, _user_display
 
 from django.db import transaction
 from django.db.models import Q
-from .models import ChatRoom, Message, SystemMessage, MessageUserMeta, DirectChatRequest
-from .serializers import ChatRoomSerializer, MessageSerializer, DirectChatRequestSerializer
+from .models import ChatRoom, Message, SystemMessage, MessageUserMeta, DirectChatRequest, GroupInvite
+from .serializers import ChatRoomSerializer, MessageSerializer, DirectChatRequestSerializer, GroupInviteSerializer
 from .utils import get_or_create_direct_room
 
 User = get_user_model()
@@ -84,25 +84,50 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         added_users = []
         added_instances = []
 
-        # Find & add by username
+        pending_users = []
+        pending_instances = []
+        invites_created: list[GroupInvite] = []
+
+        def handle_user(user: User):
+            if room.participants.filter(id=user.id).exists():
+                return
+            if user.auto_accept_group_invites:
+                room.participants.add(user)
+                added_users.append(user.username)
+                added_instances.append(user)
+            else:
+                invite, created = GroupInvite.objects.get_or_create(
+                    room=room,
+                    invitee=user,
+                    status=GroupInvite.STATUS_PENDING,
+                    defaults={
+                        "inviter": request.user,
+                        "message": "",
+                        "responded_at": None,
+                    },
+                )
+                if not created:
+                    invite.inviter = request.user
+                    invite.message = ""
+                    invite.responded_at = None
+                    invite.save(update_fields=["inviter", "message", "responded_at"])
+                pending_users.append(user.username)
+                pending_instances.append(user)
+                invites_created.append(invite)
+
         for username in usernames:
             try:
                 u = User.objects.get(username=username)
             except User.DoesNotExist:
                 continue
-            room.participants.add(u)
-            added_users.append(u.username)
-            added_instances.append(u)
+            handle_user(u)
 
-        # Find & add by email
         for email in emails:
             try:
                 u = User.objects.get(email=email)
             except User.DoesNotExist:
                 continue
-            room.participants.add(u)
-            added_users.append(u.username)
-            added_instances.append(u)
+            handle_user(u)
 
         room.save()
 
@@ -111,12 +136,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         if added_users:
             msg_text = f"{request.user.username} added {', '.join(added_users)} to the chat."
             SystemMessage.objects.create(room=room, content=msg_text)
-
-            # Send to the room group (match ChatConsumer group name!)
             async_to_sync(channel_layer.group_send)(
                 f"room_{room.id}",
                 {
-                    "type": "chat_system_message",  # will call chat_system_message()
+                    "type": "chat_system_message",
                     "event": "user_invited",
                     "message": msg_text,
                     "room_id": str(room.id),
@@ -124,23 +147,41 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 },
             )
 
-        # Notify each invited user via their personal group
         for u in added_instances:
             async_to_sync(channel_layer.group_send)(
                 f"user_{u.id}",
                 {
-                    "type": "chat_invitation",  # will call chat_invitation()
+                    "type": "chat_invitation",
                     "room_id": str(room.id),
                     "room_name": room.name,
                     "invited_by": request.user.username,
                     "message": f"You’ve been added to the chat {room.name or room.id}",
+                    "status": GroupInvite.STATUS_ACCEPTED,
                 },
             )
 
-        return Response(
-            {"room": str(room.id), "invited": added_users, "message": f"Added {len(added_users)} user(s) to this room."},
-            status=200,
-        )
+        for invite in invites_created:
+            user = invite.invitee
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user.id}",
+                {
+                    "type": "chat_group_invite",
+                    "invite_id": str(invite.id),
+                    "room_id": str(room.id),
+                    "room_name": room.name,
+                    "invited_by": request.user.username,
+                    "message": f"You’ve been invited to join {room.name or room.id}",
+                    "status": invite.status,
+                },
+            )
+
+        payload = {
+            "room": str(room.id),
+            "added": added_users,
+            "pending": pending_users,
+            "message": f"Updated invitations: {len(added_users)} added, {len(pending_users)} pending.",
+        }
+        return Response(payload, status=200)
 
 class MessageListCreateViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
@@ -504,4 +545,80 @@ class DirectChatRequestViewSet(viewsets.ViewSet):
             direct_request.room.save(update_fields=['is_pending'])
 
         serializer = DirectChatRequestSerializer(direct_request, context={"request": request})
+        return Response(serializer.data)
+
+
+class GroupInviteViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        incoming = GroupInvite.objects.filter(
+            invitee=request.user,
+            status=GroupInvite.STATUS_PENDING,
+        ).select_related('room', 'inviter', 'invitee')
+
+        outgoing = GroupInvite.objects.filter(
+            inviter=request.user,
+            status=GroupInvite.STATUS_PENDING,
+        ).select_related('room', 'inviter', 'invitee')
+
+        return Response({
+            "incoming": GroupInviteSerializer(incoming, many=True, context={"request": request}).data,
+            "outgoing": GroupInviteSerializer(outgoing, many=True, context={"request": request}).data,
+        })
+
+    @action(detail=True, methods=['post'], url_path='decision')
+    def decision(self, request, pk=None):
+        decision = (request.data.get('decision') or '').lower()
+        if decision not in ('accept', 'decline'):
+            return Response({"detail": "decision must be 'accept' or 'decline'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            invite = GroupInvite.objects.select_related('room', 'inviter', 'invitee').get(id=pk)
+        except GroupInvite.DoesNotExist:
+            return Response({"detail": "Invite not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if invite.invitee_id != request.user.id:
+            raise PermissionDenied("You are not the invitee for this request.")
+
+        if invite.status != GroupInvite.STATUS_PENDING:
+            serializer = GroupInviteSerializer(invite, context={"request": request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        channel_layer = get_channel_layer()
+
+        if decision == 'accept':
+            invite.mark(GroupInvite.STATUS_ACCEPTED)
+            invite.room.participants.add(request.user)
+            SystemMessage.objects.create(
+                room=invite.room,
+                content=f"{request.user.username} joined the chat via invitation.",
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"room_{invite.room_id}",
+                {
+                    "type": "chat_system_message",
+                    "event": "invite_accepted",
+                    "message": f"{request.user.username} accepted the invitation.",
+                    "room_id": str(invite.room_id),
+                    "invited_users": [request.user.username],
+                },
+            )
+        else:
+            invite.mark(GroupInvite.STATUS_DECLINED)
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{invite.inviter_id}",
+            {
+                "type": "chat_group_invite",
+                "invite_id": str(invite.id),
+                "room_id": str(invite.room_id),
+                "room_name": invite.room.name,
+                "invited_by": invite.inviter.username,
+                "message": f"{request.user.username} {'accepted' if decision == 'accept' else 'declined'} the invitation.",
+                "status": invite.status,
+            },
+        )
+
+        serializer = GroupInviteSerializer(invite, context={"request": request})
         return Response(serializer.data)

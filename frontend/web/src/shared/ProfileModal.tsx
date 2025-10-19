@@ -57,6 +57,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [shareLastSeen, setShareLastSeen] = React.useState(!!user?.share_last_seen)
   const [shareStatusMessage, setShareStatusMessage] = React.useState(!!user?.share_status_message)
   const [shareTimezone, setShareTimezone] = React.useState(!!user?.share_timezone)
+  const [autoAcceptGroupInvites, setAutoAcceptGroupInvites] = React.useState(user?.auto_accept_group_invites !== false)
 
   // password state
   const [currentPwd, setCurrentPwd] = React.useState('')
@@ -112,6 +113,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setShareLastSeen(!!user?.share_last_seen)
     setShareStatusMessage(!!user?.share_status_message)
     setShareTimezone(!!user?.share_timezone)
+    setAutoAcceptGroupInvites(user?.auto_accept_group_invites !== false)
   }, [user, detectedTimeZone, timezonePresets])
 
   // close automatically if auth disappears
@@ -164,6 +166,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         share_last_seen: shareLastSeen,
         share_status_message: shareStatusMessage,
         share_timezone: shareTimezone,
+        auto_accept_group_invites: autoAcceptGroupInvites,
       })
 
       // Try PATCH then PUT on the same endpoint, then a couple common fallbacks
@@ -646,6 +649,21 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                     type="checkbox"
                     checked={shareTimezone}
                     onChange={(event) => setShareTimezone(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>{t('profileModal.privacy.groupInvites.title')}</h4>
+                  <p>{t(autoAcceptGroupInvites ? 'profileModal.privacy.groupInvites.hintOn' : 'profileModal.privacy.groupInvites.hintOff')}</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={autoAcceptGroupInvites}
+                    onChange={(event) => setAutoAcceptGroupInvites(event.target.checked)}
                   />
                   <span className="slider" />
                 </label>

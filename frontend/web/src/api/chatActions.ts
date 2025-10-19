@@ -80,6 +80,15 @@ export async function fetchDirectRequests() {
   return res.json()
 }
 
+export async function fetchGroupInvites() {
+  const res = await apiFetch('/api/chat/group/invites/')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to load group invites')
+  }
+  return res.json()
+}
+
 export async function createDirectRequest(toUserId: string, message: string) {
   const res = await apiFetch('/api/chat/direct/requests/', {
     method: 'POST',
@@ -102,6 +111,19 @@ export async function decideDirectRequest(requestId: string, decision: 'accept' 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
     throw new Error(data?.detail || 'Unable to update request')
+  }
+  return res.json()
+}
+
+export async function decideGroupInvite(inviteId: string, decision: 'accept' | 'decline') {
+  const res = await apiFetch(`/api/chat/group/invites/${inviteId}/decision/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to update group invite')
   }
   return res.json()
 }

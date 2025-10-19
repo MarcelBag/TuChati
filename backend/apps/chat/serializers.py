@@ -5,7 +5,7 @@
 from django.db.models import Max
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import ChatRoom, Message, MessageUserMeta, DirectChatRequest
+from .models import ChatRoom, Message, MessageUserMeta, DirectChatRequest, GroupInvite
 from .consumers import _msg_to_dict
 
 User = get_user_model()
@@ -287,3 +287,46 @@ class DirectChatRequestSerializer(serializers.ModelSerializer):
                 "is_pending": obj.room.is_pending,
             }
         return None
+
+
+class GroupInviteSerializer(serializers.ModelSerializer):
+    inviter = serializers.SerializerMethodField()
+    invitee = serializers.SerializerMethodField()
+    room = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupInvite
+        fields = [
+            "id",
+            "status",
+            "message",
+            "created_at",
+            "responded_at",
+            "inviter",
+            "invitee",
+            "room",
+        ]
+
+    def _user_payload(self, user):
+        viewer = self.context.get("request").user if self.context.get("request") else None
+        can_share_avatar = user.share_avatar or (viewer and viewer == user)
+        return {
+            "id": user.id,
+            "username": user.username,
+            "name": (getattr(user, "get_full_name", lambda: "")() or user.username),
+            "avatar": user.avatar.url if user.avatar and can_share_avatar else None,
+        }
+
+    def get_inviter(self, obj: GroupInvite):
+        return self._user_payload(obj.inviter)
+
+    def get_invitee(self, obj: GroupInvite):
+        return self._user_payload(obj.invitee)
+
+    def get_room(self, obj: GroupInvite):
+        return {
+            "id": str(obj.room_id),
+            "name": obj.room.name,
+            "is_group": obj.room.is_group,
+            "is_pending": obj.room.is_pending,
+        }

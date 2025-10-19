@@ -189,3 +189,50 @@ class DirectChatRequest(models.Model):
 
     def __str__(self):
         return f"DirectRequest({self.from_user}->{self.to_user} : {self.status})"
+
+
+class GroupInvite(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_DECLINED = "declined"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_ACCEPTED, "Accepted"),
+        (STATUS_DECLINED, "Declined"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="group_invites")
+    inviter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="group_invites_sent",
+    )
+    invitee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="group_invites_received",
+    )
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=("invitee", "status")),
+            models.Index(fields=("inviter", "status")),
+        ]
+        unique_together = (
+            ("room", "invitee", "status"),
+        )
+
+    def mark(self, status: str):
+        self.status = status
+        self.responded_at = timezone.now()
+        self.save(update_fields=["status", "responded_at"])
+
+    def __str__(self):
+        return f"GroupInvite({self.room_id}:{self.inviter_id}->{self.invitee_id}:{self.status})"

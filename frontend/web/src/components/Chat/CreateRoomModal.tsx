@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { apiFetch } from '../../shared/api'
 import { useAuth } from '../../context/AuthContext'
 import { ChatRoom } from '../../types'
+import { searchUsers } from '../../api/chatActions'
+import AvatarBubble from '../../shared/AvatarBubble'
 import './CreateRoomModal.css'
 
 interface CreateRoomModalProps {
@@ -14,10 +16,14 @@ interface CreateRoomModalProps {
 
 export default function CreateRoomModal({ open, onClose, onRoomCreated }: CreateRoomModalProps) {
   const { t } = useTranslation()
-  const { token } = useAuth() as any
+  const { token, user: currentUser } = useAuth() as any
 
   const [name, setName] = React.useState('')
-  const [invites, setInvites] = React.useState('')
+  const [query, setQuery] = React.useState('')
+  const [manualInvites, setManualInvites] = React.useState('')
+  const [searchLoading, setSearchLoading] = React.useState(false)
+  const [searchResults, setSearchResults] = React.useState<SearchUser[]>([])
+  const [selected, setSelected] = React.useState<Record<string, SearchUser>>({})
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -28,11 +34,64 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
       setTimeout(() => nameInputRef.current?.focus(), 50)
     } else {
       setName('')
-      setInvites('')
+      setQuery('')
+      setManualInvites('')
+      setSearchResults([])
+      setSelected({})
       setError(null)
       setLoading(false)
     }
   }, [open])
+
+  React.useEffect(() => {
+    if (!open) return
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setSearchResults([])
+      setSearchLoading(false)
+      return
+    }
+    let cancelled = false
+    setSearchLoading(true)
+    searchUsers(trimmed)
+      .then((results: any) => {
+        if (cancelled) return
+        const rows = Array.isArray(results) ? results : []
+        const normalized = rows
+          .map((item: any) => ({
+            id: String(item.id ?? item.username ?? item.email ?? Math.random()),
+            username: item.username || item.handle || '',
+            name: item.name || item.display_name || item.username || item.email || '',
+            email: item.email || '',
+            avatar: item.avatar || item.photo || null,
+          }))
+          .filter((item) => item.username && (!currentUser?.id || String(item.id) !== String(currentUser.id)))
+        setSearchResults(normalized)
+      })
+      .catch(() => {
+        if (!cancelled) setSearchResults([])
+      })
+      .finally(() => {
+        if (!cancelled) setSearchLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser?.id, open, query])
+
+  const selectedList = React.useMemo(() => Object.values(selected), [selected])
+
+  const toggleSelect = React.useCallback((user: SearchUser) => {
+    setSelected(prev => {
+      const next = { ...prev }
+      if (next[user.username]) {
+        delete next[user.username]
+      } else {
+        next[user.username] = user
+      }
+      return next
+    })
+  }, [])
 
   const closeIfPossible = React.useCallback(() => {
     if (!loading) onClose()
@@ -68,8 +127,15 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
       if (!res.ok) throw await errorFromResponse(res, t('chatPage.createRoom.error'))
       const room: ChatRoom = await res.json()
 
-      const parsed = parseInviteEntries(invites)
-      if (room?.id && (parsed.emails.length > 0 || parsed.usernames.length > 0)) {
+      const parsed = parseInviteEntries(manualInvites)
+      const fromSelectedUsernames = selectedList.map((user) => user.username)
+      const fromSelectedEmails = selectedList
+        .map((user) => user.email)
+        .filter((email): email is string => !!email && email.length > 0)
+      const usernames = Array.from(new Set([...fromSelectedUsernames, ...parsed.usernames]))
+      const emails = Array.from(new Set([...fromSelectedEmails, ...parsed.emails]))
+
+      if (room?.id && (emails.length > 0 || usernames.length > 0)) {
         try {
           const inviteRes = await apiFetch(`/api/chat/rooms/${room.id}/invite/`, {
             method: 'POST',
@@ -77,7 +143,7 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(parsed),
+            body: JSON.stringify({ usernames, emails }),
           })
           if (!inviteRes.ok) throw await errorFromResponse(inviteRes, t('chatPage.createRoom.inviteError'))
         } catch (inviteError) {
@@ -88,7 +154,9 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
 
       onRoomCreated(room)
       setName('')
-      setInvites('')
+      setQuery('')
+      setManualInvites('')
+      setSelected({})
       setError(null)
       onClose()
     } catch (err: any) {
@@ -96,7 +164,7 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
     } finally {
       setLoading(false)
     }
-  }, [invites, loading, name, onClose, onRoomCreated, t, token])
+  }, [manualInvites, selectedList, loading, name, onClose, onRoomCreated, t, token])
 
   if (!open) return null
   if (typeof document === 'undefined') return null
@@ -144,16 +212,85 @@ export default function CreateRoomModal({ open, onClose, onRoomCreated }: Create
           </label>
 
           <label className="create-room-field">
-            <span>{t('chatPage.createRoom.inviteLabel')}</span>
+            <span>{t('chatPage.createRoom.inviteSearchLabel')}</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('chatPage.createRoom.inviteSearchPlaceholder') || undefined}
+              disabled={loading}
+              name="group-invite-search"
+            />
+            <small className="create-room-hint">{t('chatPage.createRoom.inviteSearchHint')}</small>
+          </label>
+
+          <div className="create-room-results" aria-live="polite">
+            {searchLoading && <div className="create-room-result-hint">{t('chatPage.createRoom.searching')}</div>}
+            {!searchLoading && query && searchResults.length === 0 && (
+              <div className="create-room-result-hint">{t('chatPage.createRoom.noMatches')}</div>
+            )}
+            {!searchLoading && searchResults.length > 0 && (
+              <ul>
+                {searchResults.map((user) => {
+                  const checked = !!selected[user.username]
+                  return (
+                    <li key={user.id}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSelect(user)}
+                          disabled={loading}
+                        />
+                        <AvatarBubble
+                          src={user.avatar}
+                          name={user.name || user.username}
+                          initials={(user.name || user.username || 'U').slice(0, 2).toUpperCase()}
+                          size="sm"
+                        />
+                        <span className="create-room-user">
+                          {user.name || user.username}
+                          {user.email ? ` · ${user.email}` : ''}
+                        </span>
+                      </label>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          {selectedList.length > 0 && (
+            <div className="create-room-selected">
+              <div className="create-room-selected-header">
+                {t('chatPage.createRoom.inviteSelected', { count: selectedList.length })}
+              </div>
+              <div className="create-room-chips">
+                {selectedList.map((user) => (
+                  <button
+                    key={user.username}
+                    type="button"
+                    onClick={() => toggleSelect(user)}
+                  >
+                    {(user.name || user.username) + (user.email ? ` · ${user.email}` : '')}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <label className="create-room-field">
+            <span>{t('chatPage.createRoom.inviteManualLabel')}</span>
             <textarea
               name="group-invites"
-              value={invites}
-              onChange={(event) => setInvites(event.target.value)}
-              placeholder={t('chatPage.createRoom.invitePlaceholder') || undefined}
+              value={manualInvites}
+              onChange={(event) => setManualInvites(event.target.value)}
+              placeholder={t('chatPage.createRoom.inviteManualPlaceholder') || undefined}
               disabled={loading}
               rows={3}
             />
-            <small className="create-room-hint">{t('chatPage.createRoom.inviteHint')}</small>
+            <small className="create-room-hint">{t('chatPage.createRoom.inviteManualHint')}</small>
           </label>
 
           <footer className="create-room-actions">
@@ -192,6 +329,14 @@ function parseInviteEntries(value: string): { usernames: string[]; emails: strin
   return { usernames: Array.from(usernames), emails: Array.from(emails) }
 }
 
+type SearchUser = {
+  id: string
+  username: string
+  name?: string
+  email?: string
+  avatar?: string | null
+}
+
 async function errorFromResponse(res: Response, fallback: string) {
   try {
     const data = await res.clone().json()
@@ -203,4 +348,3 @@ async function errorFromResponse(res: Response, fallback: string) {
     return new Error(`${fallback} (${res.status})`)
   }
 }
-

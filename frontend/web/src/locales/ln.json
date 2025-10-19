@@ -120,7 +120,15 @@
     "nameRequired": "Kombo ya groupe esengeli",
     "inviteLabel": "Benga bato",
     "invitePlaceholder": "Ba pseudonyme to ba email, bopanzi na koma",
-    "inviteHint": "Tokotinda ba invitation na mbala moko sima ya kosala groupe.",
+    "inviteSearchLabel": "Benga bamembre",
+    "inviteSearchPlaceholder": "Luka na kombo to email",
+    "inviteSearchHint": "Pona bato ya kotindela invitation sik'oyo. Bakoki kondima liboso ya kokota.",
+    "searching": "Ezali koluka…",
+    "noMatches": "Ezwi eloko te.",
+    "inviteSelected": "{{count}} baponi",
+    "inviteManualLabel": "Bakisa na kombo ya mosaleli to email",
+    "inviteManualPlaceholder": "@kombo, moto@example.com",
+    "inviteManualHint": "Kabola makomi na koma to esika ya mpamba.",
     "inviteError": "Groupe esalemi, kasi totindi ba invitation te. Okoki kobenga bato nsima na makambo ya groupe.",
     "cancel": "Boya",
     "create": "Sala groupe",
@@ -134,13 +142,18 @@
       "groups": "Ba groupe"
     },
     "requests": {
-      "loading": "Ezali kocharger ba bosenga…",
-      "incoming": "Ba bosenga ya koya",
-      "outgoing": "Ba bosenga otindi",
-      "accept": "Bondima",
-      "decline": "Boya",
-      "waiting": "Ezali kozela ndingisa"
-    },
+    "loading": "Ezali kocharger ba bosenga…",
+    "incoming": "Ba bosenga ya koya",
+    "outgoing": "Ba bosenga otindi",
+    "accept": "Bondima",
+    "decline": "Boya",
+    "waiting": "Ezali kozela ndingisa",
+    "groupIncoming": "Bainvitation ya groupe",
+    "groupOutgoing": "Bainvitation otindaki",
+    "invitedBy": "Ebengi yo na {{name}}",
+    "sentTo": "Etindami epai ya {{name}}",
+    "none": "Mpo na sik'oyo, ba bosenga te."
+  },
     "empty": {
       "title": "Pona salo moko to sala ya sika.",
       "subtitle": "Nsango na yo eko monana awa."
@@ -206,7 +219,14 @@
       "memberCount_one": "{{count}} membre",
       "memberCount_other": "{{count}} membres",
       "invite": "+ Benga",
-      "avatarAlt": "Avatar ya {{name}}"
+      "avatarAlt": "Avatar ya {{name}}",
+      "privacy": {
+        "groupInvites": {
+          "title": "Bainvitation ya groupe",
+          "hintOn": "Kota automatique na groupe soki moto abengi yo.",
+          "hintOff": "Senga kondima na yo liboso okota na groupe. Bainvitation ekomonana na esika ya basengi."
+        }
+      }
     },
     "selection": {
       "count": "{{count}} eponami",
@@ -361,6 +381,13 @@
       "paris": "Paris (Europe/Paris)",
       "newYork": "New York (America/New_York)",
       "custom": "Heure ya moto moko"
+    },
+    "privacy": {
+      "groupInvites": {
+        "title": "Bainvitation ya groupe",
+        "hintOn": "Kota automatique na groupe soki moto abengi yo.",
+        "hintOff": "Senga kondima na yo liboso okota na groupe. Bainvitation ekomonana na esika ya basengi."
+      }
     }
   }
 }

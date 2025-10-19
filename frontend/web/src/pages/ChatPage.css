@@ -68,8 +68,6 @@ html.light {
   min-height: 60px;
 }
 .rooms-actions { display: flex; gap: 8px; }
-.rooms-actions .btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.rooms-actions .btn.secondary:hover { background: var(--hover); }
 
 .rooms-hd h2 {
   margin: 0;

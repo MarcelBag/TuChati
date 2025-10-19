@@ -64,6 +64,7 @@ class User(AbstractUser):
     share_last_seen = models.BooleanField(default=True)
     share_status_message = models.BooleanField(default=True)
     share_timezone = models.BooleanField(default=True)
+    auto_accept_group_invites = models.BooleanField(default=True)
 
     def mark_online(self, device="web"):
         self.is_online = True
