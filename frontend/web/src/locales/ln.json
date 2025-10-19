@@ -81,5 +81,82 @@
     "msg10": "Ee, mpenza! 😊",
     "msg11": "Matondo mingi mpo na lisungi na yo 💚 Ekipi ya TuChati.",
     "end": "Lisolo esili. Tokomonana lisusu mbala mosusu 💬"
+  },
+
+  "chatPage": {
+    "dates": {
+      "yesterday": "Lobi"
+    },
+    "preview": {
+      "attachment": "[ekangiseli]",
+      "groupChat": "Lisolo ya groupe",
+      "directChat": "Lisolo ya moto na moto",
+      "empty": "Nsango nanu ezali te"
+    },
+    "alerts": {
+      "chooseUser": "Pona moto moko mpo na kotinda ye nsango.",
+      "requestPending": "Bosenga etindami. Ezali kozela ndingisa ya azwi.",
+      "unableStart": "Lisolo ekoki te kobanda",
+      "unableUpdate": "Bosenga ekoki te kobongisama",
+      "unableProfile": "Profili ekoki te kokɔta"
+    },
+    "rooms": {
+      "title": "Ba salo ya lisolo",
+      "prompt": "Kombo ya salo",
+      "newRoom": "+ Sika",
+      "directRoom": "+ Moto na moto",
+      "searchPlaceholder": "Luka to banda lisolo ya sika",
+      "loading": "Ezali kocharger…",
+      "empty": "Ba salo nanu ezali te",
+      "fallbackName": "Salo",
+      "groupAria": "Salo {{name}}",
+      "profileAria": "Profil ya {{name}}",
+      "unreadAria": "{{count}} nsango etángá te"
+    },
+    "filters": {
+      "all": "Nyonso",
+      "unread": "Etángá te",
+      "favorites": "Epreferami",
+      "groups": "Ba groupe"
+    },
+    "requests": {
+      "loading": "Ezali kocharger ba bosenga…",
+      "incoming": "Ba bosenga ya koya",
+      "outgoing": "Ba bosenga otindi",
+      "accept": "Bondima",
+      "decline": "Boya",
+      "waiting": "Ezali kozela ndingisa"
+    },
+    "empty": {
+      "title": "Pona salo moko to sala ya sika.",
+      "subtitle": "Nsango na yo eko monana awa."
+    }
+  },
+
+  "chatRoom": {
+    "dates": {
+      "today": "Lelo",
+      "yesterday": "Lobi"
+    },
+    "lastSeen": {
+      "justNow": "Amimonaki sikoyo kaka",
+      "minutesAgo_one": "Amimonaki miniti {{count}} eleki",
+      "minutesAgo_other": "Amimonaki miniti {{count}} eleki",
+      "today": "Amimonaki lelo na {{time}}",
+      "yesterday": "Amimonaki lobi na {{time}}",
+      "dateTime": "Amimonaki {{day}} na {{time}}"
+    },
+    "status": {
+      "online": "Na internet",
+      "away": "Azali mosika",
+      "offline": "Aza offline",
+      "dnd": "Kotungisa te",
+      "onlineNow": "Na internet sikoyo"
+    },
+    "profile": {
+      "notShared": "Epesami te",
+      "hiddenPrivacy": "Ebombami mpo na confidentialité",
+      "notProvided": "Epesi te"
+    }
   }
 }

@@ -7,6 +7,7 @@
 // ============================================================
 import React from 'react'
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
+import type { TFunction } from 'i18next'
 import { apiFetch, resolveUrl } from '../shared/api'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../hooks/useChatSocket'
@@ -24,55 +25,56 @@ import AvatarBubble from '../shared/AvatarBubble'
 import { useChatNotifications } from '../hooks/useChatNotifications'
 import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
 import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
+import { useTranslation } from 'react-i18next'
 
-function formatDayLabel(d: Date) {
+function formatDayLabel(t: TFunction, d: Date) {
   const now = new Date()
   const one = 24 * 60 * 60 * 1000
   const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const nd = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   const diff = Math.round((dd - nd) / one)
-  if (diff === 0) return 'Today'
-  if (diff === -1) return 'Yesterday'
+  if (diff === 0) return t('chatRoom.dates.today')
+  if (diff === -1) return t('chatRoom.dates.yesterday')
   return d.toLocaleDateString()
 }
 
-function describeLastSeen(value?: string | null) {
+function describeLastSeen(t: TFunction, value?: string | null) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
   const now = new Date()
   const minutes = Math.round((now.getTime() - date.getTime()) / 60000)
-  if (minutes < 1) return 'Last seen just now'
-  if (minutes < 60) return `Last seen ${minutes} min${minutes !== 1 ? 's' : ''} ago`
+  if (minutes < 1) return t('chatRoom.lastSeen.justNow')
+  if (minutes < 60) return t('chatRoom.lastSeen.minutesAgo', { count: minutes })
 
   const sameDay = now.toDateString() === date.toDateString()
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
   const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-  if (sameDay) return `Last seen today at ${time}`
-  if (yesterday.toDateString() === date.toDateString()) return `Last seen yesterday at ${time}`
+  if (sameDay) return t('chatRoom.lastSeen.today', { time })
+  if (yesterday.toDateString() === date.toDateString()) return t('chatRoom.lastSeen.yesterday', { time })
 
   const day = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })
-  return `Last seen ${day} ${time}`
+  return t('chatRoom.lastSeen.dateTime', { day, time })
 }
 
-function formatStatus(status?: string | null) {
+function formatStatus(t: TFunction, status?: string | null) {
   if (!status) return ''
   const map: Record<string, string> = {
-    online: 'Online',
-    away: 'Away',
-    offline: 'Offline',
-    dnd: 'Do Not Disturb',
+    online: t('chatRoom.status.online'),
+    away: t('chatRoom.status.away'),
+    offline: t('chatRoom.status.offline'),
+    dnd: t('chatRoom.status.dnd'),
   }
   return map[status] || status.charAt(0).toUpperCase() + status.slice(1)
 }
 
-function describeField(value?: string | null, allowed?: boolean, empty = 'Not shared') {
+function describeField(t: TFunction, value?: string | null, allowed?: boolean, emptyKey = 'chatRoom.profile.notShared') {
   if (value && value.trim().length > 0) return value
-  if (allowed === false) return 'Hidden by privacy'
-  return empty
+  if (allowed === false) return t('chatRoom.profile.hiddenPrivacy')
+  return t(emptyKey)
 }
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
@@ -89,6 +91,7 @@ const AUDIO_MIME_CANDIDATES = [
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
+  const { t } = useTranslation()
   const outletContext = useOutletContext<ChatOutletContext | null>()
   const updateRoomUnread = outletContext?.updateRoomUnread
   const navigate = useNavigate()
@@ -1440,7 +1443,7 @@ export default function ChatRoom() {
     const date = new Date(m.created_at || Date.now())
     const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
     if (dayKey !== lastDayKey) {
-      renderItems.push({ kind: 'day', id: `day-${dayKey}`, label: formatDayLabel(date) })
+      renderItems.push({ kind: 'day', id: `day-${dayKey}`, label: formatDayLabel(t, date) })
       lastDayKey = dayKey
       prevSender = null
     }
@@ -1478,12 +1481,12 @@ export default function ChatRoom() {
   const profileInitials = profileData?.initials || partnerRaw?.initials || headerInitial
   const profileDisplayName = profileData?.display_name || directPartner?.name || headerTitle || 'User'
   const profileUsername = profileData?.username || directPartner?.username || ''
-  const statusBadge = profileData ? (profileData.is_online ? 'Online now' : formatStatus(profileData.current_status)) : ''
+  const statusBadge = profileData ? (profileData.is_online ? t('chatRoom.status.onlineNow') : formatStatus(t, profileData.current_status)) : ''
   const lastSeenLine = profileData
     ? (profileData.is_online
         ? 'Active now'
         : profileData.last_seen
-          ? describeLastSeen(profileData.last_seen)
+          ? describeLastSeen(t, profileData.last_seen)
           : profilePrivacy.share_last_seen === false
             ? 'Last seen hidden by privacy'
             : 'Last seen unavailable')
@@ -1502,8 +1505,8 @@ export default function ChatRoom() {
           ? 'Bio hidden by privacy'
           : '')
     : ''
-  const emailValue = profileData ? describeField(profileData.email, profilePrivacy.share_contact_info, 'Not provided') : ''
-  const phoneValue = profileData ? describeField(profileData.phone, profilePrivacy.share_contact_info, 'Not provided') : ''
+  const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
+  const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const privacySummary = `Avatar ${profilePrivacy.share_avatar === false ? 'hidden' : 'visible'} · Contact ${profilePrivacy.share_contact_info === false ? 'hidden' : 'visible'} · Status ${profilePrivacy.share_status_message === false ? 'hidden' : 'visible'} · Bio ${profilePrivacy.share_bio === false ? 'hidden' : 'visible'} · Last seen ${profilePrivacy.share_last_seen === false ? 'hidden' : 'visible'}`
 
   if (!token) return null

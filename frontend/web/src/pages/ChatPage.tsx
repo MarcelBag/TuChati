@@ -8,10 +8,12 @@ import DirectMessageModal from '../components/Chat/DirectMessageModal'
 import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchUserProfile, searchUsers } from '../api/chatActions'
 import UserProfileModal from '../components/Chat/UserProfileModal'
 import AvatarBubble from '../shared/AvatarBubble'
+import { useTranslation } from 'react-i18next'
 import './ChatPage.css'
 
 export default function ChatPage() {
   const { token, user: currentUser } = useAuth() as any
+  const { t } = useTranslation()
   const [rooms, setRooms] = React.useState<Room[]>([])
   const [loading, setLoading] = React.useState(true)
   const [activeFilter, setActiveFilter] = React.useState<'all'|'unread'|'favorites'|'groups'>('all')
@@ -94,7 +96,7 @@ export default function ChatPage() {
     yesterday.setDate(today.getDate() - 1)
     if (d.toDateString() === today.toDateString())
       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    if (d.toDateString() === yesterday.toDateString()) return t('chatPage.dates.yesterday')
     return d.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
@@ -104,10 +106,14 @@ export default function ChatPage() {
     const lm = room?.last_message
     if (typeof lm === 'string') return lm
     if (lm && typeof lm === 'object') {
-      return lm.content || lm.text || '[attachment]'
+      return lm.content || lm.text || t('chatPage.preview.attachment')
     }
     // other possible server fields
-    return room?.last_message_text || room?.last_text || (room?.is_group ? 'Group chat' : 'Direct chat')
+    return (
+      room?.last_message_text
+      || room?.last_text
+      || (room?.is_group ? t('chatPage.preview.groupChat') : t('chatPage.preview.directChat'))
+    )
   }
 
   const openDirectModal = React.useCallback(() => {
@@ -151,7 +157,7 @@ export default function ChatPage() {
 
   const handleDirectSubmit = React.useCallback(async () => {
     if (!dmSelected) {
-      alert('Choose a user to message.')
+      alert(t('chatPage.alerts.chooseUser'))
       return
     }
     setDmSubmitting(true)
@@ -162,11 +168,11 @@ export default function ChatPage() {
         await loadRooms()
         navigate(`/chat/${data.room.id}`)
       } else {
-        alert('Request sent. Waiting for recipient approval.')
+        alert(t('chatPage.alerts.requestPending'))
       }
       closeDirectModal()
     } catch (error: any) {
-      alert(error?.message || 'Unable to start chat')
+      alert(error?.message || t('chatPage.alerts.unableStart'))
     } finally {
       setDmSubmitting(false)
     }
@@ -181,7 +187,7 @@ export default function ChatPage() {
         navigate(`/chat/${response.room.id}`)
       }
     } catch (error: any) {
-      alert(error?.message || 'Unable to update request')
+      alert(error?.message || t('chatPage.alerts.unableUpdate'))
     }
   }, [loadDirectRequests, loadRooms, navigate])
 
@@ -201,7 +207,7 @@ export default function ChatPage() {
         setProfileViewer(prev => (prev.target === target ? { ...prev, loading: false, profile: data, error: null } : prev))
       })
       .catch((error: any) => {
-        setProfileViewer(prev => (prev.target === target ? { ...prev, loading: false, error: error?.message || 'Unable to load profile' } : prev))
+        setProfileViewer(prev => (prev.target === target ? { ...prev, loading: false, error: error?.message || t('chatPage.alerts.unableProfile') } : prev))
       })
   }, [])
 
@@ -214,16 +220,16 @@ export default function ChatPage() {
       {/* Rooms (always visible on desktop) */}
       <aside className="rooms">
         <header className="rooms-hd">
-          <h2>Rooms</h2>
+          <h2>{t('chatPage.rooms.title')}</h2>
           <div className="rooms-actions">
             <button
               className="btn small"
               onClick={() => {
-                const name = prompt('Room name')
+                const name = prompt(t('chatPage.rooms.prompt'))
                 if (name) createRoom(name)
               }}
             >
-              + New
+              {t('chatPage.rooms.newRoom')}
             </button>
             <button
               className="btn small secondary"
@@ -234,13 +240,13 @@ export default function ChatPage() {
                 openDirectModal()
               }}
             >
-              + Direct
+              {t('chatPage.rooms.directRoom')}
             </button>
           </div>
         </header>
 
         <div className="rooms-search">
-          <input name="room-search" placeholder="Search or start a new chat" />
+          <input name="room-search" placeholder={t('chatPage.rooms.searchPlaceholder') || undefined} />
         </div>
 
         <div className="rooms-filters">
@@ -250,17 +256,17 @@ export default function ChatPage() {
               className={`filter-tab ${activeFilter === k ? 'active' : ''}`}
               onClick={() => setActiveFilter(k)}
             >
-              {k[0].toUpperCase()+k.slice(1)}
+              {t(`chatPage.filters.${k}`)}
             </button>
           ))}
         </div>
 
-        {requestLoading && <div className="direct-requests"><p className="hint">Loading requests…</p></div>}
+        {requestLoading && <div className="direct-requests"><p className="hint">{t('chatPage.requests.loading')}</p></div>}
         {!requestLoading && (directRequests.incoming.length > 0 || directRequests.outgoing.length > 0) && (
           <div className="direct-requests">
             {directRequests.incoming.length > 0 && (
               <div className="direct-section">
-                <h4>Incoming requests</h4>
+                <h4>{t('chatPage.requests.incoming')}</h4>
                 <ul>
                   {directRequests.incoming.map(req => (
                     <li key={req.id}>
@@ -278,8 +284,8 @@ export default function ChatPage() {
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
                       <div className="direct-actions">
-                        <button type="button" onClick={() => handleDirectDecision(req.id, 'accept')}>Accept</button>
-                        <button type="button" onClick={() => handleDirectDecision(req.id, 'decline')}>Decline</button>
+                        <button type="button" onClick={() => handleDirectDecision(req.id, 'accept')}>{t('chatPage.requests.accept')}</button>
+                        <button type="button" onClick={() => handleDirectDecision(req.id, 'decline')}>{t('chatPage.requests.decline')}</button>
                       </div>
                     </li>
                   ))}
@@ -288,7 +294,7 @@ export default function ChatPage() {
             )}
             {directRequests.outgoing.length > 0 && (
               <div className="direct-section">
-                <h4>Pending sent</h4>
+                <h4>{t('chatPage.requests.outgoing')}</h4>
                 <ul>
                   {directRequests.outgoing.map(req => (
                     <li key={req.id}>
@@ -305,7 +311,7 @@ export default function ChatPage() {
                         </div>
                       </div>
                       {req.initial_message && <p className="direct-message">{req.initial_message}</p>}
-                      <span className="direct-status">Waiting for approval</span>
+                      <span className="direct-status">{t('chatPage.requests.waiting')}</span>
                     </li>
                   ))}
                 </ul>
@@ -315,8 +321,8 @@ export default function ChatPage() {
         )}
 
         <ul className="rooms-list">
-          {loading && <li className="hint">Loading…</li>}
-          {!loading && rooms.length === 0 && <li className="hint">No rooms yet</li>}
+          {loading && <li className="hint">{t('chatPage.rooms.loading')}</li>}
+          {!loading && rooms.length === 0 && <li className="hint">{t('chatPage.rooms.empty')}</li>}
           {rooms.map(r => {
             const members = (r?.members || (r as any)?.participants || []) as any[]
             const otherMember = !r.is_group ? members.find((entry: any) => {
@@ -331,7 +337,7 @@ export default function ChatPage() {
               event.stopPropagation()
               if (otherId) openUserProfile(otherId)
             }
-            const roomName = r.name || otherMember?.name || otherMember?.username || 'Room'
+            const roomName = r.name || otherMember?.name || otherMember?.username || t('chatPage.rooms.fallbackName')
             const avatarInitials = otherMember?.initials || (roomName || 'R').slice(0, 2)
             const avatarSrc = otherMember?.avatar || (r as any)?.avatar || null
             const unread = Number((r as any)?.unread_count ?? 0)
@@ -350,14 +356,16 @@ export default function ChatPage() {
                   size="lg"
                   interactive={!r.is_group && !!otherId}
                   onClick={!r.is_group && otherId ? handleAvatarClick : undefined}
-                  ariaLabel={r.is_group ? `${roomName} room` : `${roomName} profile`}
+                  ariaLabel={r.is_group
+                    ? t('chatPage.rooms.groupAria', { name: roomName })
+                    : t('chatPage.rooms.profileAria', { name: roomName })}
                 />
                 <div className="room-main">
                   <div className="room-row room-header">
                     <span className="room-name">{roomName}</span>
                     <div className="room-meta">
                       {hasUnread && (
-                        <span className="room-unread" aria-label={`${unread} unread messages`}>
+                        <span className="room-unread" aria-label={t('chatPage.rooms.unreadAria', { count: unread })}>
                           {unread}
                         </span>
                       )}
@@ -380,8 +388,8 @@ export default function ChatPage() {
           <Outlet context={{ updateRoomUnread }} />
         ) : (
           <div className="empty-inner">
-            <h3>Select a room or create a new one.</h3>
-            <p>Your messages will appear here.</p>
+            <h3>{t('chatPage.empty.title')}</h3>
+            <p>{t('chatPage.empty.subtitle')}</p>
           </div>
         )}
       </section>

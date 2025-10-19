@@ -81,5 +81,82 @@
     "msg10": "Oui, bien sûr ! 😊",
     "msg11": "Merci pour ton soutien 💚 Ton équipe TuChati.",
     "end": "Conversation terminée. Rejoins-nous bientôt 💬"
+  },
+
+  "chatPage": {
+    "dates": {
+      "yesterday": "Hier"
+    },
+    "preview": {
+      "attachment": "[pièce jointe]",
+      "groupChat": "Discussion de groupe",
+      "directChat": "Discussion directe",
+      "empty": "Pas encore de messages"
+    },
+    "alerts": {
+      "chooseUser": "Choisissez un utilisateur à contacter.",
+      "requestPending": "Demande envoyée. En attente de l'approbation du destinataire.",
+      "unableStart": "Impossible de démarrer la discussion",
+      "unableUpdate": "Impossible de mettre à jour la demande",
+      "unableProfile": "Impossible de charger le profil"
+    },
+    "rooms": {
+      "title": "Salons",
+      "prompt": "Nom du salon",
+      "newRoom": "+ Nouveau",
+      "directRoom": "+ Direct",
+      "searchPlaceholder": "Rechercher ou démarrer une nouvelle discussion",
+      "loading": "Chargement…",
+      "empty": "Aucun salon pour le moment",
+      "fallbackName": "Salon",
+      "groupAria": "Salon {{name}}",
+      "profileAria": "Profil {{name}}",
+      "unreadAria": "{{count}} messages non lus"
+    },
+    "filters": {
+      "all": "Tous",
+      "unread": "Non lus",
+      "favorites": "Favoris",
+      "groups": "Groupes"
+    },
+    "requests": {
+      "loading": "Chargement des demandes…",
+      "incoming": "Demandes entrantes",
+      "outgoing": "Demandes envoyées",
+      "accept": "Accepter",
+      "decline": "Refuser",
+      "waiting": "En attente d'approbation"
+    },
+    "empty": {
+      "title": "Sélectionnez un salon ou créez-en un nouveau.",
+      "subtitle": "Vos messages apparaîtront ici."
+    }
+  },
+
+  "chatRoom": {
+    "dates": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "lastSeen": {
+      "justNow": "Vue il y a un instant",
+      "minutesAgo_one": "Vue il y a {{count}} minute",
+      "minutesAgo_other": "Vue il y a {{count}} minutes",
+      "today": "Vue aujourd'hui à {{time}}",
+      "yesterday": "Vue hier à {{time}}",
+      "dateTime": "Vue le {{day}} à {{time}}"
+    },
+    "status": {
+      "online": "En ligne",
+      "away": "Absent",
+      "offline": "Hors ligne",
+      "dnd": "Ne pas déranger",
+      "onlineNow": "En ligne maintenant"
+    },
+    "profile": {
+      "notShared": "Non partagé",
+      "hiddenPrivacy": "Caché par la confidentialité",
+      "notProvided": "Non renseigné"
+    }
   }
 }

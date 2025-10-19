@@ -81,5 +81,82 @@
     "msg10": "Ja, natürlich! 😊",
     "msg11": "Danke für deine Unterstützung 💚 Dein TuChati-Team.",
     "end": "Konversation beendet. Bis bald 💬"
+  },
+
+  "chatPage": {
+    "dates": {
+      "yesterday": "Gestern"
+    },
+    "preview": {
+      "attachment": "[Anhang]",
+      "groupChat": "Gruppenchat",
+      "directChat": "Direktchat",
+      "empty": "Noch keine Nachrichten"
+    },
+    "alerts": {
+      "chooseUser": "Wähle einen Benutzer, dem du schreiben möchtest.",
+      "requestPending": "Anfrage gesendet. Wartet auf die Bestätigung des Empfängers.",
+      "unableStart": "Chat kann nicht gestartet werden",
+      "unableUpdate": "Anfrage kann nicht aktualisiert werden",
+      "unableProfile": "Profil kann nicht geladen werden"
+    },
+    "rooms": {
+      "title": "Räume",
+      "prompt": "Raumname",
+      "newRoom": "+ Neu",
+      "directRoom": "+ Direkt",
+      "searchPlaceholder": "Suche oder starte einen neuen Chat",
+      "loading": "Wird geladen…",
+      "empty": "Noch keine Räume",
+      "fallbackName": "Raum",
+      "groupAria": "{{name}} Raum",
+      "profileAria": "{{name}} Profil",
+      "unreadAria": "{{count}} ungelesene Nachrichten"
+    },
+    "filters": {
+      "all": "Alle",
+      "unread": "Ungelesen",
+      "favorites": "Favoriten",
+      "groups": "Gruppen"
+    },
+    "requests": {
+      "loading": "Anfragen werden geladen…",
+      "incoming": "Eingehende Anfragen",
+      "outgoing": "Gesendete Anfragen",
+      "accept": "Annehmen",
+      "decline": "Ablehnen",
+      "waiting": "Wartet auf Bestätigung"
+    },
+    "empty": {
+      "title": "Wähle einen Raum oder erstelle einen neuen.",
+      "subtitle": "Deine Nachrichten erscheinen hier."
+    }
+  },
+
+  "chatRoom": {
+    "dates": {
+      "today": "Heute",
+      "yesterday": "Gestern"
+    },
+    "lastSeen": {
+      "justNow": "Zuletzt gerade eben gesehen",
+      "minutesAgo_one": "Zuletzt vor {{count}} Minute gesehen",
+      "minutesAgo_other": "Zuletzt vor {{count}} Minuten gesehen",
+      "today": "Zuletzt heute um {{time}} gesehen",
+      "yesterday": "Zuletzt gestern um {{time}} gesehen",
+      "dateTime": "Zuletzt am {{day}} um {{time}} gesehen"
+    },
+    "status": {
+      "online": "Online",
+      "away": "Abwesend",
+      "offline": "Offline",
+      "dnd": "Bitte nicht stören",
+      "onlineNow": "Jetzt online"
+    },
+    "profile": {
+      "notShared": "Nicht geteilt",
+      "hiddenPrivacy": "Durch Privatsphäre verborgen",
+      "notProvided": "Nicht angegeben"
+    }
   }
 }

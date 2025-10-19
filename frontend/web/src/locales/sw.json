@@ -81,5 +81,82 @@
     "msg10": "Ndiyo kabisa! 😊",
     "msg11": "Asante kwa msaada wako 💚 Timu yako ya TuChati.",
     "end": "Mazungumzo yameisha. Tukutane tena hivi karibuni 💬"
+  },
+
+  "chatPage": {
+    "dates": {
+      "yesterday": "Jana"
+    },
+    "preview": {
+      "attachment": "[kiambatisho]",
+      "groupChat": "Gumzo la kikundi",
+      "directChat": "Gumzo la moja kwa moja",
+      "empty": "Bado hakuna ujumbe"
+    },
+    "alerts": {
+      "chooseUser": "Chagua mtumiaji wa kumtumia ujumbe.",
+      "requestPending": "Ombi limetumwa. Inasubiri idhini ya mpokeaji.",
+      "unableStart": "Haiwezekani kuanza gumzo",
+      "unableUpdate": "Haiwezekani kusasisha ombi",
+      "unableProfile": "Haiwezekani kupakia wasifu"
+    },
+    "rooms": {
+      "title": "Vyumba",
+      "prompt": "Jina la chumba",
+      "newRoom": "+ Mpya",
+      "directRoom": "+ Moja kwa moja",
+      "searchPlaceholder": "Tafuta au anzisha gumzo jipya",
+      "loading": "Inapakia…",
+      "empty": "Bado hakuna vyumba",
+      "fallbackName": "Chumba",
+      "groupAria": "Chumba cha {{name}}",
+      "profileAria": "Wasifu wa {{name}}",
+      "unreadAria": "{{count}} ujumbe ambao haujasomwa"
+    },
+    "filters": {
+      "all": "Vyote",
+      "unread": "Havijasomwa",
+      "favorites": "Vipendwa",
+      "groups": "Vikundi"
+    },
+    "requests": {
+      "loading": "Inapakia maombi…",
+      "incoming": "Maombi yanayoingia",
+      "outgoing": "Maombi yaliyotumwa",
+      "accept": "Kubali",
+      "decline": "Kataa",
+      "waiting": "Inasubiri idhini"
+    },
+    "empty": {
+      "title": "Chagua chumba au unda kipya.",
+      "subtitle": "Ujumbe wako utaonekana hapa."
+    }
+  },
+
+  "chatRoom": {
+    "dates": {
+      "today": "Leo",
+      "yesterday": "Jana"
+    },
+    "lastSeen": {
+      "justNow": "Ameonekana sasa hivi",
+      "minutesAgo_one": "Ameonekana dakika {{count}} iliyopita",
+      "minutesAgo_other": "Ameonekana dakika {{count}} zilizopita",
+      "today": "Ameonekana leo saa {{time}}",
+      "yesterday": "Ameonekana jana saa {{time}}",
+      "dateTime": "Ameonekana {{day}} saa {{time}}"
+    },
+    "status": {
+      "online": "Mtandaoni",
+      "away": "Hayupo",
+      "offline": "Nje ya mtandao",
+      "dnd": "Usisumbue",
+      "onlineNow": "Mtandaoni sasa"
+    },
+    "profile": {
+      "notShared": "Haijashirikiwa",
+      "hiddenPrivacy": "Imefichwa kwa faragha",
+      "notProvided": "Haijatolewa"
+    }
   }
 }

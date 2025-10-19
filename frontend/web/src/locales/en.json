@@ -81,5 +81,82 @@
     "msg10": "Yes, of course! 😊",
     "msg11": "Thank you for your support 💚 Your TuChati Community Team.",
     "end": "Conversation ended. Join us soon 💬"
+  },
+
+  "chatPage": {
+    "dates": {
+      "yesterday": "Yesterday"
+    },
+    "preview": {
+      "attachment": "[attachment]",
+      "groupChat": "Group chat",
+      "directChat": "Direct chat",
+      "empty": "No messages yet"
+    },
+    "alerts": {
+      "chooseUser": "Choose a user to message.",
+      "requestPending": "Request sent. Waiting for recipient approval.",
+      "unableStart": "Unable to start chat",
+      "unableUpdate": "Unable to update request",
+      "unableProfile": "Unable to load profile"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "prompt": "Room name",
+      "newRoom": "+ New",
+      "directRoom": "+ Direct",
+      "searchPlaceholder": "Search or start a new chat",
+      "loading": "Loading…",
+      "empty": "No rooms yet",
+      "fallbackName": "Room",
+      "groupAria": "{{name}} room",
+      "profileAria": "{{name}} profile",
+      "unreadAria": "{{count}} unread messages"
+    },
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "favorites": "Favorites",
+      "groups": "Groups"
+    },
+    "requests": {
+      "loading": "Loading requests…",
+      "incoming": "Incoming requests",
+      "outgoing": "Pending sent",
+      "accept": "Accept",
+      "decline": "Decline",
+      "waiting": "Waiting for approval"
+    },
+    "empty": {
+      "title": "Select a room or create a new one.",
+      "subtitle": "Your messages will appear here."
+    }
+  },
+
+  "chatRoom": {
+    "dates": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "lastSeen": {
+      "justNow": "Last seen just now",
+      "minutesAgo_one": "Last seen {{count}} min ago",
+      "minutesAgo_other": "Last seen {{count}} mins ago",
+      "today": "Last seen today at {{time}}",
+      "yesterday": "Last seen yesterday at {{time}}",
+      "dateTime": "Last seen {{day}} {{time}}"
+    },
+    "status": {
+      "online": "Online",
+      "away": "Away",
+      "offline": "Offline",
+      "dnd": "Do Not Disturb",
+      "onlineNow": "Online now"
+    },
+    "profile": {
+      "notShared": "Not shared",
+      "hiddenPrivacy": "Hidden by privacy",
+      "notProvided": "Not provided"
+    }
   }
 }
