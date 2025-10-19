@@ -8,6 +8,7 @@ import ThemeSwitcher from './ThemeSwitcher'
 import { getInitials } from './utils'
 import ImagePreviewModal from './ImagePreviewModal'
 import './profileModal.css'
+import { useTranslation } from 'react-i18next'
 
 type TabKey = 'account' | 'security' | 'privacy' | 'preferences' | 'sessions'
 
@@ -36,7 +37,6 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [lastName, setLastName] = React.useState(user?.last_name || '')
   const [email, setEmail] = React.useState(user?.email || '')
   const [phone, setPhone] = React.useState(user?.phone || '')
-  const [userTimezone, setUserTimezone] = React.useState(() => user?.user_timezone || (Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone ?? 'UTC'))
   const [bio, setBio] = React.useState(user?.bio || '')
   const [statusMessage, setStatusMessage] = React.useState(user?.status_message || '')
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(user?.avatar || null)
@@ -58,6 +58,24 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [sessions, setSessions] = React.useState<SessionItem[] | null>(null)
   const [sessionsLoading, setSessionsLoading] = React.useState(false)
 
+  const timezonePresets = React.useMemo(() => {
+    return [
+      { id: 'auto', value: detectedTimeZone, label: t('profileModal.timezones.auto', { tz: detectedTimeZone }) },
+      { id: 'africa-kinshasa', value: 'Africa/Kinshasa', label: t('profileModal.timezones.kinshasa') },
+      { id: 'africa-lubumbashi', value: 'Africa/Lubumbashi', label: t('profileModal.timezones.lubumbashi') },
+      { id: 'africa-goma', value: 'Africa/Goma', label: t('profileModal.timezones.goma') },
+      { id: 'africa-bukavu', value: 'Africa/Lubumbashi', label: t('profileModal.timezones.bukavu') },
+      { id: 'africa-nairobi', value: 'Africa/Nairobi', label: t('profileModal.timezones.nairobi') },
+      { id: 'africa-lagos', value: 'Africa/Lagos', label: t('profileModal.timezones.lagos') },
+      { id: 'utc', value: 'UTC', label: t('profileModal.timezones.utc') },
+      { id: 'europe-paris', value: 'Europe/Paris', label: t('profileModal.timezones.paris') },
+      { id: 'america-new_york', value: 'America/New_York', label: t('profileModal.timezones.newYork') },
+    ]
+  }, [detectedTimeZone, t])
+
+  const [timezoneChoice, setTimezoneChoice] = React.useState('auto')
+  const [customTimezone, setCustomTimezone] = React.useState('')
+
   React.useEffect(() => {
     setFirstName(user?.first_name || '')
     setLastName(user?.last_name || '')
@@ -65,7 +83,18 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setPhone(user?.phone || '')
     setBio(user?.bio || '')
     setStatusMessage(user?.status_message || '')
-    setUserTimezone(user?.user_timezone || (Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone ?? 'UTC'))
+    const currentTz = user?.user_timezone || detectedTimeZone
+    const matched = timezonePresets.find(opt => opt.value === currentTz)
+    if (matched) {
+      setTimezoneChoice(matched.id)
+      setCustomTimezone('')
+    } else if (currentTz) {
+      setTimezoneChoice('__custom__')
+      setCustomTimezone(currentTz)
+    } else {
+      setTimezoneChoice('auto')
+      setCustomTimezone('')
+    }
     setAvatarPreview(user?.avatar || null)
     setAvatarFile(null)
     setShareAvatar(!!user?.share_avatar)
@@ -74,7 +103,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setShareLastSeen(!!user?.share_last_seen)
     setShareStatusMessage(!!user?.share_status_message)
     setShareTimezone(!!user?.share_timezone)
-  }, [user])
+  }, [user, detectedTimeZone, timezonePresets])
 
   // close automatically if auth disappears
   React.useEffect(() => {
@@ -107,6 +136,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     clearMessages()
     setBusy(true)
     try {
+      const selectedPreset = timezonePresets.find(opt => opt.id === timezoneChoice)
+      const finalTimezone = timezoneChoice === '__custom__'
+        ? (customTimezone.trim() || detectedTimeZone)
+        : (selectedPreset?.value || detectedTimeZone)
+
       const body = JSON.stringify({
         first_name: firstName,
         last_name: lastName,
@@ -114,7 +148,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         phone,
         bio,
         status_message: statusMessage,
-        user_timezone: userTimezone,
+        user_timezone: finalTimezone,
         share_avatar: shareAvatar,
         share_contact_info: shareContactInfo,
         share_bio: shareBio,
@@ -151,7 +185,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         }
       }
 
-      if (!updatedUser) throw lastError || new Error('Profile update failed')
+      if (!updatedUser) throw lastError || new Error(t('profileModal.errors.updateFailed'))
 
       setUser?.(updatedUser)
 
@@ -164,16 +198,16 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
           headers: { ...authHeaders }, // let browser set boundary
           body: fd,
         })
-        if (!r2.ok) throw await errorFromResponse(r2, 'Failed to upload avatar')
+        if (!r2.ok) throw await errorFromResponse(r2, t('profileModal.errors.avatarUpload'))
         const updated2 = await r2.json()
         setUser?.(updated2)
         setAvatarFile(null)
         setAvatarPreview(updated2.avatar || avatarPreview)
       }
 
-      setMsg('Profile saved 🎉')
+      setMsg(t('profileModal.messages.saved'))
     } catch (e: any) {
-      setErr(e.message || 'Save failed')
+      setErr(e.message || t('profileModal.errors.generic'))
     } finally {
       setBusy(false)
     }
@@ -184,7 +218,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     clearMessages()
     if (newPwd !== confirmPwd) {
-      setErr('New passwords do not match')
+      setErr(t('profileModal.errors.passwordMismatch'))
       return
     }
     setBusy(true)
@@ -226,14 +260,14 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         }
       }
 
-      if (!ok) throw lastError || new Error('Could not change password')
+      if (!ok) throw lastError || new Error(t('profileModal.errors.changePassword'))
 
-      setMsg('Password changed ✅')
+      setMsg(t('profileModal.messages.passwordChanged'))
       setCurrentPwd('')
       setNewPwd('')
       setConfirmPwd('')
     } catch (e: any) {
-      setErr(e.message || 'Change password failed')
+      setErr(e.message || t('profileModal.errors.changePassword'))
     } finally {
       setBusy(false)
     }
@@ -268,7 +302,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
             lastError = e
           }
         }
-        if (!success) throw lastError || new Error('Failed to load sessions')
+        if (!success) throw lastError || new Error(t('profileModal.errors.loadSessions'))
 
         // normalize a bit
         const normalized: SessionItem[] = (data || []).map((s: any) => ({
@@ -284,7 +318,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         }))
         setSessions(normalized)
       } catch (e: any) {
-        setErr(e.message || 'Could not load sessions')
+        setErr(e.message || t('profileModal.errors.loadSessions'))
         setSessions([])
       } finally {
         setSessionsLoading(false)
@@ -307,11 +341,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         const res = await apiFetch(p, { method: 'DELETE', headers: { ...authHeaders } })
         if (res.ok) { ok = true; break }
       }
-      if (!ok) throw new Error('Failed to revoke session')
+      if (!ok) throw new Error(t('profileModal.errors.revokeSession'))
       setSessions(s => (s ? s.filter(x => String(x.id) !== String(id)) : s))
-      setMsg('Session revoked')
+      setMsg(t('profileModal.messages.sessionRevoked'))
     } catch (e: any) {
-      setErr(e.message || 'Could not revoke session')
+      setErr(e.message || t('profileModal.errors.revokeSession'))
     } finally {
       setBusy(false)
     }
@@ -327,11 +361,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         const res = await apiFetch(p, { method: 'POST', headers: { ...authHeaders } })
         if (res.ok) { ok = true; break }
       }
-      if (!ok) throw new Error('Failed to log out from other devices')
-      setMsg('Logged out from all devices')
+      if (!ok) throw new Error(t('profileModal.errors.logoutOthers'))
+      setMsg(t('profileModal.messages.logoutOthers'))
       onClose()
     } catch (e: any) {
-      setErr(e.message || 'Action failed')
+      setErr(e.message || t('profileModal.errors.generic'))
     } finally {
       setBusy(false)
     }
@@ -356,18 +390,18 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         <header className="pm-header">
           <div className="pm-title">
             <span className="pm-logo">TuChati</span>
-            <h3>Profile & Settings</h3>
+            <h3>{t('profileModal.title')}</h3>
           </div>
-          <button className="pm-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="pm-close" onClick={onClose} aria-label={t('profileModal.actions.close')}>×</button>
         </header>
 
         {/* Tabs */}
-        <nav className="pm-tabs" aria-label="Profile sections">
-          <button className={tab === 'account' ? 'active' : ''} onClick={() => setTab('account')}>Account</button>
-          <button className={tab === 'security' ? 'active' : ''} onClick={() => setTab('security')}>Security</button>
-          <button className={tab === 'privacy' ? 'active' : ''} onClick={() => setTab('privacy')}>Privacy</button>
-          <button className={tab === 'preferences' ? 'active' : ''} onClick={() => setTab('preferences')}>Preferences</button>
-          <button className={tab === 'sessions' ? 'active' : ''} onClick={() => setTab('sessions')}>Sessions</button>
+        <nav className="pm-tabs" aria-label={t('profileModal.tabs.label')}>
+          <button className={tab === 'account' ? 'active' : ''} onClick={() => setTab('account')}>{t('profileModal.tabs.account')}</button>
+          <button className={tab === 'security' ? 'active' : ''} onClick={() => setTab('security')}>{t('profileModal.tabs.security')}</button>
+          <button className={tab === 'privacy' ? 'active' : ''} onClick={() => setTab('privacy')}>{t('profileModal.tabs.privacy')}</button>
+          <button className={tab === 'preferences' ? 'active' : ''} onClick={() => setTab('preferences')}>{t('profileModal.tabs.preferences')}</button>
+          <button className={tab === 'sessions' ? 'active' : ''} onClick={() => setTab('sessions')}>{t('profileModal.tabs.sessions')}</button>
         </nav>
 
         {(msg || err) && <div className={`pm-alert ${err ? 'error' : 'ok'}`}>{err || msg}</div>}
@@ -437,39 +471,55 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   </label>
 
                   <label>
-                    <span>Time zone</span>
-                    <input value={userTimezone} onChange={(e) => setUserTimezone(e.target.value)} placeholder="Africa/Kinshasa" />
-                    <small className="pm-hint">Use an official TZ name, e.g. <code>Africa/Nairobi</code>.</small>
+                    <span>{t('profileModal.account.timezone')}</span>
+                    <select
+                      value={timezoneChoice}
+                      onChange={(event) => setTimezoneChoice(event.target.value)}
+                    >
+                      {timezonePresets.map(option => (
+                        <option key={option.id} value={option.id}>{option.label}</option>
+                      ))}
+                      <option value="__custom__">{t('profileModal.timezones.custom')}</option>
+                    </select>
+                    {timezoneChoice === '__custom__' && (
+                      <input
+                        className="pm-timezone-custom"
+                        value={customTimezone}
+                        onChange={(event) => setCustomTimezone(event.target.value)}
+                        placeholder={t('profileModal.account.timezonePlaceholder')}
+                      />
+                    )}
+                    <small className="pm-hint">{t('profileModal.account.timezoneHint', { example: 'Africa/Nairobi' })}</small>
                   </label>
                 </div>
               </div>
 
               <div className="pm-section">
-                <h4>Profile details</h4>
+                <h4>{t('profileModal.account.profileDetails')}</h4>
                 <label className="pm-textarea">
-                  <span>Status message</span>
+                  <span>{t('profileModal.account.status.label')}</span>
                   <textarea
                     value={statusMessage}
                     onChange={(e) => setStatusMessage(e.target.value)}
                     maxLength={255}
-                    placeholder="Let others know what you're up to."
+                    placeholder={t('profileModal.account.status.placeholder')}
                   />
-                  <small className="pm-hint">Shown beside your name when people open your profile.</small>
+                  <small className="pm-hint">{t('profileModal.account.status.hint')}</small>
                 </label>
                 <label className="pm-textarea">
-                  <span>Bio</span>
+                  <span>{t('profileModal.account.bio.label')}</span>
                   <textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     rows={4}
-                    placeholder="Tell people a little about yourself."
+                    placeholder={t('profileModal.account.bio.placeholder')}
                   />
                 </label>
               </div>
 
               <div className="pm-actions">
                 <button className="btn primary" type="submit" disabled={busy}>
-                  {busy ? 'Saving…' : 'Save changes'}
+                  {busy ? t('profileModal.account.saving') : t('profileModal.account.save')}
                 </button>
               </div>
             </form>

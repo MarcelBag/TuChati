@@ -1525,6 +1525,15 @@ export default function ChatRoom() {
   const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const timezoneValue = profileData ? describeField(t, profileData.user_timezone, profilePrivacy.share_timezone, 'chatRoom.profile.notProvided') : ''
+  const timezoneDisplay = React.useMemo(() => {
+    if (!timezoneValue || typeof timezoneValue !== 'string') return ''
+    try {
+      const localeTime = new Date().toLocaleTimeString([], { timeZone: timezoneValue, hour: '2-digit', minute: '2-digit' })
+      return t('chatRoom.profile.timezoneValue', { zone: timezoneValue, time: localeTime })
+    } catch {
+      return timezoneValue
+    }
+  }, [timezoneValue, t])
   const privacySummary = t('chatRoom.profile.privacySummary', {
     avatar: t(profilePrivacy.share_avatar === false ? 'chatRoom.profile.privacy.avatar.hidden' : 'chatRoom.profile.privacy.avatar.visible'),
     contact: t(profilePrivacy.share_contact_info === false ? 'chatRoom.profile.privacy.contact.hidden' : 'chatRoom.profile.privacy.contact.visible'),
@@ -1865,7 +1874,7 @@ export default function ChatRoom() {
                   </div>
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.timezoneLabel')}</span>
-                    <span className={`ri-detail-value ${profileData?.user_timezone ? '' : 'muted'}`}>{timezoneValue}</span>
+                    <span className={`ri-detail-value ${profileData?.user_timezone ? '' : 'muted'}`}>{timezoneDisplay}</span>
                   </div>
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.lastSeenLabel')}</span>
