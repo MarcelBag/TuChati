@@ -295,5 +295,65 @@
       "placeholder": "Andika ujumbe",
       "recordingAria": "Inarekodi sauti"
     }
+  },
+  "profileModal": {
+    "title": "Mipangilio ya profaili",
+    "actions": {
+      "close": "Funga"
+    },
+    "tabs": {
+      "label": "Sehemu za profaili",
+      "account": "Akaunti",
+      "security": "Usalama",
+      "privacy": "Faragha",
+      "preferences": "Mapendeleo",
+      "sessions": "Vikao"
+    },
+    "messages": {
+      "saved": "Profaili imesasishwa",
+      "passwordChanged": "Nenosiri limesasishwa",
+      "sessionRevoked": "Kikao kimeondolewa",
+      "logoutOthers": "Umetoka kwenye vifaa vingine"
+    },
+    "errors": {
+      "updateFailed": "Imeshindikana kusasisha profaili",
+      "avatarUpload": "Kupakia picha ya profaili kumeshindikana",
+      "generic": "Tatizo limetokea. Tafadhali jaribu tena.",
+      "passwordMismatch": "Maneno ya siri hayaendani",
+      "changePassword": "Imeshindikana kubadilisha nenosiri",
+      "loadSessions": "Imeshindikana kupakia vikao",
+      "revokeSession": "Imeshindikana kuondoa kikao",
+      "logoutOthers": "Imeshindikana kutoka kwenye vifaa vingine"
+    },
+    "account": {
+      "timezone": "Saa za eneo",
+      "timezonePlaceholder": "mf. Africa/Nairobi",
+      "timezoneHint": "Ingiza kanda ya saa ya IANA kama {{example}}",
+      "profileDetails": "Maelezo ya profaili",
+      "status": {
+        "label": "Ujumbe wa hali",
+        "placeholder": "Waambie wengine unachofanya",
+        "hint": "Herufi 255 tu"
+      },
+      "bio": {
+        "label": "Maelezo mafupi",
+        "placeholder": "Jieleze kwa kifupi"
+      },
+      "save": "Hifadhi mabadiliko",
+      "saving": "Inahifadhi…"
+    },
+    "timezones": {
+      "auto": "Otomatiki ({{tz}})",
+      "kinshasa": "Kinshasa (Africa/Kinshasa)",
+      "lubumbashi": "Lubumbashi (Africa/Lubumbashi)",
+      "goma": "Goma (Africa/Goma)",
+      "bukavu": "Bukavu (Africa/Lubumbashi)",
+      "nairobi": "Nairobi (Africa/Nairobi)",
+      "lagos": "Lagos (Africa/Lagos)",
+      "utc": "UTC",
+      "paris": "Paris (Europe/Paris)",
+      "newYork": "New York (America/New_York)",
+      "custom": "Saa maalum"
+    }
   }
 }

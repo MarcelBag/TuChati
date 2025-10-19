@@ -295,5 +295,65 @@
       "placeholder": "Nachricht eingeben",
       "recordingAria": "Audioaufnahme läuft"
     }
+  },
+  "profileModal": {
+    "title": "Profileinstellungen",
+    "actions": {
+      "close": "Schließen"
+    },
+    "tabs": {
+      "label": "Profilbereiche",
+      "account": "Konto",
+      "security": "Sicherheit",
+      "privacy": "Datenschutz",
+      "preferences": "Einstellungen",
+      "sessions": "Sitzungen"
+    },
+    "messages": {
+      "saved": "Profil aktualisiert",
+      "passwordChanged": "Passwort aktualisiert",
+      "sessionRevoked": "Sitzung beendet",
+      "logoutOthers": "Von anderen Geräten abgemeldet"
+    },
+    "errors": {
+      "updateFailed": "Profil konnte nicht aktualisiert werden",
+      "avatarUpload": "Avatar-Upload fehlgeschlagen",
+      "generic": "Es ist ein Fehler aufgetreten. Bitte erneut versuchen.",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "changePassword": "Passwort konnte nicht geändert werden",
+      "loadSessions": "Sitzungen konnten nicht geladen werden",
+      "revokeSession": "Sitzung konnte nicht beendet werden",
+      "logoutOthers": "Abmeldung von anderen Geräten fehlgeschlagen"
+    },
+    "account": {
+      "timezone": "Zeitzone",
+      "timezonePlaceholder": "z. B. Africa/Nairobi",
+      "timezoneHint": "Geben Sie eine IANA-Zeitzone wie {{example}} ein",
+      "profileDetails": "Profildetails",
+      "status": {
+        "label": "Statusnachricht",
+        "placeholder": "Teile anderen mit, was du vorhast",
+        "hint": "Maximal 255 Zeichen"
+      },
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Erzähle kurz etwas über dich"
+      },
+      "save": "Änderungen speichern",
+      "saving": "Speichern…"
+    },
+    "timezones": {
+      "auto": "Auto ({{tz}})",
+      "kinshasa": "Kinshasa (Africa/Kinshasa)",
+      "lubumbashi": "Lubumbashi (Africa/Lubumbashi)",
+      "goma": "Goma (Africa/Goma)",
+      "bukavu": "Bukavu (Africa/Lubumbashi)",
+      "nairobi": "Nairobi (Africa/Nairobi)",
+      "lagos": "Lagos (Africa/Lagos)",
+      "utc": "UTC",
+      "paris": "Paris (Europe/Paris)",
+      "newYork": "New York (America/New_York)",
+      "custom": "Benutzerdefinierte Zeitzone"
+    }
   }
 }

@@ -295,5 +295,65 @@
       "placeholder": "Saisir un message",
       "recordingAria": "Enregistrement audio"
     }
+  },
+  "profileModal": {
+    "title": "Paramètres du profil",
+    "actions": {
+      "close": "Fermer"
+    },
+    "tabs": {
+      "label": "Sections du profil",
+      "account": "Compte",
+      "security": "Sécurité",
+      "privacy": "Confidentialité",
+      "preferences": "Préférences",
+      "sessions": "Sessions"
+    },
+    "messages": {
+      "saved": "Profil mis à jour",
+      "passwordChanged": "Mot de passe mis à jour",
+      "sessionRevoked": "Session révoquée",
+      "logoutOthers": "Déconnexion des autres appareils"
+    },
+    "errors": {
+      "updateFailed": "Impossible de mettre à jour le profil",
+      "avatarUpload": "Échec du téléversement de l'avatar",
+      "generic": "Une erreur est survenue. Veuillez réessayer.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "changePassword": "Impossible de changer le mot de passe",
+      "loadSessions": "Impossible de charger les sessions",
+      "revokeSession": "Impossible de révoquer la session",
+      "logoutOthers": "Impossible de déconnecter les autres appareils"
+    },
+    "account": {
+      "timezone": "Fuseau horaire",
+      "timezonePlaceholder": "ex. Africa/Nairobi",
+      "timezoneHint": "Entrez un fuseau IANA comme {{example}}",
+      "profileDetails": "Détails du profil",
+      "status": {
+        "label": "Message de statut",
+        "placeholder": "Dites aux autres ce que vous faites",
+        "hint": "255 caractères maximum"
+      },
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Présentez-vous en quelques mots"
+      },
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement…"
+    },
+    "timezones": {
+      "auto": "Auto ({{tz}})",
+      "kinshasa": "Kinshasa (Africa/Kinshasa)",
+      "lubumbashi": "Lubumbashi (Africa/Lubumbashi)",
+      "goma": "Goma (Africa/Goma)",
+      "bukavu": "Bukavu (Africa/Lubumbashi)",
+      "nairobi": "Nairobi (Africa/Nairobi)",
+      "lagos": "Lagos (Africa/Lagos)",
+      "utc": "UTC",
+      "paris": "Paris (Europe/Paris)",
+      "newYork": "New York (America/New_York)",
+      "custom": "Fuseau personnalisé"
+    }
   }
 }

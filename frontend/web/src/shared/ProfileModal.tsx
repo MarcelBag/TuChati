@@ -27,6 +27,15 @@ type SessionItem = {
 export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const { user, token, setUser, logout } = useAuth() as any
   const { prefs, update: updatePrefs, reset: resetPrefs } = usePreferences()
+  const { t } = useTranslation()
+  const detectedTimeZone = React.useMemo(() => {
+    try {
+      return Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || 'UTC'
+    } catch {
+      return 'UTC'
+    }
+  }, [])
+
   const [tab, setTab] = React.useState<TabKey>('account')
   const [busy, setBusy] = React.useState(false)
   const [msg, setMsg] = React.useState<string | null>(null)

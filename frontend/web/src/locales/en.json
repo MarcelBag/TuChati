@@ -295,5 +295,65 @@
       "placeholder": "Type a message",
       "recordingAria": "Recording audio"
     }
+  },
+  "profileModal": {
+    "title": "Profile settings",
+    "actions": {
+      "close": "Close"
+    },
+    "tabs": {
+      "label": "Profile sections",
+      "account": "Account",
+      "security": "Security",
+      "privacy": "Privacy",
+      "preferences": "Preferences",
+      "sessions": "Sessions"
+    },
+    "messages": {
+      "saved": "Profile updated",
+      "passwordChanged": "Password updated",
+      "sessionRevoked": "Session revoked",
+      "logoutOthers": "Signed out of other devices"
+    },
+    "errors": {
+      "updateFailed": "Unable to update profile",
+      "avatarUpload": "Avatar upload failed",
+      "generic": "Something went wrong. Please try again.",
+      "passwordMismatch": "Passwords do not match",
+      "changePassword": "Unable to change password",
+      "loadSessions": "Unable to load sessions",
+      "revokeSession": "Unable to revoke session",
+      "logoutOthers": "Unable to log out of other devices"
+    },
+    "account": {
+      "timezone": "Time zone",
+      "timezonePlaceholder": "e.g. Africa/Nairobi",
+      "timezoneHint": "Enter an IANA time zone such as {{example}}",
+      "profileDetails": "Profile details",
+      "status": {
+        "label": "Status message",
+        "placeholder": "Let others know what you're up to",
+        "hint": "Max 255 characters"
+      },
+      "bio": {
+        "label": "Bio",
+        "placeholder": "Tell people a little about yourself"
+      },
+      "save": "Save changes",
+      "saving": "Saving…"
+    },
+    "timezones": {
+      "auto": "Auto ({{tz}})",
+      "kinshasa": "Kinshasa (Africa/Kinshasa)",
+      "lubumbashi": "Lubumbashi (Africa/Lubumbashi)",
+      "goma": "Goma (Africa/Goma)",
+      "bukavu": "Bukavu (Africa/Lubumbashi)",
+      "nairobi": "Nairobi (Africa/Nairobi)",
+      "lagos": "Lagos (Africa/Lagos)",
+      "utc": "UTC",
+      "paris": "Paris (Europe/Paris)",
+      "newYork": "New York (America/New_York)",
+      "custom": "Custom time zone"
+    }
   }
 }
