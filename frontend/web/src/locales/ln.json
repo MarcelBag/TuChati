@@ -134,6 +134,19 @@
   },
 
   "chatRoom": {
+    "header": {
+      "fallbackTitle": "Salo",
+      "fallbackInitial": "S",
+      "typing": "{{name}} azali kokoma…",
+      "groupSubtitle": "Lisolo ya groupe",
+      "directSubtitle": "Lisolo ya moto na moto",
+      "directWithUsername": "@{{username}}",
+      "ariaRoom": "Salo {{name}}",
+      "ariaProfile": "Profil ya {{name}}",
+      "someone": "Moto",
+      "tapForInfo": "(kofuta mpo na info)",
+      "tapForProfile": "(kofuta mpo na profil)"
+    },
     "dates": {
       "today": "Lelo",
       "yesterday": "Lobi"
@@ -144,19 +157,141 @@
       "minutesAgo_other": "Amimonaki miniti {{count}} eleki",
       "today": "Amimonaki lelo na {{time}}",
       "yesterday": "Amimonaki lobi na {{time}}",
-      "dateTime": "Amimonaki {{day}} na {{time}}"
+      "dateTime": "Amimonaki {{day}} na {{time}}",
+      "hiddenByPrivacy": "Komonana ya suka ebombami mpo na confidentialité",
+      "unavailable": "Komonana ya suka ezali te"
     },
     "status": {
       "online": "Na internet",
       "away": "Azali mosika",
       "offline": "Aza offline",
       "dnd": "Kotungisa te",
-      "onlineNow": "Na internet sikoyo"
+      "onlineNow": "Na internet sikoyo",
+      "activeNow": "Azali actif sikoyo"
     },
     "profile": {
       "notShared": "Epesami te",
       "hiddenPrivacy": "Ebombami mpo na confidentialité",
-      "notProvided": "Epesi te"
+      "notProvided": "Epesi te",
+      "statusHidden": "Etat ebombami mpo na confidentialité",
+      "bioHidden": "Bio ebombami mpo na confidentialité",
+      "fallbackName": "Utilisateur",
+      "photoAlt": "Foto ya profil",
+      "viewPhotoAria": "Monisa foto ya profil",
+      "loading": "Profil ezali kocharger…",
+      "email": "Email",
+      "phone": "Téléfono",
+      "lastSeenLabel": "Komonana ya suka",
+      "privacyLabel": "Confidentialité",
+      "empty": "Makambo ya profil ezangi.",
+      "membersTitle": "Bato ya groupe",
+      "memberCount": "{{count}} membres",
+      "memberCount_one": "{{count}} membre",
+      "memberCount_other": "{{count}} membres",
+      "invite": "+ Benga",
+      "avatarAlt": "Avatar ya {{name}}",
+      "privacySummary": "Avatar {{avatar}} · Contact {{contact}} · Etat {{status}} · Bio {{bio}} · Komonana ya suka {{lastSeen}}",
+      "privacy": {
+        "avatar": { "hidden": "ebombami", "visible": "emimonani" },
+        "contact": { "hidden": "ebombami", "visible": "emimonani" },
+        "status": { "hidden": "ebombami", "visible": "emimonani" },
+        "bio": { "hidden": "ebombami", "visible": "emimonani" },
+        "lastSeen": { "hidden": "ebombami", "visible": "emimonani" }
+      }
+    },
+    "selection": {
+      "count": "{{count}} eponami",
+      "count_one": "{{count}} eponami",
+      "count_other": "{{count}} eponami"
+    },
+    "actions": {
+      "delete": "Longola",
+      "deleteForAll": "Longola mpo na bato nyonso",
+      "cancel": "Boya",
+      "react": "Lakisa emo",
+      "replying": "Ozongisi na",
+      "forwarding": "Otindeli",
+      "messageFallback": "sango"
+    },
+    "menu": {
+      "info": "Info",
+      "reply": "Eyano",
+      "forward": "Tinda lisusu",
+      "copyText": "Kokɔpɛ teksto",
+      "star": "Sala préféré",
+      "unstar": "Longola préféré",
+      "pin": "Kangisa",
+      "unpin": "Longola",
+      "addNote": "Bakisa noti",
+      "editNote": "Bongisa noti",
+      "selectMessages": "Pona ba sango",
+      "addToSelection": "Bakisa na boponi",
+      "deleteForMe": "Longola mpo na ngai",
+      "deleteForEveryone": "Longola mpo na bato nyonso"
+    },
+    "alerts": {
+      "pinUpdateFailed": "Ekoki te kosala mise à jour ya epingle",
+      "starUpdateFailed": "Ekoki te kosala mise à jour ya préféré",
+      "notePrompt": "Bakisa noti na sango oyo",
+      "noteSaveFailed": "Ekoki te kobombisa noti",
+      "infoLoadFailed": "Ekoki te kotia makambo ya sango",
+      "profileLoadFailed": "Ekoki te kotia profil",
+      "deleteFailed": "Ekoki te kolongola sango",
+      "deleteOnlyDelivered": "Sango oyo ekomi kaka nde ekoki kolongolama mpo na bato nyonso.",
+      "deleteBulkFailed": "Elongoli sango esalaki te",
+      "inviteSelectUser": "Pona moto moko to koleka mpo na kobenga.",
+      "inviteSuccess": "Babengami batindami.",
+      "inviteFailed": "Ekoki te kobenga bato",
+      "forwardNotReady": "Sango esili kaka te mpo etindama lisusu.",
+      "forwardSelectRoom": "Pona salo moko to koleka mpo na kotindela.",
+      "forwardSuccess": "Sango etindami na bosembo.",
+      "forwardFailure": "Ekoki te kotindela sango lisusu. Meyaka lisusu sima.",
+      "forwardPartial": "Sango etindami na basalo mosusu, kasi mosusu ebele ebungi.",
+      "forwardError": "Ekoki te kotindela sango lisusu",
+      "audioTooLarge": "Audio eleki 3 MB. Pona fichier moke.",
+      "attachmentTooLarge": "Kiambatisho eleki 3 MB. Pona fichier moke.",
+      "uploadFailed": "Kotinda esimbaki te.",
+      "gifOnly": "Svp pona fichier GIF",
+      "audioUnsupported": "Enregistrement ya audio esalemi te na navigateur oyo.",
+      "audioRecordingTooLarge": "Audio eleki 3 MB. Rekoda mokuse koleka."
+    },
+    "attachments": {
+      "openFile": "Fungola {{filename}}",
+      "viewImage": "Talela elilingi",
+      "imageAlt": "Kiambatisho ya elilingi",
+      "imageLabel": "Elilingi",
+      "download": "Télécharger",
+      "playVideo": "Lakisa video",
+      "videoLabel": "Video",
+      "attachment": "Kiambatisho"
+    },
+    "messages": {
+      "replyingTo": "Ozongisi na {{name}}",
+      "forwardedFrom": "Etindamaki wuta na {{name}}",
+      "attachmentFallback": "Kiambatisho",
+      "actionsAria": "Ba actions ya sango",
+      "pinned": "Ebendami",
+      "starred": "Ekoma préféré",
+      "noteLabel": "Noti:",
+      "status": {
+        "sent": "etindami",
+        "delivered": "ekomi",
+        "read": "etangi"
+      },
+      "statusAria": "Sango {{status}}"
+    },
+    "attachMenu": {
+      "document": "Document",
+      "photosVideos": "Bifoto & Video",
+      "gif": "GIF",
+      "audio": "Audio",
+      "contact": "Contact"
+    },
+    "composer": {
+      "uploading": "Ezali kotinda…",
+      "recording": "Ezali kokoma son…",
+      "placeholder": "Koma sango",
+      "recordingAria": "Enregistrement ya audio"
     }
   }
 }

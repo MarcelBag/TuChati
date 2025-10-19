@@ -125,7 +125,11 @@ export default function ChatRoom() {
   const [inviteUsersOptions, setInviteUsersOptions] = React.useState<any[]>([])
   const [inviteSelected, setInviteSelected] = React.useState<string[]>([])
   const [directProfile, setDirectProfile] = React.useState<{ open: boolean; loading: boolean; data: any | null; error: string | null }>({ open: false, loading: false, data: null, error: null })
-  const [photoPreview, setPhotoPreview] = React.useState<{ open: boolean; src: string | null; alt: string }>({ open: false, src: null, alt: 'Profile photo' })
+  const [photoPreview, setPhotoPreview] = React.useState<{ open: boolean; src: string | null; alt: string }>(() => ({
+    open: false,
+    src: null,
+    alt: t('chatRoom.profile.photoAlt'),
+  }))
   const listRef = React.useRef<HTMLDivElement>(null)
   const deliveredAckRef = React.useRef<Set<string>>(new Set())
   const readAckRef = React.useRef<Set<string>>(new Set())
@@ -147,12 +151,12 @@ export default function ChatRoom() {
         identifier: identifier ? String(identifier) : String(entry.username || ''),
         id: entry.id ?? entry.user_id ?? null,
         username: entry.username ?? entry.name ?? '',
-        name: entry.name ?? entry.username ?? entry.email ?? 'User',
+        name: entry.name ?? entry.username ?? entry.email ?? t('chatRoom.profile.fallbackName'),
         raw: entry,
       }
     }
     return null
-  }, [room, user?.id])
+  }, [room, t, user?.id])
 
   const memberInfoMap = React.useMemo(() => {
     const map = new Map<string, any>()
@@ -229,7 +233,7 @@ export default function ChatRoom() {
 
   React.useEffect(() => {
     setDirectProfile({ open: false, loading: false, data: null, error: null })
-    setPhotoPreview({ open: false, src: null, alt: 'Profile photo' })
+    setPhotoPreview({ open: false, src: null, alt: t('chatRoom.profile.photoAlt') })
   }, [roomId, isGroup])
 
   React.useEffect(() => { setHistoryLoaded(false); setMessages([]) }, [roomId])
@@ -268,11 +272,11 @@ export default function ChatRoom() {
           open: true,
           loading: false,
           data: prev.data ?? cached ?? null,
-          error: error?.message || 'Failed to load profile',
+          error: error?.message || t('chatRoom.alerts.profileLoadFailed'),
         }))
       }
     })()
-  }, [directPartner])
+  }, [directPartner, t])
 
   const handleHeaderClick = React.useCallback(() => {
     if (isGroup) {
@@ -450,9 +454,9 @@ export default function ChatRoom() {
       const next = await setPinned(roomId, message.id, !message.pinned)
       mergeMessage(next)
     } catch (error: any) {
-      alert(error?.message || 'Failed to update pin state')
+      alert(error?.message || t('chatRoom.alerts.pinUpdateFailed'))
     }
-  }, [mergeMessage, roomId])
+  }, [mergeMessage, roomId, t])
 
   const handleStarToggle = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
@@ -460,22 +464,22 @@ export default function ChatRoom() {
       const next = await setStarred(roomId, message.id, !message.starred)
       mergeMessage(next)
     } catch (error: any) {
-      alert(error?.message || 'Failed to update star state')
+      alert(error?.message || t('chatRoom.alerts.starUpdateFailed'))
     }
-  }, [mergeMessage, roomId])
+  }, [mergeMessage, roomId, t])
 
   const handleNoteEdit = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
     const current = message.note || ''
-    const nextNote = window.prompt('Add a note for this message', current)
+    const nextNote = window.prompt(t('chatRoom.alerts.notePrompt'), current)
     if (nextNote === null) return
     try {
       const next = await saveNote(roomId, message.id, nextNote)
       mergeMessage(next)
     } catch (error: any) {
-      alert(error?.message || 'Failed to save note')
+      alert(error?.message || t('chatRoom.alerts.noteSaveFailed'))
     }
-  }, [mergeMessage, roomId])
+  }, [mergeMessage, roomId, t])
 
   const handleInfo = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
@@ -484,10 +488,10 @@ export default function ChatRoom() {
       const data = await fetchMessageInfo(roomId, message.id)
       setInfoState({ open: true, loading: false, data, messageId: message.id })
     } catch (error: any) {
-      alert(error?.message || 'Failed to load message info')
+      alert(error?.message || t('chatRoom.alerts.infoLoadFailed'))
       setInfoState({ open: false, loading: false })
     }
-  }, [roomId])
+  }, [roomId, t])
 
   const handleReply = React.useCallback((message: any) => {
     setComposerContext({ type: 'reply', message })
@@ -525,9 +529,9 @@ export default function ChatRoom() {
       removeMessagesLocal([String(targetId)])
       if (selectionMode) clearSelection()
     } catch (error: any) {
-      alert(error?.message || 'Failed to delete message')
+      alert(error?.message || t('chatRoom.alerts.deleteFailed'))
     }
-  }, [clearSelection, isServerId, removeMessagesLocal, roomId, selectionMode])
+  }, [clearSelection, isServerId, removeMessagesLocal, roomId, selectionMode, t])
 
   const handleBulkDelete = React.useCallback(async (scope: 'me' | 'all' = 'me') => {
     if (!roomId || selectedIds.length === 0) return
@@ -545,7 +549,7 @@ export default function ChatRoom() {
     try {
       if (scope === 'all') {
         if (serverIds.length === 0) {
-          alert('Only delivered messages can be deleted for everyone.')
+          alert(t('chatRoom.alerts.deleteOnlyDelivered'))
           return
         }
         await deleteMessages(roomId, serverIds, 'all')
@@ -556,9 +560,9 @@ export default function ChatRoom() {
       }
       clearSelection()
     } catch (error: any) {
-      alert(error?.message || 'Failed to delete messages')
+      alert(error?.message || t('chatRoom.alerts.deleteBulkFailed'))
     }
-  }, [clearSelection, isServerId, messages, removeMessagesLocal, roomId, selectedIds])
+  }, [clearSelection, isServerId, messages, removeMessagesLocal, roomId, selectedIds, t])
 
   type AttachmentRender = {
     node: React.ReactNode | null
@@ -619,7 +623,9 @@ export default function ChatRoom() {
               className="attach"
               onClick={() => window.open(attachmentUrl, '_blank', 'noopener')}
             >
-              {filename ? `Open ${filename}` : 'View image'}
+              {filename
+                ? t('chatRoom.attachments.openFile', { filename })
+                : t('chatRoom.attachments.viewImage')}
             </button>
           ),
         }
@@ -629,12 +635,16 @@ export default function ChatRoom() {
         node: (
           <figure className="media-attachment image">
             <div className="media-frame">
-              <img src={attachmentUrl} alt={filename || 'Image attachment'} loading="lazy" />
+              <img
+                src={attachmentUrl}
+                alt={filename || t('chatRoom.attachments.imageAlt')}
+                loading="lazy"
+              />
             </div>
             <div className="media-meta">
-              <span>{filename || 'Image'}</span>
+              <span>{filename || t('chatRoom.attachments.imageLabel')}</span>
               <a href={attachmentUrl} download>
-                Download
+                {t('chatRoom.attachments.download')}
               </a>
             </div>
           </figure>
@@ -652,7 +662,9 @@ export default function ChatRoom() {
               className="attach"
               onClick={() => window.open(attachmentUrl, '_blank', 'noopener')}
             >
-              {filename ? `Open ${filename}` : 'Play video'}
+              {filename
+                ? t('chatRoom.attachments.openFile', { filename })
+                : t('chatRoom.attachments.playVideo')}
             </button>
           ),
         }
@@ -665,9 +677,9 @@ export default function ChatRoom() {
               <video controls playsInline preload="metadata" src={attachmentUrl} />
             </div>
             <div className="media-meta">
-              <span>{filename || 'Video'}</span>
+              <span>{filename || t('chatRoom.attachments.videoLabel')}</span>
               <a href={attachmentUrl} download>
-                Download
+                {t('chatRoom.attachments.download')}
               </a>
             </div>
           </figure>
@@ -680,14 +692,14 @@ export default function ChatRoom() {
         kind: 'file',
         node: (
           <a className="attach" href={attachmentUrl} target="_blank" rel="noreferrer">
-            {filename || 'Attachment'}
+            {filename || t('chatRoom.attachments.attachment')}
           </a>
         ),
       }
     }
 
     return { node: null, kind: 'none' }
-  }, [imagePreference, videoPreference])
+  }, [imagePreference, t, videoPreference])
 
   React.useEffect(() => {
     if (!roomId || !token) return
@@ -758,7 +770,7 @@ export default function ChatRoom() {
         return
       }
       case 'typing':
-        setTypingUser(data.typing ? data.from_user : null)
+        setTypingUser(data.typing ? (data.from_user || t('chatRoom.header.someone')) : null)
         return
       case 'reaction': {
         const { message_id, emoji, user_id, op } = data
@@ -836,7 +848,7 @@ export default function ChatRoom() {
         return
       }
     }
-  }, [computeStatus, historyLoaded, mergeMessage, normalizeMsg, playReceive, removeMessagesLocal, user?.id])
+  }, [computeStatus, historyLoaded, mergeMessage, normalizeMsg, playReceive, removeMessagesLocal, t, user?.id])
 
   const { sendMessage, sendTyping } = useChatSocket(roomId || '', token || '', handleIncoming)
 
@@ -1071,13 +1083,13 @@ export default function ChatRoom() {
   const submitInvite = React.useCallback(async () => {
     if (!roomId) return
     if (inviteSelected.length === 0) {
-      alert('Select at least one user to invite.')
+      alert(t('chatRoom.alerts.inviteSelectUser'))
       return
     }
     setInviteSubmitting(true)
     try {
       await inviteUsers(roomId, inviteSelected, [])
-      alert('Invitations sent.')
+      alert(t('chatRoom.alerts.inviteSuccess'))
       closeInviteModal()
       try {
         const res = await apiFetch(`/api/chat/rooms/${roomId}/`)
@@ -1087,19 +1099,19 @@ export default function ChatRoom() {
         }
       } catch {}
     } catch (error: any) {
-      alert(error?.message || 'Unable to invite users')
+      alert(error?.message || t('chatRoom.alerts.inviteFailed'))
     } finally {
       setInviteSubmitting(false)
     }
-  }, [closeInviteModal, inviteSelected, roomId])
+  }, [closeInviteModal, inviteSelected, roomId, t])
 
   const submitForward = React.useCallback(async () => {
     if (!forwardMessageTarget || !isServerId(forwardMessageTarget?.id ? String(forwardMessageTarget.id) : '')) {
-      alert('Message is not ready to forward yet.')
+      alert(t('chatRoom.alerts.forwardNotReady'))
       return
     }
     if (forwardSelected.length === 0) {
-      alert('Select at least one room to forward to.')
+      alert(t('chatRoom.alerts.forwardSelectRoom'))
       return
     }
     setForwardSubmitting(true)
@@ -1123,32 +1135,32 @@ export default function ChatRoom() {
       })
 
       if (failures.length === 0) {
-        alert('Message forwarded successfully.')
+        alert(t('chatRoom.alerts.forwardSuccess'))
         closeForwardModal()
       } else if (failures.length === results.length) {
-        alert('Unable to forward the message. Please try again later.')
+        alert(t('chatRoom.alerts.forwardFailure'))
       } else {
-        alert('Message forwarded to some rooms, but a few failed.')
+        alert(t('chatRoom.alerts.forwardPartial'))
         closeForwardModal()
       }
     } catch (error: any) {
-      alert(error?.message || 'Failed to forward message')
+      alert(error?.message || t('chatRoom.alerts.forwardError'))
     } finally {
       setForwardSubmitting(false)
     }
-  }, [closeForwardModal, forwardMessageTarget, forwardSelected, isServerId, mergeMessage, normalizeMsg, roomId])
+  }, [closeForwardModal, forwardMessageTarget, forwardSelected, isServerId, mergeMessage, normalizeMsg, roomId, t])
 
   // uploads
   const postFD = async (fd: FormData) => {
     if (!token || !roomId) return
     const audio = fd.get('audio')
     if (audio instanceof File && audio.size > MAX_UPLOAD_BYTES) {
-      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      alert(t('chatRoom.alerts.audioTooLarge'))
       return
     }
     const attachment = fd.get('attachment')
     if (attachment instanceof File && attachment.size > MAX_UPLOAD_BYTES) {
-      alert('Attachment is larger than 3 MB. Please choose a smaller file.')
+      alert(t('chatRoom.alerts.attachmentTooLarge'))
       return
     }
     setUploading(true)
@@ -1160,7 +1172,7 @@ export default function ChatRoom() {
         const m = normalizeMsg(await r.json())
         if (m) mergeMessage(m)
       } else {
-        let message = 'Upload failed.'
+        let message = t('chatRoom.alerts.uploadFailed')
         try {
           const err = await r.json()
           message = err?.audio || err?.attachment || err?.detail || message
@@ -1175,7 +1187,7 @@ export default function ChatRoom() {
     const f = e.target.files?.[0]
     if (!f) return
     if (f.type && !f.type.toLowerCase().includes('gif')) {
-      alert('Please select a GIF file')
+      alert(t('chatRoom.alerts.gifOnly'))
       e.target.value = ''
       return
     }
@@ -1185,7 +1197,7 @@ export default function ChatRoom() {
     const f = e.target.files?.[0]
     if (!f) return
     if (f.size > MAX_UPLOAD_BYTES) {
-      alert('Audio is larger than 3 MB. Please choose a smaller file.')
+      alert(t('chatRoom.alerts.audioTooLarge'))
       e.target.value = ''
       return
     }
@@ -1240,7 +1252,7 @@ export default function ChatRoom() {
   const startRecording = async () => {
     if (isRecording) return
     if (typeof MediaRecorder === 'undefined') {
-      alert('Audio recording is not supported in this browser.')
+      alert(t('chatRoom.alerts.audioUnsupported'))
       return
     }
     let stream: MediaStream | null = null
@@ -1293,7 +1305,7 @@ export default function ChatRoom() {
         const config = recorderConfigRef.current || AUDIO_MIME_CANDIDATES[1]
         const blob = new Blob(audioChunksRef.current, { type: config.mime })
         if (blob.size > MAX_UPLOAD_BYTES) {
-          alert('Audio is larger than 3 MB. Please record a shorter clip.')
+          alert(t('chatRoom.alerts.audioRecordingTooLarge'))
         } else {
           const fd = new FormData()
           const ext = config.ext || 'webm'
@@ -1354,17 +1366,17 @@ export default function ChatRoom() {
     const hasServerId = isServerId(message?.id ? String(message.id) : '')
     const actions: MessageMenuAction[] = []
 
-    actions.push({ key: 'info', label: 'Info', onClick: () => handleInfo(message), disabled: !hasServerId })
-    actions.push({ key: 'reply', label: 'Reply', onClick: () => handleReply(message) })
-    actions.push({ key: 'forward', label: 'Forward', onClick: () => handleForward(message), disabled: !hasServerId })
+    actions.push({ key: 'info', label: t('chatRoom.menu.info'), onClick: () => handleInfo(message), disabled: !hasServerId })
+    actions.push({ key: 'reply', label: t('chatRoom.menu.reply'), onClick: () => handleReply(message) })
+    actions.push({ key: 'forward', label: t('chatRoom.menu.forward'), onClick: () => handleForward(message), disabled: !hasServerId })
 
     if (message.text) {
-      actions.push({ key: 'copy', label: 'Copy text', onClick: () => handleCopy(message) })
+      actions.push({ key: 'copy', label: t('chatRoom.menu.copyText'), onClick: () => handleCopy(message) })
     }
 
     actions.push({
       key: 'star',
-      label: message.starred ? 'Unstar' : 'Star',
+      label: message.starred ? t('chatRoom.menu.unstar') : t('chatRoom.menu.star'),
       onClick: () => handleStarToggle(message),
       separatorBefore: true,
       disabled: !hasServerId,
@@ -1372,7 +1384,7 @@ export default function ChatRoom() {
 
     actions.push({
       key: 'note',
-      label: message.note ? 'Edit note' : 'Add note',
+      label: message.note ? t('chatRoom.menu.editNote') : t('chatRoom.menu.addNote'),
       onClick: () => handleNoteEdit(message),
       disabled: !hasServerId,
     })
@@ -1380,7 +1392,7 @@ export default function ChatRoom() {
     if (mine || isAdmin) {
       actions.push({
         key: 'pin',
-        label: message.pinned ? 'Unpin' : 'Pin',
+        label: message.pinned ? t('chatRoom.menu.unpin') : t('chatRoom.menu.pin'),
         onClick: () => handlePinToggle(message),
         disabled: !hasServerId,
       })
@@ -1388,14 +1400,14 @@ export default function ChatRoom() {
 
     actions.push({
       key: 'select',
-      label: selectionMode ? 'Add to selection' : 'Select messages',
+      label: selectionMode ? t('chatRoom.menu.addToSelection') : t('chatRoom.menu.selectMessages'),
       onClick: () => enterSelection(message.id ?? message._client_id),
       separatorBefore: true,
     })
 
     actions.push({
       key: 'delete-me',
-      label: 'Delete for me',
+      label: t('chatRoom.menu.deleteForMe'),
       onClick: () => handleDelete(message, 'me'),
       danger: true,
     })
@@ -1403,7 +1415,7 @@ export default function ChatRoom() {
     if (room?.is_group && (mine || isAdmin)) {
       actions.push({
         key: 'delete-all',
-        label: 'Delete for everyone',
+        label: t('chatRoom.menu.deleteForEveryone'),
         onClick: () => handleDelete(message, 'all'),
         danger: true,
         disabled: !hasServerId,
@@ -1426,6 +1438,7 @@ export default function ChatRoom() {
     menuState.open,
     selectionMode,
     room?.is_group,
+    t,
     user?.id,
   ])
 
@@ -1466,11 +1479,15 @@ export default function ChatRoom() {
     })
   })
 
-  const headerTitle = room?.name || directPartner?.name || 'Room'
-  const headerInitial = (headerTitle || 'R').slice(0, 1).toUpperCase()
+  const headerTitle = room?.name || directPartner?.name || t('chatRoom.header.fallbackTitle')
+  const headerInitial = (headerTitle || t('chatRoom.header.fallbackInitial')).slice(0, 1).toUpperCase()
   const headerSubtitle = typingUser
-    ? `${typingUser} is typing…`
-    : (isGroup ? 'Group chat' : (directPartner?.username ? `@${directPartner.username}` : 'Direct chat'))
+    ? t('chatRoom.header.typing', { name: typingUser })
+    : (isGroup
+        ? t('chatRoom.header.groupSubtitle')
+        : (directPartner?.username
+            ? t('chatRoom.header.directWithUsername', { username: directPartner.username })
+            : t('chatRoom.header.directSubtitle')))
 
   const profileData = directProfile.data
   const partnerRaw = directPartner?.raw as any
@@ -1479,35 +1496,41 @@ export default function ChatRoom() {
   const headerAvatar = !isGroup ? (profileData?.avatar || partnerRaw?.avatar || null) : null
   const profileAvatar = resolveUrl(profileData?.avatar || partnerRaw?.avatar || null)
   const profileInitials = profileData?.initials || partnerRaw?.initials || headerInitial
-  const profileDisplayName = profileData?.display_name || directPartner?.name || headerTitle || 'User'
+  const profileDisplayName = profileData?.display_name || directPartner?.name || headerTitle || t('chatRoom.profile.fallbackName')
   const profileUsername = profileData?.username || directPartner?.username || ''
   const statusBadge = profileData ? (profileData.is_online ? t('chatRoom.status.onlineNow') : formatStatus(t, profileData.current_status)) : ''
   const lastSeenLine = profileData
     ? (profileData.is_online
-        ? 'Active now'
+        ? t('chatRoom.status.activeNow')
         : profileData.last_seen
           ? describeLastSeen(t, profileData.last_seen)
           : profilePrivacy.share_last_seen === false
-            ? 'Last seen hidden by privacy'
-            : 'Last seen unavailable')
+            ? t('chatRoom.lastSeen.hiddenByPrivacy')
+            : t('chatRoom.lastSeen.unavailable'))
     : ''
   const statusMessageValue = profileData
     ? (profileData.status_message && profileData.status_message.trim()
         ? profileData.status_message.trim()
         : profilePrivacy.share_status_message === false
-          ? 'Status hidden by privacy'
+          ? t('chatRoom.profile.statusHidden')
           : '')
     : ''
   const bioValue = profileData
     ? (profileData.bio && profileData.bio.trim()
         ? profileData.bio.trim()
         : profilePrivacy.share_bio === false
-          ? 'Bio hidden by privacy'
+          ? t('chatRoom.profile.bioHidden')
           : '')
     : ''
   const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
-  const privacySummary = `Avatar ${profilePrivacy.share_avatar === false ? 'hidden' : 'visible'} · Contact ${profilePrivacy.share_contact_info === false ? 'hidden' : 'visible'} · Status ${profilePrivacy.share_status_message === false ? 'hidden' : 'visible'} · Bio ${profilePrivacy.share_bio === false ? 'hidden' : 'visible'} · Last seen ${profilePrivacy.share_last_seen === false ? 'hidden' : 'visible'}`
+  const privacySummary = t('chatRoom.profile.privacySummary', {
+    avatar: t(profilePrivacy.share_avatar === false ? 'chatRoom.profile.privacy.avatar.hidden' : 'chatRoom.profile.privacy.avatar.visible'),
+    contact: t(profilePrivacy.share_contact_info === false ? 'chatRoom.profile.privacy.contact.hidden' : 'chatRoom.profile.privacy.contact.visible'),
+    status: t(profilePrivacy.share_status_message === false ? 'chatRoom.profile.privacy.status.hidden' : 'chatRoom.profile.privacy.status.visible'),
+    bio: t(profilePrivacy.share_bio === false ? 'chatRoom.profile.privacy.bio.hidden' : 'chatRoom.profile.privacy.bio.visible'),
+    lastSeen: t(profilePrivacy.share_last_seen === false ? 'chatRoom.profile.privacy.lastSeen.hidden' : 'chatRoom.profile.privacy.lastSeen.visible'),
+  })
 
   if (!token) return null
 
@@ -1522,7 +1545,9 @@ export default function ChatRoom() {
             size="lg"
             interactive={!isGroup && !!directPartner}
             onClick={!isGroup && directPartner ? (event) => { event.preventDefault(); event.stopPropagation(); handleHeaderClick() } : undefined}
-            ariaLabel={isGroup ? `${headerTitle} room` : `${headerTitle} profile`}
+            ariaLabel={isGroup
+              ? t('chatRoom.header.ariaRoom', { name: headerTitle })
+              : t('chatRoom.header.ariaProfile', { name: headerTitle })}
           />
           <div>
             <div
@@ -1532,7 +1557,7 @@ export default function ChatRoom() {
             >
               {headerTitle}{' '}
               {(isGroup || directPartner) && (
-                <span className="ri-tip">{isGroup ? '(tap for info)' : '(tap for profile)'}</span>
+                <span className="ri-tip">{isGroup ? t('chatRoom.header.tapForInfo') : t('chatRoom.header.tapForProfile')}</span>
               )}
             </div>
             <div className="sub">{headerSubtitle}</div>
@@ -1542,16 +1567,20 @@ export default function ChatRoom() {
 
       {selectionMode && (
         <div className="selection-bar">
-          <span>{selectedIds.length} selected</span>
+          <span>{t('chatRoom.selection.count', { count: selectedIds.length })}</span>
           <div className="actions">
-            <button type="button" onClick={() => handleBulkDelete('me')}>Delete</button>
+            <button type="button" onClick={() => handleBulkDelete('me')}>
+              {t('chatRoom.actions.delete')}
+            </button>
             {(isAdmin || selectedIds.every(id => {
               const msg = messages.find((m: any) => m.id === id || m._client_id === id)
               return msg?.is_me || msg?.sender_id === user?.id
             })) && (
-              <button type="button" onClick={() => handleBulkDelete('all')}>Delete for all</button>
+              <button type="button" onClick={() => handleBulkDelete('all')}>
+                {t('chatRoom.actions.deleteForAll')}
+              </button>
             )}
-            <button type="button" onClick={clearSelection}>Cancel</button>
+            <button type="button" onClick={clearSelection}>{t('chatRoom.actions.cancel')}</button>
           </div>
         </div>
       )}
@@ -1565,7 +1594,7 @@ export default function ChatRoom() {
           const senderInfo = m.sender_id ? memberInfoMap.get(String(m.sender_id)) : null
           const senderInitials = senderInfo?.initials || (m.sender_name || 'U').slice(0, 2)
           const senderAvatar = senderInfo?.avatar || null
-          const senderName = senderInfo?.name || m.sender_name || 'User'
+          const senderName = senderInfo?.name || m.sender_name || t('chatRoom.profile.fallbackName')
           const reactionPairs = Object.entries(m.reactions || {}).filter(([, arr]) => Array.isArray(arr) && arr.length>0)
           const status = m.status || null
           const attachment = renderAttachment(m)
@@ -1598,7 +1627,7 @@ export default function ChatRoom() {
                   name={senderName}
                   initials={senderInitials}
                   size="sm"
-                  ariaLabel={`${senderName} avatar`}
+                  ariaLabel={t('chatRoom.profile.avatarAlt', { name: senderName })}
                 />
               )}
 
@@ -1619,15 +1648,15 @@ export default function ChatRoom() {
               >
                 <button
                   className="more"
-                  aria-label="Message actions"
+                  aria-label={t('chatRoom.messages.actionsAria')}
                   onClick={(e) => openMenu(m, e)}
                 >
                   ⋯
                 </button>
 
-                {m.pinned && (<div className="pin-flag">📌 Pinned</div>)}
-                {m.starred && <div className="meta-row"><span className="star">★</span> Starred</div>}
-                {m.note && <div className="note-chip">Note: {m.note}</div>}
+                {m.pinned && (<div className="pin-flag">📌 {t('chatRoom.messages.pinned')}</div>)}
+                {m.starred && <div className="meta-row"><span className="star">★</span> {t('chatRoom.messages.starred')}</div>}
+                {m.note && <div className="note-chip">{t('chatRoom.messages.noteLabel')} {m.note}</div>}
 
                 {m.reply_to && (
                   <div
@@ -1646,15 +1675,15 @@ export default function ChatRoom() {
                       }
                     }}
                   >
-                    <strong>{m.reply_to.sender_name}</strong>
-                    <div>{m.reply_to.text || (m.reply_to.attachment ? 'Attachment' : '')}</div>
+                    <strong>{t('chatRoom.messages.replyingTo', { name: m.reply_to.sender_name })}</strong>
+                    <div>{m.reply_to.text || (m.reply_to.attachment ? t('chatRoom.messages.attachmentFallback') : '')}</div>
                   </div>
                 )}
 
                 {m.forwarded_from && (
                   <div className="reply-preview">
-                    <strong>Forwarded from {m.forwarded_from.sender_name}</strong>
-                    <div>{m.forwarded_from.text || (m.forwarded_from.attachment ? 'Attachment' : '')}</div>
+                    <strong>{t('chatRoom.messages.forwardedFrom', { name: m.forwarded_from.sender_name })}</strong>
+                    <div>{m.forwarded_from.text || (m.forwarded_from.attachment ? t('chatRoom.messages.attachmentFallback') : '')}</div>
                   </div>
                 )}
 
@@ -1664,7 +1693,10 @@ export default function ChatRoom() {
                 <span className="time">
                   {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                   {mine && status && (
-                    <span className={`status-icon status-${status}`} aria-label={`Message ${status}`}>
+                    <span
+                      className={`status-icon status-${status}`}
+                      aria-label={t('chatRoom.messages.statusAria', { status: t(`chatRoom.messages.status.${status}`) })}
+                    >
                       {status === 'sent' ? '✓' : '✓✓'}
                     </span>
                   )}
@@ -1680,7 +1712,7 @@ export default function ChatRoom() {
 
                 <button
                   className="react-btn"
-                  aria-label="React"
+                  aria-label={t('chatRoom.actions.react')}
                   onClick={(e) => {
                     e.stopPropagation()
                     setReactAnchor({ id: messageId, x: e.clientX, y: e.clientY })
@@ -1697,15 +1729,15 @@ export default function ChatRoom() {
           <button className="icon-btn" onClick={() => setShowAttach(s => !s)}>＋</button>
           {showAttach && (
             <div className="attach-menu">
-              <button className="attach-item" onClick={() => docRef.current?.click()}>📄 Document</button>
-              <button className="attach-item" onClick={() => mediaRef.current?.click()}>🖼️ Photos & Videos</button>
-              <button className="attach-item" onClick={() => gifRef.current?.click()}>🎞️ GIF</button>
-              <button className="attach-item" onClick={() => audioRef.current?.click()}>🎧 Audio</button>
-              <button className="attach-item" onClick={pickContact}>👤 Contact</button>
+              <button className="attach-item" onClick={() => docRef.current?.click()}>📄 {t('chatRoom.attachMenu.document')}</button>
+              <button className="attach-item" onClick={() => mediaRef.current?.click()}>🖼️ {t('chatRoom.attachMenu.photosVideos')}</button>
+              <button className="attach-item" onClick={() => gifRef.current?.click()}>🎞️ {t('chatRoom.attachMenu.gif')}</button>
+              <button className="attach-item" onClick={() => audioRef.current?.click()}>🎧 {t('chatRoom.attachMenu.audio')}</button>
+              <button className="attach-item" onClick={pickContact}>👤 {t('chatRoom.attachMenu.contact')}</button>
             </div>
           )}
           {isRecording && (
-            <div className="record-visual" aria-label="Recording audio">
+            <div className="record-visual" aria-label={t('chatRoom.composer.recordingAria')}>
               {(recordPeaks.length ? recordPeaks : new Array(24).fill(0.1)).map((v, i) => (
                 <span
                   key={i}
@@ -1725,7 +1757,7 @@ export default function ChatRoom() {
         {composerContext && (
           <div className="composer-context">
             <div className="context-body">
-              <strong>{composerContext.type === 'reply' ? 'Replying to' : 'Forwarding'}</strong> {composerContext.message?.sender_name || 'message'}
+              <strong>{composerContext.type === 'reply' ? t('chatRoom.actions.replying') : t('chatRoom.actions.forwarding')}</strong> {composerContext.message?.sender_name || t('chatRoom.actions.messageFallback')}
             </div>
             <button type="button" onClick={() => setComposerContext(null)}>✕</button>
           </div>
@@ -1736,7 +1768,7 @@ export default function ChatRoom() {
           onChange={e => { setDraft(e.target.value); try { sendTyping?.(true) } catch {} }}
           onBlur={() => { try { sendTyping?.(false) } catch {} }}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() } }}
-          placeholder={uploading ? 'Uploading…' : (isRecording ? 'Recording…' : 'Type a message')}
+          placeholder={uploading ? t('chatRoom.composer.uploading') : (isRecording ? t('chatRoom.composer.recording') : t('chatRoom.composer.placeholder'))}
           disabled={uploading}
         />
 
@@ -1756,21 +1788,29 @@ export default function ChatRoom() {
               className={`ri-profile-avatar ${profileAvatar ? 'has-image' : ''}`}
               role={profileAvatar ? 'button' : undefined}
               tabIndex={profileAvatar ? 0 : undefined}
-              aria-label={profileAvatar ? 'View profile photo' : undefined}
+              aria-label={profileAvatar ? t('chatRoom.profile.viewPhotoAria') : undefined}
               onClick={() => {
                 if (!profileAvatar) return
-                setPhotoPreview({ open: true, src: profileAvatar, alt: `${profileDisplayName} avatar` })
+                setPhotoPreview({
+                  open: true,
+                  src: profileAvatar,
+                  alt: t('chatRoom.profile.avatarAlt', { name: profileDisplayName }),
+                })
               }}
               onKeyDown={(event) => {
                 if (!profileAvatar) return
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault()
-                  setPhotoPreview({ open: true, src: profileAvatar, alt: `${profileDisplayName} avatar` })
+                  setPhotoPreview({
+                    open: true,
+                    src: profileAvatar,
+                    alt: t('chatRoom.profile.avatarAlt', { name: profileDisplayName }),
+                  })
                 }
               }}
             >
               {profileAvatar ? (
-                <img src={profileAvatar} alt={`${profileDisplayName} avatar`} />
+                <img src={profileAvatar} alt={t('chatRoom.profile.avatarAlt', { name: profileDisplayName })} />
               ) : (
                 <span>{profileInitials}</span>
               )}
@@ -1795,40 +1835,40 @@ export default function ChatRoom() {
           </div>
 
           <div className="ri-section">
-            {directProfile.loading && !profileData && <p className="ri-loading">Loading profile…</p>}
+            {directProfile.loading && !profileData && <p className="ri-loading">{t('chatRoom.profile.loading')}</p>}
             {directProfile.error && <p className="ri-error">{directProfile.error}</p>}
 
             {profileData && (
               <div className="ri-profile">
                 {statusMessageValue && (
-                  <p className={`ri-status-message ${statusMessageValue === 'Status hidden by privacy' ? 'muted' : ''}`}>
+                  <p className={`ri-status-message ${statusMessageValue === t('chatRoom.profile.statusHidden') ? 'muted' : ''}`}>
                     {statusMessageValue}
                   </p>
                 )}
 
                 {bioValue && (
-                  <p className={`ri-bio ${bioValue === 'Bio hidden by privacy' ? 'muted' : ''}`}>
+                  <p className={`ri-bio ${bioValue === t('chatRoom.profile.bioHidden') ? 'muted' : ''}`}>
                     {bioValue}
                   </p>
                 )}
 
                 <div className="ri-profile-details">
                   <div className="ri-detail-row">
-                    <span className="ri-detail-label">Email</span>
+                    <span className="ri-detail-label">{t('chatRoom.profile.email')}</span>
                     <span className={`ri-detail-value ${profileData?.email ? '' : 'muted'}`}>{emailValue}</span>
                   </div>
                   <div className="ri-detail-row">
-                    <span className="ri-detail-label">Phone</span>
+                    <span className="ri-detail-label">{t('chatRoom.profile.phone')}</span>
                     <span className={`ri-detail-value ${profileData?.phone ? '' : 'muted'}`}>{phoneValue}</span>
                   </div>
                   <div className="ri-detail-row">
-                    <span className="ri-detail-label">Last seen</span>
+                    <span className="ri-detail-label">{t('chatRoom.profile.lastSeenLabel')}</span>
                     <span className={`ri-detail-value ${(!profileData?.is_online && !profileData?.last_seen) ? 'muted' : ''}`}>
-                      {profileData?.is_online ? 'Active now' : lastSeenLine}
+                      {profileData?.is_online ? t('chatRoom.status.activeNow') : lastSeenLine}
                     </span>
                   </div>
                   <div className="ri-detail-row">
-                    <span className="ri-detail-label">Privacy</span>
+                    <span className="ri-detail-label">{t('chatRoom.profile.privacyLabel')}</span>
                     <span className="ri-detail-value muted">{privacySummary}</span>
                   </div>
                 </div>
@@ -1836,7 +1876,7 @@ export default function ChatRoom() {
             )}
 
             {!directProfile.loading && !directProfile.error && !profileData && (
-              <p className="ri-empty">Profile details not available.</p>
+              <p className="ri-empty">{t('chatRoom.profile.empty')}</p>
             )}
           </div>
         </aside>
@@ -1846,20 +1886,22 @@ export default function ChatRoom() {
       {isGroup && (
         <aside className={`room-info ${showInfo ? 'open' : ''}`}>
           <div className="room-info-hd">
-            <div className="avatar-badge lg">{(room?.name || 'R').slice(0, 1).toUpperCase()}</div>
+            <div className="avatar-badge lg">{(room?.name || t('chatRoom.header.fallbackInitial')).slice(0, 1).toUpperCase()}</div>
             <div className="ri-meta">
               <h4>{room?.name}</h4>
-              <p>{room?.member_count ?? room?.members?.length ?? 0} members</p>
+              <p>{t('chatRoom.profile.memberCount', { count: room?.member_count ?? room?.members?.length ?? 0 })}</p>
             </div>
             <button className="ri-close" onClick={() => setShowInfo(false)}>✕</button>
           </div>
           <div className="ri-section">
-            <div className="ri-title">Members</div>
+            <div className="ri-title">{t('chatRoom.profile.membersTitle')}</div>
             <ul className="ri-list">
               {room?.members?.map((m: any) => (
                 <li key={m.id}>
                   <span className={`ri-avatar ${m.avatar ? 'has-image' : ''}`}>
-                    {m.avatar ? <img src={resolveUrl(m.avatar)} alt={`${m.name || m.username || 'User'} avatar`} /> : (m.initials || (m.name || m.username || 'U').slice(0, 1))}
+                    {m.avatar
+                      ? <img src={resolveUrl(m.avatar)} alt={t('chatRoom.profile.avatarAlt', { name: m.name || m.username || t('chatRoom.profile.fallbackName') })} />
+                      : (m.initials || (m.name || m.username || 'U').slice(0, 1))}
                   </span>
                   <span className="ri-name">{m.name || m.username || m.email}</span>
                 </li>
@@ -1876,7 +1918,7 @@ export default function ChatRoom() {
                   openInviteModal()
                 }}
               >
-                + Invite
+                {t('chatRoom.profile.invite')}
               </button>
             )}
           </div>
@@ -1926,7 +1968,7 @@ export default function ChatRoom() {
         open={photoPreview.open && !!photoPreview.src}
         src={photoPreview.src ?? undefined}
         alt={photoPreview.alt}
-        onClose={() => setPhotoPreview({ open: false, src: null, alt: 'Profile photo' })}
+        onClose={() => setPhotoPreview({ open: false, src: null, alt: t('chatRoom.profile.photoAlt') })}
       />
 
       {reactAnchor && (

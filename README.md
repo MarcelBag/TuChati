@@ -44,7 +44,7 @@ TuChati aims to reduce digital isolation by offering communication services that
 | 🗂️ File Sharing | Send and receive images, docs, and audio | 🚧 Planned |
 | 📴 Offline Mode | Caching and local queue for low-network conditions | 🚧 Planned |
 | 📱 Mobile Apps | Android and iOS via React Native | 🚧 Coming Soon |
-| 🌍 Multi-Language | English, French, Swahili | 🚧 Planned |
+| 🌍 Multi-Language | English, French, Swahili, German, Lingala | ✅ Done |
 | 🔒 End-to-End Encryption | Strong privacy layer | 🚧 Planned |
 
 ---
@@ -143,4 +143,3 @@ For enterprise use or regional deployment partnerships, contact **tuunganes.com*
 ![alt text](image-1.png)
 
 > *“TuChati built in Africa, for Africa. Because connection should never depend on privilege.”*
-

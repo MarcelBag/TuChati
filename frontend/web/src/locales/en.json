@@ -134,6 +134,19 @@
   },
 
   "chatRoom": {
+    "header": {
+      "fallbackTitle": "Room",
+      "fallbackInitial": "R",
+      "typing": "{{name}} is typing…",
+      "groupSubtitle": "Group chat",
+      "directSubtitle": "Direct chat",
+      "directWithUsername": "@{{username}}",
+      "ariaRoom": "{{name}} room",
+      "ariaProfile": "{{name}} profile",
+      "someone": "Someone",
+      "tapForInfo": "(tap for info)",
+      "tapForProfile": "(tap for profile)"
+    },
     "dates": {
       "today": "Today",
       "yesterday": "Yesterday"
@@ -144,19 +157,141 @@
       "minutesAgo_other": "Last seen {{count}} mins ago",
       "today": "Last seen today at {{time}}",
       "yesterday": "Last seen yesterday at {{time}}",
-      "dateTime": "Last seen {{day}} {{time}}"
+      "dateTime": "Last seen {{day}} {{time}}",
+      "hiddenByPrivacy": "Last seen hidden by privacy",
+      "unavailable": "Last seen unavailable"
     },
     "status": {
       "online": "Online",
       "away": "Away",
       "offline": "Offline",
       "dnd": "Do Not Disturb",
-      "onlineNow": "Online now"
+      "onlineNow": "Online now",
+      "activeNow": "Active now"
     },
     "profile": {
       "notShared": "Not shared",
       "hiddenPrivacy": "Hidden by privacy",
-      "notProvided": "Not provided"
+      "notProvided": "Not provided",
+      "statusHidden": "Status hidden by privacy",
+      "bioHidden": "Bio hidden by privacy",
+      "fallbackName": "User",
+      "photoAlt": "Profile photo",
+      "viewPhotoAria": "View profile photo",
+      "loading": "Loading profile…",
+      "email": "Email",
+      "phone": "Phone",
+      "lastSeenLabel": "Last seen",
+      "privacyLabel": "Privacy",
+      "empty": "Profile details not available.",
+      "membersTitle": "Members",
+      "memberCount": "{{count}} members",
+      "memberCount_one": "{{count}} member",
+      "memberCount_other": "{{count}} members",
+      "invite": "+ Invite",
+      "avatarAlt": "{{name}} avatar",
+      "privacySummary": "Avatar {{avatar}} · Contact {{contact}} · Status {{status}} · Bio {{bio}} · Last seen {{lastSeen}}",
+      "privacy": {
+        "avatar": { "hidden": "hidden", "visible": "visible" },
+        "contact": { "hidden": "hidden", "visible": "visible" },
+        "status": { "hidden": "hidden", "visible": "visible" },
+        "bio": { "hidden": "hidden", "visible": "visible" },
+        "lastSeen": { "hidden": "hidden", "visible": "visible" }
+      }
+    },
+    "selection": {
+      "count": "{{count}} selected",
+      "count_one": "{{count}} selected",
+      "count_other": "{{count}} selected"
+    },
+    "actions": {
+      "delete": "Delete",
+      "deleteForAll": "Delete for all",
+      "cancel": "Cancel",
+      "react": "React",
+      "replying": "Replying to",
+      "forwarding": "Forwarding",
+      "messageFallback": "message"
+    },
+    "menu": {
+      "info": "Info",
+      "reply": "Reply",
+      "forward": "Forward",
+      "copyText": "Copy text",
+      "star": "Star",
+      "unstar": "Unstar",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "addNote": "Add note",
+      "editNote": "Edit note",
+      "selectMessages": "Select messages",
+      "addToSelection": "Add to selection",
+      "deleteForMe": "Delete for me",
+      "deleteForEveryone": "Delete for everyone"
+    },
+    "alerts": {
+      "pinUpdateFailed": "Failed to update pin state",
+      "starUpdateFailed": "Failed to update star state",
+      "notePrompt": "Add a note for this message",
+      "noteSaveFailed": "Failed to save note",
+      "infoLoadFailed": "Failed to load message info",
+      "profileLoadFailed": "Failed to load profile",
+      "deleteFailed": "Failed to delete message",
+      "deleteOnlyDelivered": "Only delivered messages can be deleted for everyone.",
+      "deleteBulkFailed": "Failed to delete messages",
+      "inviteSelectUser": "Select at least one user to invite.",
+      "inviteSuccess": "Invitations sent.",
+      "inviteFailed": "Unable to invite users",
+      "forwardNotReady": "Message is not ready to forward yet.",
+      "forwardSelectRoom": "Select at least one room to forward to.",
+      "forwardSuccess": "Message forwarded successfully.",
+      "forwardFailure": "Unable to forward the message. Please try again later.",
+      "forwardPartial": "Message forwarded to some rooms, but a few failed.",
+      "forwardError": "Failed to forward message",
+      "audioTooLarge": "Audio is larger than 3 MB. Please choose a smaller file.",
+      "attachmentTooLarge": "Attachment is larger than 3 MB. Please choose a smaller file.",
+      "uploadFailed": "Upload failed.",
+      "gifOnly": "Please select a GIF file",
+      "audioUnsupported": "Audio recording is not supported in this browser.",
+      "audioRecordingTooLarge": "Audio is larger than 3 MB. Please record a shorter clip."
+    },
+    "attachments": {
+      "openFile": "Open {{filename}}",
+      "viewImage": "View image",
+      "imageAlt": "Image attachment",
+      "imageLabel": "Image",
+      "download": "Download",
+      "playVideo": "Play video",
+      "videoLabel": "Video",
+      "attachment": "Attachment"
+    },
+    "messages": {
+      "replyingTo": "Replying to {{name}}",
+      "forwardedFrom": "Forwarded from {{name}}",
+      "attachmentFallback": "Attachment",
+      "actionsAria": "Message actions",
+      "pinned": "Pinned",
+      "starred": "Starred",
+      "noteLabel": "Note:",
+      "status": {
+        "sent": "sent",
+        "delivered": "delivered",
+        "read": "read"
+      },
+      "statusAria": "Message {{status}}"
+    },
+    "attachMenu": {
+      "document": "Document",
+      "photosVideos": "Photos & Videos",
+      "gif": "GIF",
+      "audio": "Audio",
+      "contact": "Contact"
+    },
+    "composer": {
+      "uploading": "Uploading…",
+      "recording": "Recording…",
+      "placeholder": "Type a message",
+      "recordingAria": "Recording audio"
     }
   }
 }

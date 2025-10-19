@@ -134,6 +134,19 @@
   },
 
   "chatRoom": {
+    "header": {
+      "fallbackTitle": "Salon",
+      "fallbackInitial": "S",
+      "typing": "{{name}} est en train d'écrire…",
+      "groupSubtitle": "Discussion de groupe",
+      "directSubtitle": "Discussion directe",
+      "directWithUsername": "@{{username}}",
+      "ariaRoom": "Salon {{name}}",
+      "ariaProfile": "Profil {{name}}",
+      "someone": "Quelqu'un",
+      "tapForInfo": "(toucher pour info)",
+      "tapForProfile": "(toucher pour profil)"
+    },
     "dates": {
       "today": "Aujourd'hui",
       "yesterday": "Hier"
@@ -144,19 +157,141 @@
       "minutesAgo_other": "Vue il y a {{count}} minutes",
       "today": "Vue aujourd'hui à {{time}}",
       "yesterday": "Vue hier à {{time}}",
-      "dateTime": "Vue le {{day}} à {{time}}"
+      "dateTime": "Vue le {{day}} à {{time}}",
+      "hiddenByPrivacy": "Dernière connexion cachée par la confidentialité",
+      "unavailable": "Dernière connexion indisponible"
     },
     "status": {
       "online": "En ligne",
       "away": "Absent",
       "offline": "Hors ligne",
       "dnd": "Ne pas déranger",
-      "onlineNow": "En ligne maintenant"
+      "onlineNow": "En ligne maintenant",
+      "activeNow": "Actif maintenant"
     },
     "profile": {
       "notShared": "Non partagé",
       "hiddenPrivacy": "Caché par la confidentialité",
-      "notProvided": "Non renseigné"
+      "notProvided": "Non renseigné",
+      "statusHidden": "Statut caché par la confidentialité",
+      "bioHidden": "Bio cachée par la confidentialité",
+      "fallbackName": "Utilisateur",
+      "photoAlt": "Photo de profil",
+      "viewPhotoAria": "Voir la photo de profil",
+      "loading": "Chargement du profil…",
+      "email": "Email",
+      "phone": "Téléphone",
+      "lastSeenLabel": "Dernière connexion",
+      "privacyLabel": "Confidentialité",
+      "empty": "Détails du profil non disponibles.",
+      "membersTitle": "Membres",
+      "memberCount": "{{count}} membres",
+      "memberCount_one": "{{count}} membre",
+      "memberCount_other": "{{count}} membres",
+      "invite": "+ Inviter",
+      "avatarAlt": "Avatar de {{name}}",
+      "privacySummary": "Avatar {{avatar}} · Contact {{contact}} · Statut {{status}} · Bio {{bio}} · Dernière connexion {{lastSeen}}",
+      "privacy": {
+        "avatar": { "hidden": "caché", "visible": "visible" },
+        "contact": { "hidden": "caché", "visible": "visible" },
+        "status": { "hidden": "caché", "visible": "visible" },
+        "bio": { "hidden": "cachée", "visible": "visible" },
+        "lastSeen": { "hidden": "cachée", "visible": "visible" }
+      }
+    },
+    "selection": {
+      "count": "{{count}} sélectionnés",
+      "count_one": "{{count}} sélectionné",
+      "count_other": "{{count}} sélectionnés"
+    },
+    "actions": {
+      "delete": "Supprimer",
+      "deleteForAll": "Supprimer pour tous",
+      "cancel": "Annuler",
+      "react": "Réagir",
+      "replying": "Répondre à",
+      "forwarding": "Transférer",
+      "messageFallback": "message"
+    },
+    "menu": {
+      "info": "Infos",
+      "reply": "Répondre",
+      "forward": "Transférer",
+      "copyText": "Copier le texte",
+      "star": "Mettre en favori",
+      "unstar": "Retirer des favoris",
+      "pin": "Épingler",
+      "unpin": "Retirer l'épingle",
+      "addNote": "Ajouter une note",
+      "editNote": "Modifier la note",
+      "selectMessages": "Sélectionner des messages",
+      "addToSelection": "Ajouter à la sélection",
+      "deleteForMe": "Supprimer pour moi",
+      "deleteForEveryone": "Supprimer pour tous"
+    },
+    "alerts": {
+      "pinUpdateFailed": "Impossible de mettre à jour l'épingle",
+      "starUpdateFailed": "Impossible de mettre à jour le favori",
+      "notePrompt": "Ajouter une note à ce message",
+      "noteSaveFailed": "Impossible d'enregistrer la note",
+      "infoLoadFailed": "Impossible de charger les informations du message",
+      "profileLoadFailed": "Impossible de charger le profil",
+      "deleteFailed": "Impossible de supprimer le message",
+      "deleteOnlyDelivered": "Seuls les messages livrés peuvent être supprimés pour tout le monde.",
+      "deleteBulkFailed": "Impossible de supprimer les messages",
+      "inviteSelectUser": "Sélectionnez au moins un utilisateur à inviter.",
+      "inviteSuccess": "Invitations envoyées.",
+      "inviteFailed": "Impossible d'inviter les utilisateurs",
+      "forwardNotReady": "Le message n'est pas encore prêt à être transféré.",
+      "forwardSelectRoom": "Sélectionnez au moins un salon auquel transférer.",
+      "forwardSuccess": "Message transféré avec succès.",
+      "forwardFailure": "Impossible de transférer le message. Réessayez plus tard.",
+      "forwardPartial": "Message transféré dans certains salons, mais quelques-uns ont échoué.",
+      "forwardError": "Impossible de transférer le message",
+      "audioTooLarge": "L'audio dépasse 3 Mo. Choisissez un fichier plus petit.",
+      "attachmentTooLarge": "La pièce jointe dépasse 3 Mo. Choisissez un fichier plus petit.",
+      "uploadFailed": "Échec du téléversement.",
+      "gifOnly": "Veuillez sélectionner un fichier GIF",
+      "audioUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur.",
+      "audioRecordingTooLarge": "L'audio dépasse 3 Mo. Enregistrez un clip plus court."
+    },
+    "attachments": {
+      "openFile": "Ouvrir {{filename}}",
+      "viewImage": "Voir l'image",
+      "imageAlt": "Pièce jointe image",
+      "imageLabel": "Image",
+      "download": "Télécharger",
+      "playVideo": "Lire la vidéo",
+      "videoLabel": "Vidéo",
+      "attachment": "Pièce jointe"
+    },
+    "messages": {
+      "replyingTo": "Répond à {{name}}",
+      "forwardedFrom": "Transfert de {{name}}",
+      "attachmentFallback": "Pièce jointe",
+      "actionsAria": "Actions du message",
+      "pinned": "Épinglé",
+      "starred": "Favori",
+      "noteLabel": "Note :",
+      "status": {
+        "sent": "envoyé",
+        "delivered": "livré",
+        "read": "lu"
+      },
+      "statusAria": "Message {{status}}"
+    },
+    "attachMenu": {
+      "document": "Document",
+      "photosVideos": "Photos & Vidéos",
+      "gif": "GIF",
+      "audio": "Audio",
+      "contact": "Contact"
+    },
+    "composer": {
+      "uploading": "Téléversement…",
+      "recording": "Enregistrement…",
+      "placeholder": "Saisir un message",
+      "recordingAria": "Enregistrement audio"
     }
   }
 }

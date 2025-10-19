@@ -134,6 +134,19 @@
   },
 
   "chatRoom": {
+    "header": {
+      "fallbackTitle": "Chumba",
+      "fallbackInitial": "C",
+      "typing": "{{name}} anaandika…",
+      "groupSubtitle": "Gumzo la kikundi",
+      "directSubtitle": "Gumzo la moja kwa moja",
+      "directWithUsername": "@{{username}}",
+      "ariaRoom": "Chumba cha {{name}}",
+      "ariaProfile": "Wasifu wa {{name}}",
+      "someone": "Mtu",
+      "tapForInfo": "(gusa kwa maelezo)",
+      "tapForProfile": "(gusa kwa wasifu)"
+    },
     "dates": {
       "today": "Leo",
       "yesterday": "Jana"
@@ -144,19 +157,141 @@
       "minutesAgo_other": "Ameonekana dakika {{count}} zilizopita",
       "today": "Ameonekana leo saa {{time}}",
       "yesterday": "Ameonekana jana saa {{time}}",
-      "dateTime": "Ameonekana {{day}} saa {{time}}"
+      "dateTime": "Ameonekana {{day}} saa {{time}}",
+      "hiddenByPrivacy": "Kuonekana kwa mwisho kumejificha kwa faragha",
+      "unavailable": "Kuonekana kwa mwisho hakupatikani"
     },
     "status": {
       "online": "Mtandaoni",
       "away": "Hayupo",
       "offline": "Nje ya mtandao",
       "dnd": "Usisumbue",
-      "onlineNow": "Mtandaoni sasa"
+      "onlineNow": "Mtandaoni sasa",
+      "activeNow": "Anaonekana sasa"
     },
     "profile": {
       "notShared": "Haijashirikiwa",
       "hiddenPrivacy": "Imefichwa kwa faragha",
-      "notProvided": "Haijatolewa"
+      "notProvided": "Haijatolewa",
+      "statusHidden": "Hali imefichwa kwa faragha",
+      "bioHidden": "Maelezo yamefichwa kwa faragha",
+      "fallbackName": "Mtumiaji",
+      "photoAlt": "Picha ya wasifu",
+      "viewPhotoAria": "Tazama picha ya wasifu",
+      "loading": "Inapakia wasifu…",
+      "email": "Barua pepe",
+      "phone": "Simu",
+      "lastSeenLabel": "Kuonekana mwisho",
+      "privacyLabel": "Faragha",
+      "empty": "Maelezo ya wasifu hayapatikani.",
+      "membersTitle": "Wanachama",
+      "memberCount": "{{count}} washiriki",
+      "memberCount_one": "{{count}} mshiriki",
+      "memberCount_other": "{{count}} washiriki",
+      "invite": "+ Alika",
+      "avatarAlt": "Picha ya {{name}}",
+      "privacySummary": "Picha ya wasifu {{avatar}} · Mawasiliano {{contact}} · Hali {{status}} · Maelezo {{bio}} · Kuonekana kwa mwisho {{lastSeen}}",
+      "privacy": {
+        "avatar": { "hidden": "imefichwa", "visible": "inaonekana" },
+        "contact": { "hidden": "imefichwa", "visible": "inaonekana" },
+        "status": { "hidden": "imefichwa", "visible": "inaonekana" },
+        "bio": { "hidden": "imefichwa", "visible": "inaonekana" },
+        "lastSeen": { "hidden": "imefichwa", "visible": "inaonekana" }
+      }
+    },
+    "selection": {
+      "count": "{{count}} zimechaguliwa",
+      "count_one": "{{count}} imechaguliwa",
+      "count_other": "{{count}} zimechaguliwa"
+    },
+    "actions": {
+      "delete": "Futa",
+      "deleteForAll": "Futa kwa wote",
+      "cancel": "Ghairi",
+      "react": "Tuma hisia",
+      "replying": "Unamjibu",
+      "forwarding": "Unatuma mbele",
+      "messageFallback": "ujumbe"
+    },
+    "menu": {
+      "info": "Taarifa",
+      "reply": "Jibu",
+      "forward": "Tuma mbele",
+      "copyText": "Nakili maandishi",
+      "star": "Weka kipendwa",
+      "unstar": "Ondoa kipendwa",
+      "pin": "Bandika",
+      "unpin": "Ondoa kibandiko",
+      "addNote": "Ongeza dokezo",
+      "editNote": "Hariri dokezo",
+      "selectMessages": "Chagua ujumbe",
+      "addToSelection": "Ongeza kwenye uteuzi",
+      "deleteForMe": "Futa kwangu",
+      "deleteForEveryone": "Futa kwa wote"
+    },
+    "alerts": {
+      "pinUpdateFailed": "Imeshindikana kusasisha pini",
+      "starUpdateFailed": "Imeshindikana kusasisha kipendwa",
+      "notePrompt": "Ongeza maelezo kwa ujumbe huu",
+      "noteSaveFailed": "Imeshindikana kuhifadhi maelezo",
+      "infoLoadFailed": "Imeshindikana kupakia taarifa za ujumbe",
+      "profileLoadFailed": "Imeshindikana kupakia wasifu",
+      "deleteFailed": "Imeshindikana kufuta ujumbe",
+      "deleteOnlyDelivered": "Ni ujumbe uliowasilishwa pekee unaweza kufutwa kwa wote.",
+      "deleteBulkFailed": "Imeshindikana kufuta ujumbe",
+      "inviteSelectUser": "Chagua angalau mtumiaji mmoja wa kumwalika.",
+      "inviteSuccess": "Mialiko imetumwa.",
+      "inviteFailed": "Imeshindikana kuwaalika watumiaji",
+      "forwardNotReady": "Ujumbe hauko tayari kutumwa mbele.",
+      "forwardSelectRoom": "Chagua angalau chumba kimoja cha kutuma ujumbe.",
+      "forwardSuccess": "Ujumbe umetumwa kwa mafanikio.",
+      "forwardFailure": "Imeshindikana kutuma ujumbe. Tafadhali jaribu tena baadaye.",
+      "forwardPartial": "Ujumbe umetumwa kwa baadhi ya vyumba, lakini vingine vimeshindwa.",
+      "forwardError": "Imeshindikana kutuma ujumbe mbele",
+      "audioTooLarge": "Faili ya sauti ni kubwa kuliko 3 MB. Chagua faili ndogo.",
+      "attachmentTooLarge": "Kiambatisho ni kikubwa kuliko 3 MB. Chagua faili ndogo.",
+      "uploadFailed": "Upakiaji umeshindikana.",
+      "gifOnly": "Tafadhali chagua faili ya GIF",
+      "audioUnsupported": "Kurekodi sauti hakutumiki kwenye kivinjari hiki.",
+      "audioRecordingTooLarge": "Sauti ni kubwa kuliko 3 MB. Rekodi kipande kifupi."
+    },
+    "attachments": {
+      "openFile": "Fungua {{filename}}",
+      "viewImage": "Tazama picha",
+      "imageAlt": "Kiambatisho cha picha",
+      "imageLabel": "Picha",
+      "download": "Pakua",
+      "playVideo": "Cheza video",
+      "videoLabel": "Video",
+      "attachment": "Kiambatisho"
+    },
+    "messages": {
+      "replyingTo": "Unamjibu {{name}}",
+      "forwardedFrom": "Imetumwa kutoka kwa {{name}}",
+      "attachmentFallback": "Kiambatisho",
+      "actionsAria": "Vitendo vya ujumbe",
+      "pinned": "Imebandikwa",
+      "starred": "Kipendwa",
+      "noteLabel": "Dokezo:",
+      "status": {
+        "sent": "imetumwa",
+        "delivered": "imewasilishwa",
+        "read": "imesomwa"
+      },
+      "statusAria": "Ujumbe {{status}}"
+    },
+    "attachMenu": {
+      "document": "Hati",
+      "photosVideos": "Picha & Video",
+      "gif": "GIF",
+      "audio": "Sauti",
+      "contact": "Mawasiliano"
+    },
+    "composer": {
+      "uploading": "Inapakia…",
+      "recording": "Inarekodi…",
+      "placeholder": "Andika ujumbe",
+      "recordingAria": "Inarekodi sauti"
     }
   }
 }

@@ -134,6 +134,19 @@
   },
 
   "chatRoom": {
+    "header": {
+      "fallbackTitle": "Raum",
+      "fallbackInitial": "R",
+      "typing": "{{name}} schreibt…",
+      "groupSubtitle": "Gruppenchat",
+      "directSubtitle": "Direktchat",
+      "directWithUsername": "@{{username}}",
+      "ariaRoom": "{{name}} Raum",
+      "ariaProfile": "{{name}} Profil",
+      "someone": "Jemand",
+      "tapForInfo": "(tippen für Infos)",
+      "tapForProfile": "(tippen für Profil)"
+    },
     "dates": {
       "today": "Heute",
       "yesterday": "Gestern"
@@ -144,19 +157,141 @@
       "minutesAgo_other": "Zuletzt vor {{count}} Minuten gesehen",
       "today": "Zuletzt heute um {{time}} gesehen",
       "yesterday": "Zuletzt gestern um {{time}} gesehen",
-      "dateTime": "Zuletzt am {{day}} um {{time}} gesehen"
+      "dateTime": "Zuletzt am {{day}} um {{time}} gesehen",
+      "hiddenByPrivacy": "Zuletzt online durch Privatsphäre verborgen",
+      "unavailable": "Zuletzt online nicht verfügbar"
     },
     "status": {
       "online": "Online",
       "away": "Abwesend",
       "offline": "Offline",
       "dnd": "Bitte nicht stören",
-      "onlineNow": "Jetzt online"
+      "onlineNow": "Jetzt online",
+      "activeNow": "Jetzt aktiv"
     },
     "profile": {
       "notShared": "Nicht geteilt",
       "hiddenPrivacy": "Durch Privatsphäre verborgen",
-      "notProvided": "Nicht angegeben"
+      "notProvided": "Nicht angegeben",
+      "statusHidden": "Status durch Privatsphäre verborgen",
+      "bioHidden": "Bio durch Privatsphäre verborgen",
+      "fallbackName": "Benutzer",
+      "photoAlt": "Profilfoto",
+      "viewPhotoAria": "Profilfoto anzeigen",
+      "loading": "Profil wird geladen…",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "lastSeenLabel": "Zuletzt online",
+      "privacyLabel": "Privatsphäre",
+      "empty": "Profildetails nicht verfügbar.",
+      "membersTitle": "Mitglieder",
+      "memberCount": "{{count}} Mitglieder",
+      "memberCount_one": "{{count}} Mitglied",
+      "memberCount_other": "{{count}} Mitglieder",
+      "invite": "+ Einladen",
+      "avatarAlt": "{{name}} Avatar",
+      "privacySummary": "Avatar {{avatar}} · Kontakt {{contact}} · Status {{status}} · Bio {{bio}} · Zuletzt online {{lastSeen}}",
+      "privacy": {
+        "avatar": { "hidden": "verborgen", "visible": "sichtbar" },
+        "contact": { "hidden": "verborgen", "visible": "sichtbar" },
+        "status": { "hidden": "verborgen", "visible": "sichtbar" },
+        "bio": { "hidden": "verborgen", "visible": "sichtbar" },
+        "lastSeen": { "hidden": "verborgen", "visible": "sichtbar" }
+      }
+    },
+    "selection": {
+      "count": "{{count}} ausgewählt",
+      "count_one": "{{count}} ausgewählt",
+      "count_other": "{{count}} ausgewählt"
+    },
+    "actions": {
+      "delete": "Löschen",
+      "deleteForAll": "Für alle löschen",
+      "cancel": "Abbrechen",
+      "react": "Reagieren",
+      "replying": "Antwort an",
+      "forwarding": "Weiterleiten",
+      "messageFallback": "Nachricht"
+    },
+    "menu": {
+      "info": "Info",
+      "reply": "Antworten",
+      "forward": "Weiterleiten",
+      "copyText": "Text kopieren",
+      "star": "Favorisieren",
+      "unstar": "Favorit entfernen",
+      "pin": "Anheften",
+      "unpin": "Lösen",
+      "addNote": "Notiz hinzufügen",
+      "editNote": "Notiz bearbeiten",
+      "selectMessages": "Nachrichten auswählen",
+      "addToSelection": "Zur Auswahl hinzufügen",
+      "deleteForMe": "Für mich löschen",
+      "deleteForEveryone": "Für alle löschen"
+    },
+    "alerts": {
+      "pinUpdateFailed": "Pin-Status konnte nicht aktualisiert werden",
+      "starUpdateFailed": "Favoritenstatus konnte nicht aktualisiert werden",
+      "notePrompt": "Notiz zu dieser Nachricht hinzufügen",
+      "noteSaveFailed": "Notiz konnte nicht gespeichert werden",
+      "infoLoadFailed": "Nachrichteninfo konnte nicht geladen werden",
+      "profileLoadFailed": "Profil konnte nicht geladen werden",
+      "deleteFailed": "Nachricht konnte nicht gelöscht werden",
+      "deleteOnlyDelivered": "Nur zugestellte Nachrichten können für alle gelöscht werden.",
+      "deleteBulkFailed": "Nachrichten konnten nicht gelöscht werden",
+      "inviteSelectUser": "Wähle mindestens einen Nutzer zum Einladen aus.",
+      "inviteSuccess": "Einladungen gesendet.",
+      "inviteFailed": "Einladen der Nutzer fehlgeschlagen",
+      "forwardNotReady": "Nachricht ist noch nicht bereit zum Weiterleiten.",
+      "forwardSelectRoom": "Wähle mindestens einen Raum zum Weiterleiten aus.",
+      "forwardSuccess": "Nachricht erfolgreich weitergeleitet.",
+      "forwardFailure": "Nachricht konnte nicht weitergeleitet werden. Bitte später erneut versuchen.",
+      "forwardPartial": "Nachricht wurde an einige Räume weitergeleitet, einige sind fehlgeschlagen.",
+      "forwardError": "Nachricht konnte nicht weitergeleitet werden",
+      "audioTooLarge": "Audiodatei ist größer als 3 MB. Bitte kleinere Datei wählen.",
+      "attachmentTooLarge": "Anhang ist größer als 3 MB. Bitte kleinere Datei wählen.",
+      "uploadFailed": "Upload fehlgeschlagen.",
+      "gifOnly": "Bitte wähle eine GIF-Datei aus",
+      "audioUnsupported": "Audioaufnahme wird von diesem Browser nicht unterstützt.",
+      "audioRecordingTooLarge": "Audio ist größer als 3 MB. Bitte kürzer aufnehmen."
+    },
+    "attachments": {
+      "openFile": "{{filename}} öffnen",
+      "viewImage": "Bild ansehen",
+      "imageAlt": "Bildanhang",
+      "imageLabel": "Bild",
+      "download": "Herunterladen",
+      "playVideo": "Video abspielen",
+      "videoLabel": "Video",
+      "attachment": "Anhang"
+    },
+    "messages": {
+      "replyingTo": "Antwort an {{name}}",
+      "forwardedFrom": "Weitergeleitet von {{name}}",
+      "attachmentFallback": "Anhang",
+      "actionsAria": "Nachrichtenaktionen",
+      "pinned": "Angeheftet",
+      "starred": "Markiert",
+      "noteLabel": "Notiz:",
+      "status": {
+        "sent": "gesendet",
+        "delivered": "zugestellt",
+        "read": "gelesen"
+      },
+      "statusAria": "Nachricht {{status}}"
+    },
+    "attachMenu": {
+      "document": "Dokument",
+      "photosVideos": "Fotos & Videos",
+      "gif": "GIF",
+      "audio": "Audio",
+      "contact": "Kontakt"
+    },
+    "composer": {
+      "uploading": "Wird hochgeladen…",
+      "recording": "Wird aufgenommen…",
+      "placeholder": "Nachricht eingeben",
+      "recordingAria": "Audioaufnahme läuft"
     }
   }
 }
