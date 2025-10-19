@@ -28,11 +28,13 @@ type User = {
   phone?: string | null
   bio?: string | null
   status_message?: string | null
+  user_timezone?: string | null
   share_avatar?: boolean
   share_contact_info?: boolean
   share_bio?: boolean
   share_last_seen?: boolean
   share_status_message?: boolean
+  share_timezone?: boolean
   [key: string]: any
 } | null
 

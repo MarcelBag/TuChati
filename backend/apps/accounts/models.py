@@ -63,6 +63,7 @@ class User(AbstractUser):
     share_bio = models.BooleanField(default=True)
     share_last_seen = models.BooleanField(default=True)
     share_status_message = models.BooleanField(default=True)
+    share_timezone = models.BooleanField(default=True)
 
     def mark_online(self, device="web"):
         self.is_online = True

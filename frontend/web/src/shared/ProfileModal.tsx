@@ -47,6 +47,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [shareBio, setShareBio] = React.useState(!!user?.share_bio)
   const [shareLastSeen, setShareLastSeen] = React.useState(!!user?.share_last_seen)
   const [shareStatusMessage, setShareStatusMessage] = React.useState(!!user?.share_status_message)
+  const [shareTimezone, setShareTimezone] = React.useState(!!user?.share_timezone)
 
   // password state
   const [currentPwd, setCurrentPwd] = React.useState('')
@@ -72,6 +73,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setShareBio(!!user?.share_bio)
     setShareLastSeen(!!user?.share_last_seen)
     setShareStatusMessage(!!user?.share_status_message)
+    setShareTimezone(!!user?.share_timezone)
   }, [user])
 
   // close automatically if auth disappears
@@ -118,6 +120,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         share_bio: shareBio,
         share_last_seen: shareLastSeen,
         share_status_message: shareStatusMessage,
+        share_timezone: shareTimezone,
       })
 
       // Try PATCH then PUT on the same endpoint, then a couple common fallbacks
@@ -569,6 +572,21 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                     type="checkbox"
                     checked={shareLastSeen}
                     onChange={(event) => setShareLastSeen(event.target.checked)}
+                  />
+                  <span className="slider" />
+                </label>
+              </div>
+
+              <div className="pref-row">
+                <div>
+                  <h4>Time zone</h4>
+                  <p>Allow others to see your local time zone.</p>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={shareTimezone}
+                    onChange={(event) => setShareTimezone(event.target.checked)}
                   />
                   <span className="slider" />
                 </label>

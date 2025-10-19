@@ -197,6 +197,7 @@ class UserProfileView(APIView):
         email = user.email if allow('share_contact_info') else ''
         phone = user.phone if allow('share_contact_info') else ''
         last_seen = user.last_seen if allow('share_last_seen') else None
+        timezone_value = user.user_timezone if allow('share_timezone') else ''
 
         payload = {
             "id": user.id,
@@ -211,6 +212,7 @@ class UserProfileView(APIView):
             "last_seen": last_seen,
             "phone": phone,
             "email": email,
+            "user_timezone": timezone_value,
             "is_online": user.is_online,
             "privacy": {
                 "share_avatar": user.share_avatar,
@@ -218,6 +220,7 @@ class UserProfileView(APIView):
                 "share_bio": user.share_bio,
                 "share_last_seen": user.share_last_seen,
                 "share_status_message": user.share_status_message,
+                "share_timezone": user.share_timezone,
             },
             "viewer_is_self": is_self,
         }

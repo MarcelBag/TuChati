@@ -1524,12 +1524,14 @@ export default function ChatRoom() {
     : ''
   const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
+  const timezoneValue = profileData ? describeField(t, profileData.user_timezone, profilePrivacy.share_timezone, 'chatRoom.profile.notProvided') : ''
   const privacySummary = t('chatRoom.profile.privacySummary', {
     avatar: t(profilePrivacy.share_avatar === false ? 'chatRoom.profile.privacy.avatar.hidden' : 'chatRoom.profile.privacy.avatar.visible'),
     contact: t(profilePrivacy.share_contact_info === false ? 'chatRoom.profile.privacy.contact.hidden' : 'chatRoom.profile.privacy.contact.visible'),
     status: t(profilePrivacy.share_status_message === false ? 'chatRoom.profile.privacy.status.hidden' : 'chatRoom.profile.privacy.status.visible'),
     bio: t(profilePrivacy.share_bio === false ? 'chatRoom.profile.privacy.bio.hidden' : 'chatRoom.profile.privacy.bio.visible'),
     lastSeen: t(profilePrivacy.share_last_seen === false ? 'chatRoom.profile.privacy.lastSeen.hidden' : 'chatRoom.profile.privacy.lastSeen.visible'),
+    timezone: t(profilePrivacy.share_timezone === false ? 'chatRoom.profile.privacy.timezone.hidden' : 'chatRoom.profile.privacy.timezone.visible'),
   })
 
   if (!token) return null
@@ -1860,6 +1862,10 @@ export default function ChatRoom() {
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.phone')}</span>
                     <span className={`ri-detail-value ${profileData?.phone ? '' : 'muted'}`}>{phoneValue}</span>
+                  </div>
+                  <div className="ri-detail-row">
+                    <span className="ri-detail-label">{t('chatRoom.profile.timezoneLabel')}</span>
+                    <span className={`ri-detail-value ${profileData?.user_timezone ? '' : 'muted'}`}>{timezoneValue}</span>
                   </div>
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.lastSeenLabel')}</span>
