@@ -1534,15 +1534,6 @@ export default function ChatRoom() {
       return timezoneValue
     }
   }, [timezoneValue, t])
-  const privacySummary = t('chatRoom.profile.privacySummary', {
-    avatar: t(profilePrivacy.share_avatar === false ? 'chatRoom.profile.privacy.avatar.hidden' : 'chatRoom.profile.privacy.avatar.visible'),
-    contact: t(profilePrivacy.share_contact_info === false ? 'chatRoom.profile.privacy.contact.hidden' : 'chatRoom.profile.privacy.contact.visible'),
-    status: t(profilePrivacy.share_status_message === false ? 'chatRoom.profile.privacy.status.hidden' : 'chatRoom.profile.privacy.status.visible'),
-    bio: t(profilePrivacy.share_bio === false ? 'chatRoom.profile.privacy.bio.hidden' : 'chatRoom.profile.privacy.bio.visible'),
-    lastSeen: t(profilePrivacy.share_last_seen === false ? 'chatRoom.profile.privacy.lastSeen.hidden' : 'chatRoom.profile.privacy.lastSeen.visible'),
-    timezone: t(profilePrivacy.share_timezone === false ? 'chatRoom.profile.privacy.timezone.hidden' : 'chatRoom.profile.privacy.timezone.visible'),
-  })
-
   if (!token) return null
 
   return (
@@ -1863,6 +1854,7 @@ export default function ChatRoom() {
                   </p>
                 )}
 
+                <div className="ri-detail-heading">{t('chatRoom.profile.detailsHeading')}</div>
                 <div className="ri-profile-details">
                   <div className="ri-detail-row">
                     <span className="ri-detail-label">{t('chatRoom.profile.email')}</span>
@@ -1881,10 +1873,6 @@ export default function ChatRoom() {
                     <span className={`ri-detail-value ${(!profileData?.is_online && !profileData?.last_seen) ? 'muted' : ''}`}>
                       {profileData?.is_online ? t('chatRoom.status.activeNow') : lastSeenLine}
                     </span>
-                  </div>
-                  <div className="ri-detail-row">
-                    <span className="ri-detail-label">{t('chatRoom.profile.privacyLabel')}</span>
-                    <span className="ri-detail-value muted">{privacySummary}</span>
                   </div>
                 </div>
               </div>

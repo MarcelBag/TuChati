@@ -183,23 +183,14 @@
       "phone": "Simu",
       "lastSeenLabel": "Kuonekana mwisho",
       "timezoneLabel": "Saa za eneo",
-      "privacyLabel": "Faragha",
+      "detailsHeading": "Maelezo ya profaili",
       "empty": "Maelezo ya wasifu hayapatikani.",
       "membersTitle": "Wanachama",
       "memberCount": "{{count}} washiriki",
       "memberCount_one": "{{count}} mshiriki",
       "memberCount_other": "{{count}} washiriki",
       "invite": "+ Alika",
-      "avatarAlt": "Picha ya {{name}}",
-      "privacySummary": "Picha ya wasifu {{avatar}} · Mawasiliano {{contact}} · Hali {{status}} · Maelezo {{bio}} · Kuonekana mwisho {{lastSeen}} · Saa za eneo {{timezone}}",
-      "privacy": {
-        "avatar": { "hidden": "imefichwa", "visible": "inaonekana" },
-        "contact": { "hidden": "imefichwa", "visible": "inaonekana" },
-        "status": { "hidden": "imefichwa", "visible": "inaonekana" },
-        "bio": { "hidden": "imefichwa", "visible": "inaonekana" },
-        "lastSeen": { "hidden": "imefichwa", "visible": "inaonekana" },
-        "timezone": { "hidden": "imefichwa", "visible": "inaonekana" }
-      }
+      "avatarAlt": "Picha ya {{name}}"
     },
     "selection": {
       "count": "{{count}} zimechaguliwa",

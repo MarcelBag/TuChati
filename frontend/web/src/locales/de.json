@@ -183,23 +183,14 @@
       "phone": "Telefon",
       "lastSeenLabel": "Zuletzt online",
       "timezoneLabel": "Zeitzone",
-      "privacyLabel": "Privatsphäre",
+      "detailsHeading": "Profildetails",
       "empty": "Profildetails nicht verfügbar.",
       "membersTitle": "Mitglieder",
       "memberCount": "{{count}} Mitglieder",
       "memberCount_one": "{{count}} Mitglied",
       "memberCount_other": "{{count}} Mitglieder",
       "invite": "+ Einladen",
-      "avatarAlt": "{{name}} Avatar",
-      "privacySummary": "Avatar {{avatar}} · Kontakt {{contact}} · Status {{status}} · Bio {{bio}} · Zuletzt online {{lastSeen}} · Zeitzone {{timezone}}",
-      "privacy": {
-        "avatar": { "hidden": "verborgen", "visible": "sichtbar" },
-        "contact": { "hidden": "verborgen", "visible": "sichtbar" },
-        "status": { "hidden": "verborgen", "visible": "sichtbar" },
-        "bio": { "hidden": "verborgen", "visible": "sichtbar" },
-        "lastSeen": { "hidden": "verborgen", "visible": "sichtbar" },
-        "timezone": { "hidden": "verborgen", "visible": "sichtbar" }
-      }
+      "avatarAlt": "{{name}} Avatar"
     },
     "selection": {
       "count": "{{count}} ausgewählt",
