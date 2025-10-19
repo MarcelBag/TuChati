@@ -57,15 +57,6 @@ export default function ChatPage() {
     void loadRooms()
   }, [loadRooms, token])
 
-  const handleRoomCreated = React.useCallback((room: Room) => {
-    setRooms(prev => {
-      const filtered = prev.filter((item) => String(item.id) !== String(room.id))
-      return [room, ...filtered]
-    })
-    navigate(`/chat/${room.id}`)
-    loadGroupInvites()
-  }, [navigate, loadGroupInvites])
-
   const loadDirectRequests = React.useCallback(async () => {
     if (!token) return
     setRequestLoading(true)
@@ -107,6 +98,15 @@ export default function ChatPage() {
     if (!token) return
     void loadGroupInvites()
   }, [loadGroupInvites, token])
+
+  const handleRoomCreated = React.useCallback((room: Room) => {
+    setRooms(prev => {
+      const filtered = prev.filter((item) => String(item.id) !== String(room.id))
+      return [room, ...filtered]
+    })
+    navigate(`/chat/${room.id}`)
+    loadGroupInvites()
+  }, [navigate, loadGroupInvites])
 
   function formatDate(dateString?: string) {
     if (!dateString) return ''
