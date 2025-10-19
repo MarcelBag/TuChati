@@ -35,6 +35,10 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [firstName, setFirstName] = React.useState(user?.first_name || '')
   const [lastName, setLastName] = React.useState(user?.last_name || '')
   const [email, setEmail] = React.useState(user?.email || '')
+  const [phone, setPhone] = React.useState(user?.phone || '')
+  const [userTimezone, setUserTimezone] = React.useState(() => user?.user_timezone || (Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone ?? 'UTC'))
+  const [bio, setBio] = React.useState(user?.bio || '')
+  const [statusMessage, setStatusMessage] = React.useState(user?.status_message || '')
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(user?.avatar || null)
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
   const [avatarPreviewOpen, setAvatarPreviewOpen] = React.useState(false)
@@ -57,6 +61,10 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setFirstName(user?.first_name || '')
     setLastName(user?.last_name || '')
     setEmail(user?.email || '')
+    setPhone(user?.phone || '')
+    setBio(user?.bio || '')
+    setStatusMessage(user?.status_message || '')
+    setUserTimezone(user?.user_timezone || (Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone ?? 'UTC'))
     setAvatarPreview(user?.avatar || null)
     setAvatarFile(null)
     setShareAvatar(!!user?.share_avatar)
@@ -101,6 +109,10 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
         first_name: firstName,
         last_name: lastName,
         email,
+        phone,
+        bio,
+        status_message: statusMessage,
+        user_timezone: userTimezone,
         share_avatar: shareAvatar,
         share_contact_info: shareContactInfo,
         share_bio: shareBio,
@@ -415,7 +427,41 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                     <span>Email</span>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </label>
+
+                  <label>
+                    <span>Phone number</span>
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +243 970 000 000" />
+                  </label>
+
+                  <label>
+                    <span>Time zone</span>
+                    <input value={userTimezone} onChange={(e) => setUserTimezone(e.target.value)} placeholder="Africa/Kinshasa" />
+                    <small className="pm-hint">Use an official TZ name, e.g. <code>Africa/Nairobi</code>.</small>
+                  </label>
                 </div>
+              </div>
+
+              <div className="pm-section">
+                <h4>Profile details</h4>
+                <label className="pm-textarea">
+                  <span>Status message</span>
+                  <textarea
+                    value={statusMessage}
+                    onChange={(e) => setStatusMessage(e.target.value)}
+                    maxLength={255}
+                    placeholder="Let others know what you're up to."
+                  />
+                  <small className="pm-hint">Shown beside your name when people open your profile.</small>
+                </label>
+                <label className="pm-textarea">
+                  <span>Bio</span>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={4}
+                    placeholder="Tell people a little about yourself."
+                  />
+                </label>
               </div>
 
               <div className="pm-actions">

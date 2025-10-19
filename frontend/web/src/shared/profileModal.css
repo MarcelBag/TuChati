@@ -114,6 +114,45 @@
   box-shadow: 0 0 0 2px rgba(124,184,255,.25);
 }
 
+.pm-textarea textarea {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: inherit;
+  outline: none;
+  resize: vertical;
+  min-height: 96px;
+  font-family: inherit;
+}
+.pm-textarea textarea:focus {
+  border-color: #7cb8ff;
+  box-shadow: 0 0 0 2px rgba(124,184,255,.25);
+}
+.pm-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: .82rem;
+  opacity: .7;
+}
+.pm-hint code {
+  font-family: inherit;
+  background: rgba(148,163,184,.12);
+  padding: 0 4px;
+  border-radius: 6px;
+}
+
+.pm-section {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+.pm-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  opacity: .9;
+}
+
 .pm-grid {
   display: grid;
   grid-template-columns: 220px 1fr;
