@@ -197,11 +197,13 @@ html.light .room-item.unread { background: rgba(5, 154, 62, 0.18); }
   height: 50px;
   min-width: 50px;
   border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
   background: linear-gradient(135deg, #3b82f6, #06b6d4);
   display: grid;
   place-items: center;
   /* ensuring initials visible in light mode */
-  color: #fff;               
+  color: #fff;
   font-weight: 700;
   font-size: 20px;
   text-transform: uppercase;

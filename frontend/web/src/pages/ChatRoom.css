@@ -61,9 +61,19 @@ html.light {
 
 /* Avatars */
 .avatar-badge {
-  width: 40px; height: 40px; min-width: 40px; border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
   background: linear-gradient(135deg, #3b82f6, #06b6d4);
-  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 16px; text-transform: uppercase;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  text-transform: uppercase;
 }
 .avatar-badge.lg { width: 44px; height: 44px; font-size: 18px; }
 .avatar-badge.sm { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
@@ -191,7 +201,7 @@ html.light .bubble .time { opacity: .55; }
 .ri-title { font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .ri-list { list-style: none; margin: 0; padding: 0; }
 .ri-list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
-.ri-avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #3b82f6, #06b6d4); }
+.ri-avatar { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; aspect-ratio: 1 / 1; overflow: hidden; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #3b82f6, #06b6d4); }
 .ri-avatar.has-image { background: transparent; }
 .ri-avatar.has-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .ri-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
@@ -199,7 +209,7 @@ html.light .bubble .time { opacity: .55; }
 .ri-close { margin-left:auto; border:0; background:transparent; font-size:18px; color:var(--muted); cursor:pointer; }
 .ri-close:hover{ color: var(--text); }
 .ri-profile { display: flex; flex-direction: column; gap: 16px; }
-.ri-profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#06b6d4); display: grid; place-items: center; font-size: 24px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.ri-profile-avatar { width: 72px; height: 72px; border-radius: 50%; aspect-ratio: 1 / 1; overflow: hidden; background: linear-gradient(135deg,#3b82f6,#06b6d4); display: grid; place-items: center; font-size: 24px; font-weight: 700; color: #fff; flex-shrink: 0; }
 .ri-profile-avatar.has-image { cursor: zoom-in; overflow: hidden; }
 .ri-profile-avatar.has-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .ri-profile-avatar.has-image:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
@@ -280,7 +290,7 @@ html.light{
 .chat-hd .sub{color:var(--muted);font-size:13px;margin-top:2px}
 
 /* avatars */
-.avatar-badge{width:40px;height:40px;min-width:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;text-transform:uppercase}
+.avatar-badge{width:40px;height:40px;min-width:40px;border-radius:50%;aspect-ratio:1/1;overflow:hidden;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:grid;place-items:center;color:#fff;font-weight:700;font-size:16px;text-transform:uppercase}
 .avatar-badge.lg{width:44px;height:44px;font-size:18px}
 .avatar-badge.sm{width:32px;height:32px;font-size:14px;flex-shrink:0}
 button.avatar-badge{border:none;background:transparent;padding:0;cursor:pointer}
@@ -443,7 +453,7 @@ html:not(.light) .rxn-chip{background:rgba(255,255,255,.12)}
 .ri-title{font-weight:600;color:var(--text);margin-bottom:8px}
 .ri-list{list-style:none;margin:0;padding:0}
 .ri-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06)}
-.ri-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#3b82f6,#06b6d4)}
+.ri-avatar{width:28px;height:28px;min-width:28px;border-radius:50%;aspect-ratio:1/1;overflow:hidden;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#3b82f6,#06b6d4)}
 .ri-name{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis}
 .ri-action{border:none;background:transparent;color:#ef4444;cursor:pointer}
 .ri-close{margin-left:auto;border:0;background:transparent;font-size:18px;color:var(--muted);cursor:pointer}
