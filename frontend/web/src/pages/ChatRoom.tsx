@@ -38,7 +38,7 @@ function formatDayLabel(t: TFunction, d: Date) {
   return d.toLocaleDateString()
 }
 
-function describeLastSeen(t: TFunction, value?: string | null) {
+function describeLastSeen(t: TFunction, value: string | null | undefined, locale: string, hour12: boolean) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
@@ -51,12 +51,13 @@ function describeLastSeen(t: TFunction, value?: string | null) {
   const sameDay = now.toDateString() === date.toDateString()
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const localeArg = locale ? [locale] : undefined
+  const time = date.toLocaleTimeString(localeArg, { hour: '2-digit', minute: '2-digit', hour12 })
 
   if (sameDay) return t('chatRoom.lastSeen.today', { time })
   if (yesterday.toDateString() === date.toDateString()) return t('chatRoom.lastSeen.yesterday', { time })
 
-  const day = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })
+  const day = date.toLocaleDateString(localeArg, { day: '2-digit', month: 'short', year: 'numeric' })
   return t('chatRoom.lastSeen.dateTime', { day, time })
 }
 
@@ -77,6 +78,28 @@ function describeField(t: TFunction, value?: string | null, allowed?: boolean, e
   return t(emptyKey)
 }
 
+const TIMEZONE_LABEL_LOOKUP: Record<string, string> = {
+  'Africa/Kinshasa': 'profileModal.timezones.kinshasa',
+  'Africa/Lubumbashi': 'profileModal.timezones.lubumbashi',
+  'Africa/Goma': 'profileModal.timezones.goma',
+  'Africa/Nairobi': 'profileModal.timezones.nairobi',
+  'Africa/Lagos': 'profileModal.timezones.lagos',
+  'Africa/Kampala': 'profileModal.timezones.kampala',
+  'Africa/Bukavu': 'profileModal.timezones.bukavu',
+  'UTC': 'profileModal.timezones.utc',
+  'Europe/Paris': 'profileModal.timezones.paris',
+  'Europe/Berlin': 'profileModal.timezones.berlin',
+  'America/New_York': 'profileModal.timezones.newYork',
+  'America/Los_Angeles': 'profileModal.timezones.seattle',
+  'America/Toronto': 'profileModal.timezones.montreal',
+}
+
+function resolveTimezoneLabel(t: TFunction, timezone?: string | null) {
+  if (!timezone) return ''
+  const key = TIMEZONE_LABEL_LOOKUP[timezone]
+  return key ? t(key) : timezone
+}
+
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -91,7 +114,7 @@ const AUDIO_MIME_CANDIDATES = [
 export default function ChatRoom() {
   const { roomId } = useParams()
   const { token, user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const outletContext = useOutletContext<ChatOutletContext | null>()
   const updateRoomUnread = outletContext?.updateRoomUnread
   const navigate = useNavigate()
@@ -118,6 +141,22 @@ export default function ChatRoom() {
   const [forwardRooms, setForwardRooms] = React.useState<any[]>([])
   const [forwardSelected, setForwardSelected] = React.useState<string[]>([])
   const [forwardLoading, setForwardLoading] = React.useState(false)
+  const [clockTick, setClockTick] = React.useState(() => Date.now())
+
+  const locale = React.useMemo(() => (
+    i18n?.language || (typeof navigator !== 'undefined' ? navigator.language : 'en')
+  ), [i18n?.language])
+
+  const use12Hour = React.useMemo(() => {
+    const base = locale?.toLowerCase() || 'en'
+    return base.startsWith('en')
+  }, [locale])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const id = window.setInterval(() => setClockTick(Date.now()), 60000)
+    return () => window.clearInterval(id)
+  }, [])
   const [forwardSubmitting, setForwardSubmitting] = React.useState(false)
   const [inviteOpen, setInviteOpen] = React.useState(false)
   const [inviteLoading, setInviteLoading] = React.useState(false)
@@ -1503,7 +1542,7 @@ export default function ChatRoom() {
     ? (profileData.is_online
         ? t('chatRoom.status.activeNow')
         : profileData.last_seen
-          ? describeLastSeen(t, profileData.last_seen)
+          ? describeLastSeen(t, profileData.last_seen, locale, use12Hour)
           : profilePrivacy.share_last_seen === false
             ? t('chatRoom.lastSeen.hiddenByPrivacy')
             : t('chatRoom.lastSeen.unavailable'))
@@ -1525,16 +1564,25 @@ export default function ChatRoom() {
   const bioMuted = !rawBio
   const emailValue = profileData ? describeField(t, profileData.email, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
   const phoneValue = profileData ? describeField(t, profileData.phone, profilePrivacy.share_contact_info, 'chatRoom.profile.notProvided') : ''
-  const timezoneValue = profileData ? describeField(t, profileData.user_timezone, profilePrivacy.share_timezone, 'chatRoom.profile.notProvided') : ''
+  const timezoneRaw = profileData?.user_timezone?.trim() || ''
+  const timezoneLabel = resolveTimezoneLabel(t, timezoneRaw) || timezoneRaw
+  const timezoneValue = profileData ? describeField(t, timezoneRaw, profilePrivacy.share_timezone, 'chatRoom.profile.notProvided') : ''
   const timezoneDisplay = React.useMemo(() => {
-    if (!timezoneValue || typeof timezoneValue !== 'string') return ''
+    if (!profileData) return ''
+    if (!timezoneRaw || profilePrivacy.share_timezone === false) return timezoneValue
     try {
-      const localeTime = new Date().toLocaleTimeString([], { timeZone: timezoneValue, hour: '2-digit', minute: '2-digit' })
-      return t('chatRoom.profile.timezoneValue', { zone: timezoneValue, time: localeTime })
+      const localeArg = locale ? [locale] : undefined
+      const formatted = new Intl.DateTimeFormat(localeArg, {
+        timeZone: timezoneRaw,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: use12Hour,
+      }).format(new Date(clockTick))
+      return t('chatRoom.profile.timezoneValue', { zone: timezoneLabel || timezoneRaw, time: formatted })
     } catch {
-      return timezoneValue
+      return timezoneLabel || timezoneValue || timezoneRaw
     }
-  }, [timezoneValue, t])
+  }, [clockTick, locale, profileData, profilePrivacy.share_timezone, t, timezoneLabel, timezoneRaw, timezoneValue, use12Hour])
   if (!token) return null
 
   return (

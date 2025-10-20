@@ -196,6 +196,7 @@
       "phone": "Téléfon",
       "lastSeenLabel": "Komonana ya suka",
       "timezoneLabel": "Heure ya etuka",
+      "timezoneValue": "Ngonga na {{zone}} · {{time}}",
       "privacyLabel": "Confidentialité",
       "empty": "Makambo ya profil ezangi.",
       "membersTitle": "Bato ya groupe",

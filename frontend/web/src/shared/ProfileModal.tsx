@@ -76,10 +76,14 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
       { id: 'africa-goma', value: 'Africa/Goma', label: t('profileModal.timezones.goma') },
       { id: 'africa-bukavu', value: 'Africa/Lubumbashi', label: t('profileModal.timezones.bukavu') },
       { id: 'africa-nairobi', value: 'Africa/Nairobi', label: t('profileModal.timezones.nairobi') },
+      { id: 'africa-kampala', value: 'Africa/Kampala', label: t('profileModal.timezones.kampala') },
       { id: 'africa-lagos', value: 'Africa/Lagos', label: t('profileModal.timezones.lagos') },
       { id: 'utc', value: 'UTC', label: t('profileModal.timezones.utc') },
       { id: 'europe-paris', value: 'Europe/Paris', label: t('profileModal.timezones.paris') },
+      { id: 'europe-berlin', value: 'Europe/Berlin', label: t('profileModal.timezones.berlin') },
       { id: 'america-new_york', value: 'America/New_York', label: t('profileModal.timezones.newYork') },
+      { id: 'america-seattle', value: 'America/Los_Angeles', label: t('profileModal.timezones.seattle') },
+      { id: 'america-montreal', value: 'America/Toronto', label: t('profileModal.timezones.montreal') },
     ]
   }, [detectedTimeZone, t])
 

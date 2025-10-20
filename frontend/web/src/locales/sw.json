@@ -229,6 +229,7 @@
       "phone": "Simu",
       "lastSeenLabel": "Kuonekana mwisho",
       "timezoneLabel": "Saa za eneo",
+      "timezoneValue": "Muda katika {{zone}} · {{time}}",
       "statusLabel": "Ujumbe wa hali",
       "bioLabel": "Maelezo mafupi",
       "detailsHeading": "Maelezo ya profaili",
@@ -395,10 +396,14 @@
       "goma": "Goma (Africa/Goma)",
       "bukavu": "Bukavu (Africa/Lubumbashi)",
       "nairobi": "Nairobi (Africa/Nairobi)",
+      "kampala": "Kampala (Africa/Kampala)",
       "lagos": "Lagos (Africa/Lagos)",
       "utc": "UTC",
       "paris": "Paris (Europe/Paris)",
+      "berlin": "Berlin (Europe/Berlin)",
       "newYork": "New York (America/New_York)",
+      "seattle": "Seattle (America/Los_Angeles)",
+      "montreal": "Montreal (America/Toronto)",
       "custom": "Saa maalum"
     },
     "privacy": {

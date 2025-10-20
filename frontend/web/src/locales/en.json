@@ -229,6 +229,7 @@
       "phone": "Phone",
       "lastSeenLabel": "Last seen",
       "timezoneLabel": "Time zone",
+      "timezoneValue": "Time in {{zone}} · {{time}}",
       "statusLabel": "Status message",
       "bioLabel": "Bio",
       "detailsHeading": "Profile details",
@@ -388,10 +389,14 @@
       "goma": "Goma (Africa/Goma)",
       "bukavu": "Bukavu (Africa/Lubumbashi)",
       "nairobi": "Nairobi (Africa/Nairobi)",
+      "kampala": "Kampala (Africa/Kampala)",
       "lagos": "Lagos (Africa/Lagos)",
       "utc": "UTC",
       "paris": "Paris (Europe/Paris)",
+      "berlin": "Berlin (Europe/Berlin)",
       "newYork": "New York (America/New_York)",
+      "seattle": "Seattle (America/Los_Angeles)",
+      "montreal": "Montreal (America/Toronto)",
       "custom": "Custom time zone"
     },
     "privacy": {
