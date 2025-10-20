@@ -1,6 +1,5 @@
 #backend/apps/accounts/models.py
 # ================================================================
-# backend/apps/accounts/models.py
 # Extended User model with presence, device tracking, and security
 # ================================================================
 import uuid
