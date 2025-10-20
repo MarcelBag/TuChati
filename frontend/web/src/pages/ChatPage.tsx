@@ -304,7 +304,7 @@ export default function ChatPage() {
 
             {directRequests.incoming.length > 0 && (
               <div className="direct-section">
-                <h4>{t('chatPage.requests.incoming')}</h4>
+                <h4>{t('chatPage.requests.directRequests.incoming')}</h4>
                 <ul>
                   {directRequests.incoming.map(req => (
                     <li key={req.id}>
@@ -333,7 +333,7 @@ export default function ChatPage() {
 
             {directRequests.outgoing.length > 0 && (
               <div className="direct-section">
-                <h4>{t('chatPage.requests.outgoing')}</h4>
+                <h4>{t('chatPage.requests.directRequests.outgoing')}</h4>
                 <ul>
                   {directRequests.outgoing.map(req => (
                     <li key={req.id}>
@@ -357,62 +357,75 @@ export default function ChatPage() {
               </div>
             )}
 
-            {groupInvites.incoming.length > 0 && (
+            {(groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0) && (
               <div className="direct-section">
-                <h4>{t('chatPage.requests.groupIncoming')}</h4>
-                <ul>
-                  {groupInvites.incoming.map((invite: any) => (
-                    <li key={invite.id}>
-                      <div className="direct-meta">
-                        <AvatarBubble
-                          src={invite.inviter?.avatar}
-                          name={invite.inviter?.name || invite.inviter?.username}
-                          initials={((invite.inviter?.name || invite.inviter?.username || 'U') as string).slice(0, 2).toUpperCase()}
-                          size="sm"
-                        />
-                        <div className="direct-meta-text">
-                          <strong>{invite.room?.name || t('chatPage.rooms.fallbackName')}</strong>
-                          <span>{t('chatPage.requests.invitedBy', { name: invite.inviter?.name || invite.inviter?.username })}</span>
-                        </div>
-                        <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
-                      </div>
-                      <div className="direct-actions">
-                        <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'accept')}>
-                          {t('chatPage.requests.accept')}
-                        </button>
-                        <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'decline')}>
-                          {t('chatPage.requests.decline')}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                <h4>{t('chatPage.requests.groupInvites.title')}</h4>
 
-            {groupInvites.outgoing.length > 0 && (
-              <div className="direct-section">
-                <h4>{t('chatPage.requests.groupOutgoing')}</h4>
-                <ul>
-                  {groupInvites.outgoing.map((invite: any) => (
-                    <li key={invite.id}>
-                      <div className="direct-meta">
-                        <AvatarBubble
-                          src={invite.invitee?.avatar}
-                          name={invite.invitee?.name || invite.invitee?.username}
-                          initials={((invite.invitee?.name || invite.invitee?.username || 'U') as string).slice(0, 2).toUpperCase()}
-                          size="sm"
-                        />
-                        <div className="direct-meta-text">
-                          <strong>{invite.room?.name || t('chatPage.rooms.fallbackName')}</strong>
-                          <span>{t('chatPage.requests.sentTo', { name: invite.invitee?.name || invite.invitee?.username })}</span>
-                        </div>
-                        <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
-                      </div>
-                      <span className="direct-status">{t('chatPage.requests.waiting')}</span>
-                    </li>
-                  ))}
-                </ul>
+                {groupInvites.incoming.length > 0 && (
+                  <>
+                    <h5 className="direct-subhead">{t('chatPage.requests.groupInvites.incoming')}</h5>
+                    <ul>
+                      {groupInvites.incoming.map((invite: any) => {
+                        const roomName = invite.room?.name || t('chatPage.rooms.fallbackName')
+                        const inviterName = invite.inviter?.name || invite.inviter?.username || '—'
+                        return (
+                          <li key={invite.id}>
+                          <div className="direct-meta">
+                            <AvatarBubble
+                              src={invite.inviter?.avatar}
+                              name={inviterName}
+                              initials={(inviterName || 'U').slice(0, 2).toUpperCase()}
+                              size="sm"
+                            />
+                            <div className="direct-meta-text">
+                              <strong>{t('chatPage.requests.attributedInvite', { room: roomName, name: inviterName })}</strong>
+                              <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
+                            </div>
+                          </div>
+                          <div className="direct-actions">
+                            <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'accept')}>
+                              {t('chatPage.requests.accept')}
+                            </button>
+                            <button type="button" disabled={groupInvitesLoading} onClick={() => handleGroupInviteDecision(invite.id, 'decline')}>
+                              {t('chatPage.requests.decline')}
+                            </button>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  </>
+                )}
+
+                {groupInvites.outgoing.length > 0 && (
+                  <>
+                    <h5 className="direct-subhead">{t('chatPage.requests.groupInvites.outgoing')}</h5>
+                    <ul>
+                      {groupInvites.outgoing.map((invite: any) => {
+                        const roomName = invite.room?.name || t('chatPage.rooms.fallbackName')
+                        const inviteeName = invite.invitee?.name || invite.invitee?.username || '—'
+                        return (
+                          <li key={`${invite.id}-out`}>
+                          <div className="direct-meta">
+                            <AvatarBubble
+                              src={invite.invitee?.avatar}
+                              name={inviteeName}
+                              initials={(inviteeName || 'U').slice(0, 2).toUpperCase()}
+                              size="sm"
+                            />
+                            <div className="direct-meta-text">
+                              <strong>{roomName}</strong>
+                              <span>{t('chatPage.requests.sentTo', { name: inviteeName })}</span>
+                              <span className="direct-meta-time">{formatDate(invite.created_at)}</span>
+                            </div>
+                          </div>
+                          <span className="direct-status">{t('chatPage.requests.waiting')}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  </>
+                )}
               </div>
             )}
 

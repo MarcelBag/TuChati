@@ -57,7 +57,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   const [shareLastSeen, setShareLastSeen] = React.useState(!!user?.share_last_seen)
   const [shareStatusMessage, setShareStatusMessage] = React.useState(!!user?.share_status_message)
   const [shareTimezone, setShareTimezone] = React.useState(!!user?.share_timezone)
-  const [autoAcceptGroupInvites, setAutoAcceptGroupInvites] = React.useState(user?.auto_accept_group_invites !== false)
+  const [autoAcceptGroupInvites, setAutoAcceptGroupInvites] = React.useState(!!user?.auto_accept_group_invites)
 
   // password state
   const [currentPwd, setCurrentPwd] = React.useState('')
@@ -113,7 +113,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
     setShareLastSeen(!!user?.share_last_seen)
     setShareStatusMessage(!!user?.share_status_message)
     setShareTimezone(!!user?.share_timezone)
-    setAutoAcceptGroupInvites(user?.auto_accept_group_invites !== false)
+    setAutoAcceptGroupInvites(!!user?.auto_accept_group_invites)
   }, [user, detectedTimeZone, timezonePresets])
 
   // close automatically if auth disappears
@@ -129,6 +129,23 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+
+  const patchPrivacy = React.useCallback(async (payload: Record<string, any>) => {
+    if (!token) return
+    clearMessages()
+    try {
+      const res = await apiFetch('/api/accounts/me/', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw await errorFromResponse(res, t('profileModal.errors.generic'))
+      const updated = await res.json()
+      setUser?.(updated)
+    } catch (error: any) {
+      setErr(error.message || t('profileModal.errors.generic'))
+    }
+  }, [authHeaders, setUser, t])
 
   function clearMessages() {
     setMsg(null)
@@ -573,7 +590,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareAvatar}
-                    onChange={(event) => setShareAvatar(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareAvatar(value)
+                      void patchPrivacy({ share_avatar: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -588,7 +609,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareContactInfo}
-                    onChange={(event) => setShareContactInfo(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareContactInfo(value)
+                      void patchPrivacy({ share_contact_info: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -603,7 +628,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareBio}
-                    onChange={(event) => setShareBio(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareBio(value)
+                      void patchPrivacy({ share_bio: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -618,7 +647,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareStatusMessage}
-                    onChange={(event) => setShareStatusMessage(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareStatusMessage(value)
+                      void patchPrivacy({ share_status_message: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -633,7 +666,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareLastSeen}
-                    onChange={(event) => setShareLastSeen(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareLastSeen(value)
+                      void patchPrivacy({ share_last_seen: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -648,7 +685,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={shareTimezone}
-                    onChange={(event) => setShareTimezone(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setShareTimezone(value)
+                      void patchPrivacy({ share_timezone: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>
@@ -663,7 +704,11 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                   <input
                     type="checkbox"
                     checked={autoAcceptGroupInvites}
-                    onChange={(event) => setAutoAcceptGroupInvites(event.target.checked)}
+                    onChange={(event) => {
+                      const value = event.target.checked
+                      setAutoAcceptGroupInvites(value)
+                      void patchPrivacy({ auto_accept_group_invites: value })
+                    }}
                   />
                   <span className="slider" />
                 </label>

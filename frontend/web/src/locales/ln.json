@@ -142,18 +142,24 @@
       "groups": "Ba groupe"
     },
     "requests": {
-    "loading": "Ezali kocharger ba bosenga…",
-    "incoming": "Ba bosenga ya koya",
-    "outgoing": "Ba bosenga otindi",
-    "accept": "Bondima",
-    "decline": "Boya",
-    "waiting": "Ezali kozela ndingisa",
-    "groupIncoming": "Bainvitation ya groupe",
-    "groupOutgoing": "Bainvitation otindaki",
-    "invitedBy": "Ebengi yo na {{name}}",
-    "sentTo": "Etindami epai ya {{name}}",
-    "none": "Mpo na sik'oyo, ba bosenga te."
-  },
+      "directRequests": {
+        "incoming": "Ba bosenga ya kotindela moto moko",
+        "outgoing": "Ba bosenga otindi"
+      },
+      "groupInvites": {
+        "title": "Bainvitation ya groupe",
+        "incoming": "Bainvitation ozwaki",
+        "outgoing": "Bainvitation otindaki"
+      },
+      "loading": "Ezali kocharger ba bosenga…",
+      "accept": "Bondima",
+      "decline": "Boya",
+      "waiting": "Ezali kozela ndingisa",
+      "invitedBy": "Ebengi yo na {{name}}",
+      "sentTo": "Etindami epai ya {{name}}",
+      "attributedInvite": "{{room}} · ebengi na {{name}}",
+      "none": "Mpo na sik'oyo, ba bosenga te."
+    },
     "empty": {
       "title": "Pona salo moko to sala ya sika.",
       "subtitle": "Nsango na yo eko monana awa."

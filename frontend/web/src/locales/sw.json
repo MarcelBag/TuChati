@@ -142,18 +142,24 @@
       "groups": "Vikundi"
     },
     "requests": {
-    "loading": "Inapakia maombi…",
-    "incoming": "Maombi yanayoingia",
-    "outgoing": "Maombi yaliyotumwa",
-    "accept": "Kubali",
-    "decline": "Kataa",
-    "waiting": "Inasubiri idhini",
-    "groupIncoming": "Mialiko ya kundi",
-    "groupOutgoing": "Mialiko uliyotuma",
-    "invitedBy": "Umealikwa na {{name}}",
-    "sentTo": "Imetumwa kwa {{name}}",
-    "none": "Hakuna maombi yanayosubiri kwa sasa."
-  },
+      "directRequests": {
+        "incoming": "Maombi ya moja kwa moja",
+        "outgoing": "Maombi uliyotuma"
+      },
+      "groupInvites": {
+        "title": "Mialiko ya kundi",
+        "incoming": "Mialiko uliyopewa",
+        "outgoing": "Mialiko uliyotuma"
+      },
+      "loading": "Inapakia maombi…",
+      "accept": "Kubali",
+      "decline": "Kataa",
+      "waiting": "Inasubiri idhini",
+      "invitedBy": "Umealikwa na {{name}}",
+      "sentTo": "Imetumwa kwa {{name}}",
+      "attributedInvite": "{{room}} · umealikwa na {{name}}",
+      "none": "Hakuna maombi yanayosubiri kwa sasa."
+    },
     "empty": {
       "title": "Chagua chumba au unda kipya.",
       "subtitle": "Ujumbe wako utaonekana hapa."

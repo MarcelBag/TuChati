@@ -142,16 +142,22 @@
       "groups": "Groups"
     },
     "requests": {
+      "directRequests": {
+        "incoming": "Direct requests",
+        "outgoing": "Requests you sent"
+      },
+      "groupInvites": {
+        "title": "Group invitations",
+        "incoming": "Invites you’ve received",
+        "outgoing": "Invites you sent"
+      },
       "loading": "Loading requests…",
-      "incoming": "Incoming requests",
-      "outgoing": "Pending sent",
       "accept": "Accept",
       "decline": "Decline",
       "waiting": "Waiting for approval",
-      "groupIncoming": "Group invitations",
-      "groupOutgoing": "Invites you sent",
       "invitedBy": "Invited by {{name}}",
       "sentTo": "Sent to {{name}}",
+      "attributedInvite": "{{room}} · invited by {{name}}",
       "none": "No pending requests right now."
     },
     "empty": {
