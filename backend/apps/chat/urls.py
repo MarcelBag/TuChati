@@ -64,4 +64,9 @@ urlpatterns = [
         MessageListCreateViewSet.as_view({"get": "info"}),
         name="chat_room_message_info",
     ),
+    path(
+        "rooms/<uuid:room_id>/messages/starred/",
+        MessageListCreateViewSet.as_view({"get": "starred"}),
+        name="chat_room_messages_starred",
+    ),
 ]
