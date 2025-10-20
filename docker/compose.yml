@@ -58,3 +58,7 @@ volumes:
   db_data:
   staticdata:
   mediadata:
+networks:
+  default:
+    name: tuchati_network     # static name avoids random deletion
+    driver: bridge

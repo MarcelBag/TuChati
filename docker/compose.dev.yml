@@ -33,3 +33,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - web
+networks:
+  default:
+    name: tuchati_network     # static name avoids random deletion
+    driver: bridge

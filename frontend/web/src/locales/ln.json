@@ -101,40 +101,18 @@
       "unableProfile": "Profili ekoki te kokɔta"
     },
     "rooms": {
-    "title": "Ba salo ya lisolo",
-    "newGroup": "+ Groupe ya sika",
-    "directRoom": "+ Moto na moto",
+      "title": "Ba salo ya lisolo",
+      "prompt": "Kombo ya salo",
+      "newRoom": "+ Sika",
+      "directRoom": "+ Moto na moto",
       "searchPlaceholder": "Luka to banda lisolo ya sika",
       "loading": "Ezali kocharger…",
       "empty": "Ba salo nanu ezali te",
       "fallbackName": "Salo",
       "groupAria": "Salo {{name}}",
       "profileAria": "Profil ya {{name}}",
-    "unreadAria": "{{count}} nsango etángá te"
-  },
-  "createRoom": {
-    "title": "Sala groupe",
-    "subtitle": "Pesa groupe kombo mpe benga bato baye.",
-    "nameLabel": "Kombo ya groupe",
-    "namePlaceholder": "ndakisa Baplanificateur ya communauté",
-    "nameRequired": "Kombo ya groupe esengeli",
-    "inviteLabel": "Benga bato",
-    "invitePlaceholder": "Ba pseudonyme to ba email, bopanzi na koma",
-    "inviteSearchLabel": "Benga bamembre",
-    "inviteSearchPlaceholder": "Luka na kombo to email",
-    "inviteSearchHint": "Pona bato ya kotindela invitation sik'oyo. Bakoki kondima liboso ya kokota.",
-    "searching": "Ezali koluka…",
-    "noMatches": "Ezwi eloko te.",
-    "inviteSelected": "{{count}} baponi",
-    "inviteManualLabel": "Bakisa na kombo ya mosaleli to email",
-    "inviteManualPlaceholder": "@kombo, moto@example.com",
-    "inviteManualHint": "Kabola makomi na koma to esika ya mpamba.",
-    "inviteError": "Groupe esalemi, kasi totindi ba invitation te. Okoki kobenga bato nsima na makambo ya groupe.",
-    "cancel": "Boya",
-    "create": "Sala groupe",
-    "creating": "Ezali kosala…",
-    "error": "Groupe esalemi te"
-  },
+      "unreadAria": "{{count}} nsango etángá te"
+    },
     "filters": {
       "all": "Nyonso",
       "unread": "Etángá te",
@@ -142,23 +120,12 @@
       "groups": "Ba groupe"
     },
     "requests": {
-      "directRequests": {
-        "incoming": "Ba bosenga ya kotindela moto moko",
-        "outgoing": "Ba bosenga otindi"
-      },
-      "groupInvites": {
-        "title": "Bainvitation ya groupe",
-        "incoming": "Bainvitation ozwaki",
-        "outgoing": "Bainvitation otindaki"
-      },
       "loading": "Ezali kocharger ba bosenga…",
+      "incoming": "Ba bosenga ya koya",
+      "outgoing": "Ba bosenga otindi",
       "accept": "Bondima",
       "decline": "Boya",
-      "waiting": "Ezali kozela ndingisa",
-      "invitedBy": "Ebengi yo na {{name}}",
-      "sentTo": "Etindami epai ya {{name}}",
-      "attributedInvite": "{{room}} · ebengi na {{name}}",
-      "none": "Mpo na sik'oyo, ba bosenga te."
+      "waiting": "Ezali kozela ndingisa"
     },
     "empty": {
       "title": "Pona salo moko to sala ya sika.",
@@ -213,12 +180,10 @@
       "viewPhotoAria": "Monisa foto ya profil",
       "loading": "Profil ezali kocharger…",
       "email": "Email",
-      "phone": "Téléfono",
+      "phone": "Téléfon",
       "lastSeenLabel": "Komonana ya suka",
       "timezoneLabel": "Heure ya etuka",
-      "statusLabel": "Nsango ya etat",
-      "bioLabel": "Bio",
-      "detailsHeading": "Ba detay ya profíli",
+      "privacyLabel": "Confidentialité",
       "empty": "Makambo ya profil ezangi.",
       "membersTitle": "Bato ya groupe",
       "memberCount": "{{count}} membres",
@@ -226,12 +191,14 @@
       "memberCount_other": "{{count}} membres",
       "invite": "+ Benga",
       "avatarAlt": "Avatar ya {{name}}",
+      "privacySummary": "Avatar {{avatar}} · Contact {{contact}} · Etat {{status}} · Bio {{bio}} · Komonana ya suka {{lastSeen}} · Heure ya etuka {{timezone}}",
       "privacy": {
-        "groupInvites": {
-          "title": "Bainvitation ya groupe",
-          "hintOn": "Kota automatique na groupe soki moto abengi yo.",
-          "hintOff": "Senga kondima na yo liboso okota na groupe. Bainvitation ekomonana na esika ya basengi."
-        }
+        "avatar": { "hidden": "ebombami", "visible": "emimonani" },
+        "contact": { "hidden": "ebombami", "visible": "emimonani" },
+        "status": { "hidden": "ebombami", "visible": "emimonani" },
+        "bio": { "hidden": "ebombami", "visible": "emimonani" },
+        "lastSeen": { "hidden": "ebombami", "visible": "emimonani" },
+        "timezone": { "hidden": "ebombami", "visible": "emimonani" }
       }
     },
     "selection": {
@@ -327,73 +294,6 @@
       "recording": "Ezali kokoma son…",
       "placeholder": "Koma sango",
       "recordingAria": "Enregistrement ya audio"
-    }
-  },
-  "profileModal": {
-    "title": "Ba réglage ya profíli",
-    "actions": {
-      "close": "Kanga"
-    },
-    "tabs": {
-      "label": "Biteni ya profíli",
-      "account": "Kɔmpa",
-      "security": "Bosungi",
-      "privacy": "Kobombama",
-      "preferences": "Ba preferans",
-      "sessions": "Basɛsyɔ"
-    },
-    "messages": {
-      "saved": "Profíli ebongwani",
-      "passwordChanged": "Mot de passe ebongwani",
-      "sessionRevoked": "Sɛsyɔ elongolami",
-      "logoutOthers": "Obimi na ba aparɛyi mosusu"
-    },
-    "errors": {
-      "updateFailed": "Profíli ebongwaki te",
-      "avatarUpload": "Kotélécharger avatar ekokaki te",
-      "generic": "Likambo moko esalemi. Meka lisusu.",
-      "passwordMismatch": "Ba mot de passe ekokanaki te",
-      "changePassword": "Kobongola mot de passe ekokaki te",
-      "loadSessions": "Kokotisa basɛsyɔ ekokaki te",
-      "revokeSession": "Kolongola sɛsyɔ ekokaki te",
-      "logoutOthers": "Kobima na ba aparɛyi mosusu ekokaki te"
-    },
-    "account": {
-      "timezone": "Heure ya etuka",
-      "timezonePlaceholder": "ndakisa Africa/Nairobi",
-      "timezoneHint": "Tya kombo ya heure ya IANA lokola {{example}}",
-      "profileDetails": "Ba detay ya profíli",
-      "status": {
-        "label": "Nsango ya etat",
-        "placeholder": "Yebisa baninga makambo ozali kosala",
-        "hint": "Mikomá 255 kaka"
-      },
-      "bio": {
-        "label": "Bio",
-        "placeholder": "Lobela bato moke na tina na yo"
-      },
-      "save": "Bomba mabongisi",
-      "saving": "Ezali kobomba…"
-    },
-    "timezones": {
-      "auto": "Auto ({{tz}})",
-      "kinshasa": "Kinshasa (Africa/Kinshasa)",
-      "lubumbashi": "Lubumbashi (Africa/Lubumbashi)",
-      "goma": "Goma (Africa/Goma)",
-      "bukavu": "Bukavu (Africa/Lubumbashi)",
-      "nairobi": "Nairobi (Africa/Nairobi)",
-      "lagos": "Lagos (Africa/Lagos)",
-      "utc": "UTC",
-      "paris": "Paris (Europe/Paris)",
-      "newYork": "New York (America/New_York)",
-      "custom": "Heure ya moto moko"
-    },
-    "privacy": {
-      "groupInvites": {
-        "title": "Bainvitation ya groupe",
-        "hintOn": "Kota automatique na groupe soki moto abengi yo.",
-        "hintOff": "Senga kondima na yo liboso okota na groupe. Bainvitation ekomonana na esika ya basengi."
-      }
     }
   }
 }
