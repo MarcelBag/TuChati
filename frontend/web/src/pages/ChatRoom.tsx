@@ -443,6 +443,54 @@ export default function ChatRoom() {
     return 'sent'
   }, [memberIdSet, myId])
 
+  const formatFavoriteTimestamp = React.useCallback((value?: string | null) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+    const localeArg = locale ? [locale] : undefined
+    return date.toLocaleString(localeArg, {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: use12Hour,
+    })
+  }, [locale, use12Hour])
+
+  const loadProfileFavorites = React.useCallback(async () => {
+    if (!roomId) return
+    setProfileFavoritesLoading(true)
+    setProfileFavoritesError(null)
+    try {
+      const data = await fetchStarredMessages(String(roomId))
+      const items = Array.isArray(data) ? data : (data?.results ?? data?.items ?? [])
+      const normalized = items
+        .map((item: any) => normalizeMsg(item))
+        .filter(Boolean) as any[]
+      normalized.sort((a: any, b: any) => {
+        const aTime = new Date(a.created_at || 0).getTime()
+        const bTime = new Date(b.created_at || 0).getTime()
+        return bTime - aTime
+      })
+      setProfileFavorites(normalized)
+      setProfileFavoritesLoaded(true)
+    } catch (error: any) {
+      setProfileFavoritesError(error?.message || t('chatRoom.profile.favorites.error'))
+    } finally {
+      setProfileFavoritesLoading(false)
+    }
+  }, [normalizeMsg, roomId, t])
+
+  const toggleProfileFavorites = React.useCallback(() => {
+    setProfileFavoritesOpen(prev => {
+      const next = !prev
+      if (!prev && !profileFavoritesLoaded && !profileFavoritesLoading) {
+        void loadProfileFavorites()
+      }
+      return next
+    })
+  }, [loadProfileFavorites, profileFavoritesLoaded, profileFavoritesLoading])
+
   // --- mergeMessage must come BEFORE any callbacks that depend on it ---
   const mergeMessage = React.useCallback((payload: any) => {
     if (!payload) return false

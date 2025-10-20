@@ -15,7 +15,19 @@ type ExtractResult = {
 }
 
 async function extractPeaks(src: string, signal: AbortSignal): Promise<ExtractResult> {
-  const response = await fetch(src, { credentials: 'include', signal })
+  let requestUrl = src
+  let credentials: RequestCredentials = 'same-origin'
+  if (typeof window !== 'undefined') {
+    try {
+      const resolved = new URL(src, window.location.href)
+      requestUrl = resolved.toString()
+      credentials = resolved.origin === window.location.origin ? 'include' : 'omit'
+    } catch {
+      credentials = 'omit'
+    }
+  }
+
+  const response = await fetch(requestUrl, { credentials, signal })
   if (!response.ok) {
     throw new Error('Failed to fetch audio source')
   }
@@ -274,7 +286,7 @@ export function VoiceMessage({ src, durationSeconds }: VoiceMessageProps) {
         </div>
       </div>
 
-      <audio ref={audioRef} preload="metadata" src={src} />
+      <audio ref={audioRef} preload="metadata" src={src} crossOrigin="anonymous" />
     </div>
   )
 }
