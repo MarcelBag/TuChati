@@ -205,6 +205,16 @@
       "memberCount_other": "{{count}} membres",
       "invite": "+ Benga",
       "avatarAlt": "Avatar ya {{name}}",
+      "you": "Yo",
+      "favorites": {
+        "toggleShow": "Lakisa ba message ya préféré ({{count}})",
+        "toggleHide": "Bomba ba message ya préféré",
+        "title": "Ba message ya préféré",
+        "loading": "Ezali kocharger ba message ya préféré…",
+        "empty": "Message ya préféré ezali nanu te.",
+        "error": "Ekoki te kocharger ba message ya préféré.",
+        "attachment": "[ekangiseli]"
+      },
       "privacySummary": "Avatar {{avatar}} · Contact {{contact}} · Etat {{status}} · Bio {{bio}} · Komonana ya suka {{lastSeen}} · Heure ya etuka {{timezone}}",
       "privacy": {
         "avatar": { "hidden": "ebombami", "visible": "emimonani" },

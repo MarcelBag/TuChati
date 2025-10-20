@@ -240,6 +240,16 @@
       "memberCount_other": "{{count}} membres",
       "invite": "+ Inviter",
       "avatarAlt": "Avatar de {{name}}",
+      "you": "Vous",
+      "favorites": {
+        "toggleShow": "Afficher les messages favoris ({{count}})",
+        "toggleHide": "Masquer les messages favoris",
+        "title": "Messages favoris",
+        "loading": "Chargement des messages favoris…",
+        "empty": "Aucun message favori pour le moment.",
+        "error": "Impossible de charger les messages favoris.",
+        "attachment": "[pièce jointe]"
+      },
       "privacy": {
         "groupInvites": {
           "title": "Invitations de groupe",

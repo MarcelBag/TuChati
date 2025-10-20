@@ -239,7 +239,17 @@
       "memberCount_one": "{{count}} member",
       "memberCount_other": "{{count}} members",
       "invite": "+ Invite",
-      "avatarAlt": "{{name}} avatar"
+      "avatarAlt": "{{name}} avatar",
+      "you": "You",
+      "favorites": {
+        "toggleShow": "Show starred messages ({{count}})",
+        "toggleHide": "Hide starred messages",
+        "title": "Starred messages",
+        "loading": "Loading starred messages…",
+        "empty": "No starred messages yet.",
+        "error": "Unable to load starred messages.",
+        "attachment": "[attachment]"
+      }
     },
     "selection": {
       "count": "{{count}} selected",

@@ -383,6 +383,28 @@ class MessageListCreateViewSet(viewsets.ModelViewSet):
         )
         return Response(payload)
 
+    @action(detail=False, methods=["get"], url_path="starred")
+    def starred(self, request, room_id=None):
+        room = self._get_room()
+        metas = (
+            MessageUserMeta.objects.filter(
+                message__room=room,
+                user=request.user,
+                starred=True,
+            )
+            .select_related("message", "message__sender")
+            .order_by("-message__created_at")
+        )
+
+        messages: list[Message] = []
+        for meta in metas:
+            message = meta.message
+            message.meta_for_user = [meta]
+            messages.append(message)
+
+        serializer = self.get_serializer(messages, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"], url_path="note")
     def note(self, request, room_id=None, pk=None):
         note_text = request.data.get("note", "")

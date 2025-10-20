@@ -184,3 +184,12 @@ export async function fetchMessageInfo(roomId: string, messageId: string) {
   }
   return res.json()
 }
+
+export async function fetchStarredMessages(roomId: string) {
+  const res = await apiFetch(`/api/chat/rooms/${roomId}/messages/starred/`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data?.detail || 'Unable to load starred messages')
+  }
+  return res.json()
+}

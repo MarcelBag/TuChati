@@ -24,7 +24,7 @@ import ImagePreviewModal from '../shared/ImagePreviewModal'
 import AvatarBubble from '../shared/AvatarBubble'
 import { useChatNotifications } from '../hooks/useChatNotifications'
 import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
-import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
+import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, fetchStarredMessages, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
 import { useTranslation } from 'react-i18next'
 
 function formatDayLabel(t: TFunction, d: Date) {
@@ -141,6 +141,11 @@ export default function ChatRoom() {
   const [forwardRooms, setForwardRooms] = React.useState<any[]>([])
   const [forwardSelected, setForwardSelected] = React.useState<string[]>([])
   const [forwardLoading, setForwardLoading] = React.useState(false)
+  const [profileFavoritesOpen, setProfileFavoritesOpen] = React.useState(false)
+  const [profileFavorites, setProfileFavorites] = React.useState<any[]>([])
+  const [profileFavoritesLoaded, setProfileFavoritesLoaded] = React.useState(false)
+  const [profileFavoritesLoading, setProfileFavoritesLoading] = React.useState(false)
+  const [profileFavoritesError, setProfileFavoritesError] = React.useState<string | null>(null)
   const [clockTick, setClockTick] = React.useState(() => Date.now())
 
   const locale = React.useMemo(() => (
@@ -164,6 +169,18 @@ export default function ChatRoom() {
   const [inviteUsersOptions, setInviteUsersOptions] = React.useState<any[]>([])
   const [inviteSelected, setInviteSelected] = React.useState<string[]>([])
   const [directProfile, setDirectProfile] = React.useState<{ open: boolean; loading: boolean; data: any | null; error: string | null }>({ open: false, loading: false, data: null, error: null })
+  React.useEffect(() => {
+    setProfileFavorites([])
+    setProfileFavoritesLoaded(false)
+    setProfileFavoritesError(null)
+    setProfileFavoritesOpen(false)
+  }, [roomId])
+
+  React.useEffect(() => {
+    if (!directProfile.open) {
+      setProfileFavoritesOpen(false)
+    }
+  }, [directProfile.open])
   const [photoPreview, setPhotoPreview] = React.useState<{ open: boolean; src: string | null; alt: string }>(() => ({
     open: false,
     src: null,
@@ -441,10 +458,12 @@ export default function ChatRoom() {
     }
 
     let changed = false
+    let finalMessage: any = null
     setMessages(prev => {
       const candidateKeys = [normalized.id, normalized._client_id].filter(Boolean)
       if (!candidateKeys.length) {
         changed = true
+        finalMessage = normalized
         return [...prev, normalized]
       }
 
@@ -474,6 +493,7 @@ export default function ChatRoom() {
         }
         const next = prev.slice()
         next[idx] = updated
+        finalMessage = updated
         return next
       }
 
@@ -482,10 +502,43 @@ export default function ChatRoom() {
       if (!isGroup && nextItem.sender_id !== user?.id && Array.isArray(nextItem.read_by)) {
         nextItem.read_by = nextItem.read_by.filter((id: string) => String(id) !== myId)
       }
+      finalMessage = nextItem
       return [...prev, nextItem]
     })
+
+    if (profileFavoritesLoaded && finalMessage && (finalMessage.id || finalMessage._client_id)) {
+      const key = finalMessage.id ?? finalMessage._client_id
+      if (key) {
+        setProfileFavorites(prev => {
+          const idx = prev.findIndex((item: any) => {
+            const keys = [item.id, item._client_id].filter(Boolean)
+            return keys.includes(key)
+          })
+          if (finalMessage.starred) {
+            const entry = idx !== -1 ? { ...prev[idx], ...finalMessage } : { ...finalMessage }
+            const next = idx !== -1 ? prev.slice() : [entry, ...prev]
+            if (idx !== -1) {
+              next[idx] = entry
+            }
+            next.sort((a: any, b: any) => {
+              const aTime = new Date(a.created_at || 0).getTime()
+              const bTime = new Date(b.created_at || 0).getTime()
+              return bTime - aTime
+            })
+            return next
+          }
+          if (idx !== -1) {
+            const next = prev.slice()
+            next.splice(idx, 1)
+            return next
+          }
+          return prev
+        })
+      }
+    }
+
     return changed
-  }, [computeStatus, removeMessagesLocal, user?.id])
+  }, [computeStatus, myId, profileFavoritesLoaded, removeMessagesLocal, user?.id])
 
   const handlePinToggle = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
@@ -1913,18 +1966,72 @@ export default function ChatRoom() {
                     <span className="ri-detail-label">{t('chatRoom.profile.timezoneLabel')}</span>
                     <span className={`ri-detail-value ${profileData?.user_timezone ? '' : 'muted'}`}>{timezoneDisplay}</span>
                   </div>
-                  <div className="ri-detail-row">
-                    <span className="ri-detail-label">{t('chatRoom.profile.lastSeenLabel')}</span>
-                    <span className={`ri-detail-value ${(!profileData?.is_online && !profileData?.last_seen) ? 'muted' : ''}`}>
-                      {profileData?.is_online ? t('chatRoom.status.activeNow') : lastSeenLine}
-                    </span>
-                  </div>
+                <div className="ri-detail-row">
+                  <span className="ri-detail-label">{t('chatRoom.profile.lastSeenLabel')}</span>
+                  <span className={`ri-detail-value ${(!profileData?.is_online && !profileData?.last_seen) ? 'muted' : ''}`}>
+                    {profileData?.is_online ? t('chatRoom.status.activeNow') : lastSeenLine}
+                  </span>
                 </div>
               </div>
-            )}
+              <div className="ri-favorites-block">
+                <button
+                  type="button"
+                  className="ri-fav-toggle"
+                  onClick={toggleProfileFavorites}
+                >
+                  <span className="ri-fav-icon">★</span>
+                  <span>
+                    {profileFavoritesOpen
+                      ? t('chatRoom.profile.favorites.toggleHide')
+                      : t('chatRoom.profile.favorites.toggleShow', { count: profileFavorites.length })}
+                  </span>
+                </button>
+                {profileFavoritesOpen && (
+                  <div className="ri-favorites">
+                    {profileFavoritesLoading && <p className="ri-loading">{t('chatRoom.profile.favorites.loading')}</p>}
+                    {profileFavoritesError && <p className="ri-error">{profileFavoritesError}</p>}
+                    {!profileFavoritesLoading && !profileFavoritesError && profileFavorites.length === 0 && (
+                      <p className="ri-empty">{t('chatRoom.profile.favorites.empty')}</p>
+                    )}
+                    {!profileFavoritesLoading && !profileFavoritesError && profileFavorites.length > 0 && (
+                      <ul className="ri-favorites-list">
+                        {profileFavorites.map((fav: any) => {
+                          const key = String(fav.id ?? fav._client_id ?? Math.random())
+                          const timeLabel = formatFavoriteTimestamp(fav.created_at)
+                          const authorLabel = fav.is_me ? t('chatRoom.profile.you') : (fav.sender_name || t('chatRoom.profile.fallbackName'))
+                          const preview = (fav.text || '').trim() || t('chatRoom.profile.favorites.attachment')
+                          return (
+                            <li
+                              key={key}
+                              role="button"
+                              tabIndex={0}
+                              className="ri-fav-item"
+                              onClick={() => scrollToMessage(fav.id ?? fav._client_id)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  scrollToMessage(fav.id ?? fav._client_id)
+                                }
+                              }}
+                            >
+                              <div className="ri-fav-meta">
+                                <span className="ri-fav-author">{authorLabel}</span>
+                                {timeLabel && <span className="ri-fav-time">{timeLabel}</span>}
+                              </div>
+                              <p className="ri-fav-text">{preview}</p>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-            {!directProfile.loading && !directProfile.error && !profileData && (
-              <p className="ri-empty">{t('chatRoom.profile.empty')}</p>
+          {!directProfile.loading && !directProfile.error && !profileData && (
+            <p className="ri-empty">{t('chatRoom.profile.empty')}</p>
             )}
           </div>
         </aside>

@@ -240,6 +240,16 @@
       "memberCount_other": "{{count}} washiriki",
       "invite": "+ Alika",
       "avatarAlt": "Picha ya {{name}}",
+      "you": "Wewe",
+      "favorites": {
+        "toggleShow": "Onyesha ujumbe uliopendwa ({{count}})",
+        "toggleHide": "Ficha ujumbe uliopendwa",
+        "title": "Ujumbe uliopendwa",
+        "loading": "Inapakia ujumbe uliopendwa…",
+        "empty": "Hakuna ujumbe uliopendwa bado.",
+        "error": "Haiwezekani kupakia ujumbe uliopendwa.",
+        "attachment": "[kiambatisho]"
+      },
       "privacy": {
         "groupInvites": {
           "title": "Mialiko ya kundi",
