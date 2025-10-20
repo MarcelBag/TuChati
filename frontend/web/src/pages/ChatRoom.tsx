@@ -26,6 +26,7 @@ import { useChatNotifications } from '../hooks/useChatNotifications'
 import { useMediaPreference, usePreferences } from '../context/PreferencesContext'
 import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, fetchStarredMessages, forwardMessage, inviteUsers, listRooms, saveNote, searchUsers, setPinned, setStarred } from '../api/chatActions'
 import { useTranslation } from 'react-i18next'
+import StarredMessageList, { type StarredMessage } from '../components/Chat/StarredMessageList'
 
 function formatDayLabel(t: TFunction, d: Date) {
   const now = new Date()
@@ -142,7 +143,7 @@ export default function ChatRoom() {
   const [forwardSelected, setForwardSelected] = React.useState<string[]>([])
   const [forwardLoading, setForwardLoading] = React.useState(false)
   const [profileFavoritesOpen, setProfileFavoritesOpen] = React.useState(false)
-  const [profileFavorites, setProfileFavorites] = React.useState<any[]>([])
+  const [profileFavorites, setProfileFavorites] = React.useState<StarredMessage[]>([])
   const [profileFavoritesLoaded, setProfileFavoritesLoaded] = React.useState(false)
   const [profileFavoritesLoading, setProfileFavoritesLoading] = React.useState(false)
   const [profileFavoritesError, setProfileFavoritesError] = React.useState<string | null>(null)
@@ -465,8 +466,8 @@ export default function ChatRoom() {
       const data = await fetchStarredMessages(String(roomId))
       const items = Array.isArray(data) ? data : (data?.results ?? data?.items ?? [])
       const normalized = items
-        .map((item: any) => normalizeMsg(item))
-        .filter(Boolean) as any[]
+        .map((item: any) => normalizeMsg(item) as StarredMessage | null)
+        .filter(Boolean) as StarredMessage[]
       normalized.sort((a: any, b: any) => {
         const aTime = new Date(a.created_at || 0).getTime()
         const bTime = new Date(b.created_at || 0).getTime()
@@ -894,6 +895,34 @@ export default function ChatRoom() {
       el.classList.remove('jump-highlight')
     }, 1400)
   }, [])
+
+  const handleFavoriteJump = React.useCallback((fav: StarredMessage) => {
+    if (!fav) return
+    const normalized = { ...fav }
+    mergeMessage(normalized)
+    const target = normalized.id ?? normalized._client_id
+    if (!target) return
+    const performScroll = () => scrollToMessage(target)
+    if (typeof window !== 'undefined') {
+      window.setTimeout(performScroll, 60)
+    } else {
+      performScroll()
+    }
+  }, [mergeMessage, scrollToMessage])
+
+  const handleFavoriteReply = React.useCallback((fav: StarredMessage) => {
+    if (!fav) return
+    const normalized = { ...fav }
+    mergeMessage(normalized)
+    handleReply(normalized)
+  }, [handleReply, mergeMessage])
+
+  const handleFavoriteForward = React.useCallback((fav: StarredMessage) => {
+    if (!fav) return
+    const normalized = { ...fav }
+    mergeMessage(normalized)
+    handleForward(normalized)
+  }, [handleForward, mergeMessage])
 
   // Socket & incoming events
   const handleIncoming = React.useCallback((data: any) => {
@@ -2035,44 +2064,17 @@ export default function ChatRoom() {
                   </span>
                 </button>
                 {profileFavoritesOpen && (
-                  <div className="ri-favorites">
-                    {profileFavoritesLoading && <p className="ri-loading">{t('chatRoom.profile.favorites.loading')}</p>}
-                    {profileFavoritesError && <p className="ri-error">{profileFavoritesError}</p>}
-                    {!profileFavoritesLoading && !profileFavoritesError && profileFavorites.length === 0 && (
-                      <p className="ri-empty">{t('chatRoom.profile.favorites.empty')}</p>
-                    )}
-                    {!profileFavoritesLoading && !profileFavoritesError && profileFavorites.length > 0 && (
-                      <ul className="ri-favorites-list">
-                        {profileFavorites.map((fav: any) => {
-                          const key = String(fav.id ?? fav._client_id ?? Math.random())
-                          const timeLabel = formatFavoriteTimestamp(fav.created_at)
-                          const authorLabel = fav.is_me ? t('chatRoom.profile.you') : (fav.sender_name || t('chatRoom.profile.fallbackName'))
-                          const preview = (fav.text || '').trim() || t('chatRoom.profile.favorites.attachment')
-                          return (
-                            <li
-                              key={key}
-                              role="button"
-                              tabIndex={0}
-                              className="ri-fav-item"
-                              onClick={() => scrollToMessage(fav.id ?? fav._client_id)}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  event.preventDefault()
-                                  scrollToMessage(fav.id ?? fav._client_id)
-                                }
-                              }}
-                            >
-                              <div className="ri-fav-meta">
-                                <span className="ri-fav-author">{authorLabel}</span>
-                                {timeLabel && <span className="ri-fav-time">{timeLabel}</span>}
-                              </div>
-                              <p className="ri-fav-text">{preview}</p>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    )}
-                  </div>
+                  <StarredMessageList
+                    items={profileFavorites}
+                    loading={profileFavoritesLoading}
+                    error={profileFavoritesError}
+                    canReply
+                    canForward
+                    onJump={handleFavoriteJump}
+                    onReply={handleFavoriteReply}
+                    onForward={handleFavoriteForward}
+                    formatTimestamp={formatFavoriteTimestamp}
+                  />
                 )}
               </div>
             </div>

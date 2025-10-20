@@ -245,11 +245,13 @@
         "toggleShow": "Afficher les messages favoris ({{count}})",
         "toggleHide": "Masquer les messages favoris",
         "title": "Messages favoris",
-        "loading": "Chargement des messages favoris…",
-        "empty": "Aucun message favori pour le moment.",
-        "error": "Impossible de charger les messages favoris.",
-        "attachment": "[pièce jointe]"
-      },
+      "loading": "Chargement des messages favoris…",
+      "empty": "Aucun message favori pour le moment.",
+      "error": "Impossible de charger les messages favoris.",
+      "attachment": "[pièce jointe]",
+      "reply": "Répondre",
+      "forward": "Transférer"
+    },
       "privacy": {
         "groupInvites": {
           "title": "Invitations de groupe",

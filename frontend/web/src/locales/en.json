@@ -245,12 +245,14 @@
         "toggleShow": "Show starred messages ({{count}})",
         "toggleHide": "Hide starred messages",
         "title": "Starred messages",
-        "loading": "Loading starred messages…",
-        "empty": "No starred messages yet.",
-        "error": "Unable to load starred messages.",
-        "attachment": "[attachment]"
-      }
-    },
+      "loading": "Loading starred messages…",
+      "empty": "No starred messages yet.",
+      "error": "Unable to load starred messages.",
+      "attachment": "[attachment]",
+      "reply": "Reply",
+      "forward": "Forward"
+    }
+  },
     "selection": {
       "count": "{{count}} selected",
       "count_one": "{{count}} selected",

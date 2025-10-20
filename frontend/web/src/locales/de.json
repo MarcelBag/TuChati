@@ -245,11 +245,13 @@
         "toggleShow": "Markierte Nachrichten anzeigen ({{count}})",
         "toggleHide": "Markierte Nachrichten ausblenden",
         "title": "Markierte Nachrichten",
-        "loading": "Markierte Nachrichten werden geladen…",
-        "empty": "Noch keine markierten Nachrichten.",
-        "error": "Markierte Nachrichten können nicht geladen werden.",
-        "attachment": "[Anhang]"
-      },
+      "loading": "Markierte Nachrichten werden geladen…",
+      "empty": "Noch keine markierten Nachrichten.",
+      "error": "Markierte Nachrichten können nicht geladen werden.",
+      "attachment": "[Anhang]",
+      "reply": "Antworten",
+      "forward": "Weiterleiten"
+    },
       "privacy": {
         "groupInvites": {
           "title": "Gruppeneinladungen",

@@ -245,11 +245,13 @@
         "toggleShow": "Onyesha ujumbe uliopendwa ({{count}})",
         "toggleHide": "Ficha ujumbe uliopendwa",
         "title": "Ujumbe uliopendwa",
-        "loading": "Inapakia ujumbe uliopendwa…",
-        "empty": "Hakuna ujumbe uliopendwa bado.",
-        "error": "Haiwezekani kupakia ujumbe uliopendwa.",
-        "attachment": "[kiambatisho]"
-      },
+      "loading": "Inapakia ujumbe uliopendwa…",
+      "empty": "Hakuna ujumbe uliopendwa bado.",
+      "error": "Haiwezekani kupakia ujumbe uliopendwa.",
+      "attachment": "[kiambatisho]",
+      "reply": "Jibu",
+      "forward": "Tuma mbele"
+    },
       "privacy": {
         "groupInvites": {
           "title": "Mialiko ya kundi",
