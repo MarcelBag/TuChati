@@ -1,8 +1,19 @@
-.create-room-modal {
-  width: min(440px, 92vw);
+.modal-surface.create-room-modal {
+  width: 420px;
+  max-width: 90vw;
+  min-width: 320px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  resize: both;
+  overflow: auto;
+}
+
+@media (max-width: 520px) {
+  .modal-surface.create-room-modal {
+    width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+  }
 }
 
 .create-room-head {
@@ -39,7 +50,7 @@
 .create-room-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .create-room-field {
@@ -69,7 +80,7 @@
 
 .create-room-field textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 70px;
 }
 
 .create-room-hint {
