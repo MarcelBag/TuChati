@@ -27,6 +27,10 @@ export interface ChatRoom {
   name: string
   is_group: boolean
   is_pending?: boolean
+  is_favorite?: boolean
+  is_archived?: boolean
+  is_muted?: boolean
+  unread_count?: number
   participants: UserMini[]
   members?: RoomMember[]
   created_at: string

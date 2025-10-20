@@ -170,6 +170,7 @@ html.light {
   border-bottom: 1px solid rgba(255,255,255,0.03);
   align-items: flex-start;
   min-height: 72px;
+  position: relative;
 }
 .room-item:hover { background: var(--hover); }
 .room-item:active { background: var(--active); }
@@ -251,9 +252,68 @@ html.light .room-unread {
   background: rgba(255, 77, 79, 0.18);
   color: #c53030;
 }
+.room-item.archived { opacity: 0.65; }
+html.light .room-item.archived { background: rgba(148, 163, 184, 0.08); }
 .room-date { font-size: 12px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .room-row.dim { color: var(--muted); font-size: 14px; margin-top: 2px; }
 .room-last { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; line-height: 1.4; }
+.room-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(148, 163, 184, 0.25);
+  color: var(--muted);
+}
+.room-menu-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+.room-menu-btn:hover,
+.room-menu-btn:focus-visible {
+  background: var(--hover);
+  color: var(--text);
+  outline: none;
+}
+.room-actions-menu {
+  position: absolute;
+  top: calc(100% - 8px);
+  right: 16px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  z-index: 50;
+  min-width: 180px;
+}
+.room-actions-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+.room-actions-item:hover,
+.room-actions-item:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.room-actions-item.danger { color: #f87171; }
 
 /* Right side - chat pane */
 .chat-pane {

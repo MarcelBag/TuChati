@@ -100,6 +100,17 @@
       "unableUpdate": "Impossible de mettre à jour la demande",
       "unableProfile": "Impossible de charger le profil"
     },
+    "actions": {
+      "openMenu": "Ouvrir les actions de la discussion",
+      "archive": "Archiver la discussion",
+      "unarchive": "Désarchiver la discussion",
+      "archivedBadge": "Archivé",
+      "mute": "Couper les notifications",
+      "unmute": "Réactiver les notifications",
+      "delete": "Supprimer la discussion",
+      "confirmDelete": "Supprimer « {{name}} » définitivement ?",
+      "deleteFailed": "Impossible de supprimer la discussion pour le moment. Réessayez plus tard."
+    },
     "rooms": {
     "title": "Salons",
     "newGroup": "+ Nouveau groupe",
@@ -107,6 +118,7 @@
       "searchPlaceholder": "Rechercher ou démarrer une nouvelle discussion",
       "loading": "Chargement…",
       "empty": "Aucun salon pour le moment",
+      "emptyFiltered": "Aucune discussion dans ce filtre.",
       "fallbackName": "Salon",
       "groupAria": "Salon {{name}}",
       "profileAria": "Profil {{name}}",
@@ -139,7 +151,8 @@
       "all": "Tous",
       "unread": "Non lus",
       "favorites": "Favoris",
-      "groups": "Groupes"
+      "groups": "Groupes",
+      "archived": "Archivés"
     },
     "requests": {
       "directRequests": {

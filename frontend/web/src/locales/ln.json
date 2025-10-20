@@ -100,6 +100,17 @@
       "unableUpdate": "Bosenga ekoki te kobongisama",
       "unableProfile": "Profili ekoki te kokɔta"
     },
+    "actions": {
+      "openMenu": "Open room actions",
+      "archive": "Archive chat",
+      "unarchive": "Unarchive chat",
+      "archivedBadge": "Archived",
+      "mute": "Mute notifications",
+      "unmute": "Unmute notifications",
+      "delete": "Delete chat",
+      "confirmDelete": "Delete \"{{name}}\" permanently?",
+      "deleteFailed": "Unable to delete chat right now. Try again later."
+    },
     "rooms": {
       "title": "Ba salo ya lisolo",
       "prompt": "Kombo ya salo",
@@ -108,6 +119,7 @@
       "searchPlaceholder": "Luka to banda lisolo ya sika",
       "loading": "Ezali kocharger…",
       "empty": "Ba salo nanu ezali te",
+      "emptyFiltered": "Lisolo moko te na filtre oyo.",
       "fallbackName": "Salo",
       "groupAria": "Salo {{name}}",
       "profileAria": "Profil ya {{name}}",
@@ -117,7 +129,8 @@
       "all": "Nyonso",
       "unread": "Etángá te",
       "favorites": "Epreferami",
-      "groups": "Ba groupe"
+      "groups": "Ba groupe",
+      "archived": "Archived"
     },
     "requests": {
       "loading": "Ezali kocharger ba bosenga…",

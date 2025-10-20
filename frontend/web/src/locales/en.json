@@ -100,6 +100,17 @@
       "unableUpdate": "Unable to update request",
       "unableProfile": "Unable to load profile"
     },
+    "actions": {
+      "openMenu": "Open room actions",
+      "archive": "Archive chat",
+      "unarchive": "Unarchive chat",
+      "archivedBadge": "Archived",
+      "mute": "Mute notifications",
+      "unmute": "Unmute notifications",
+      "delete": "Delete chat",
+      "confirmDelete": "Delete \"{{name}}\" permanently?",
+      "deleteFailed": "Unable to delete chat right now. Try again later."
+    },
   "rooms": {
     "title": "Rooms",
     "newGroup": "+ New Group",
@@ -107,6 +118,7 @@
     "searchPlaceholder": "Search or start a new chat",
     "loading": "Loading…",
       "empty": "No rooms yet",
+      "emptyFiltered": "No chats in this filter yet.",
       "fallbackName": "Room",
       "groupAria": "{{name}} room",
     "profileAria": "{{name}} profile",
@@ -139,7 +151,8 @@
       "all": "All",
       "unread": "Unread",
       "favorites": "Favorites",
-      "groups": "Groups"
+      "groups": "Groups",
+      "archived": "Archived"
     },
     "requests": {
       "directRequests": {

@@ -100,6 +100,17 @@
       "unableUpdate": "Anfrage kann nicht aktualisiert werden",
       "unableProfile": "Profil kann nicht geladen werden"
     },
+    "actions": {
+      "openMenu": "Chat-Aktionen öffnen",
+      "archive": "Chat archivieren",
+      "unarchive": "Chat wiederherstellen",
+      "archivedBadge": "Archiviert",
+      "mute": "Benachrichtigungen stummschalten",
+      "unmute": "Benachrichtigungen einschalten",
+      "delete": "Chat löschen",
+      "confirmDelete": "\"{{name}}\" dauerhaft löschen?",
+      "deleteFailed": "Chat kann derzeit nicht gelöscht werden. Bitte später erneut versuchen."
+    },
     "rooms": {
     "title": "Räume",
     "newGroup": "+ Neue Gruppe",
@@ -107,6 +118,7 @@
       "searchPlaceholder": "Suche oder starte einen neuen Chat",
       "loading": "Wird geladen…",
       "empty": "Noch keine Räume",
+      "emptyFiltered": "Keine Chats in diesem Filter.",
       "fallbackName": "Raum",
       "groupAria": "{{name}} Raum",
       "profileAria": "{{name}} Profil",
@@ -139,7 +151,8 @@
       "all": "Alle",
       "unread": "Ungelesen",
       "favorites": "Favoriten",
-      "groups": "Gruppen"
+      "groups": "Gruppen",
+      "archived": "Archiviert"
     },
     "requests": {
       "directRequests": {

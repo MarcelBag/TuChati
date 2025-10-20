@@ -10,14 +10,42 @@ import { createDirectRequest, decideDirectRequest, fetchDirectRequests, fetchGro
 import UserProfileModal from '../components/Chat/UserProfileModal'
 import AvatarBubble from '../shared/AvatarBubble'
 import { useTranslation } from 'react-i18next'
+import { archiveRoom, unarchiveRoom, getArchivedRoomIds } from '../shared/archiveManager'
 import './ChatPage.css'
+
+const MUTED_ROOMS_KEY = 'tuchati.mutedRooms'
+
+function readMutedRooms(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(MUTED_ROOMS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item) => typeof item === 'string')
+    }
+    return []
+  } catch {
+    return []
+  }
+}
+
+function persistMutedRooms(ids: string[]) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(MUTED_ROOMS_KEY, JSON.stringify(ids))
+}
 
 export default function ChatPage() {
   const { token, user: currentUser } = useAuth() as any
   const { t } = useTranslation()
   const [rooms, setRooms] = React.useState<Room[]>([])
   const [loading, setLoading] = React.useState(true)
-  const [activeFilter, setActiveFilter] = React.useState<'all'|'unread'|'favorites'|'groups'>('all')
+  const [archivedRoomIds, setArchivedRoomIds] = React.useState<string[]>(() => getArchivedRoomIds())
+  const [mutedRoomIds, setMutedRoomIds] = React.useState<string[]>(() => readMutedRooms())
+  const archivedSet = React.useMemo(() => new Set(archivedRoomIds.map(String)), [archivedRoomIds])
+  const mutedSet = React.useMemo(() => new Set(mutedRoomIds.map(String)), [mutedRoomIds])
+  const [activeFilter, setActiveFilter] = React.useState<'all'|'unread'|'favorites'|'groups'|'archived'>('all')
+  const [roomMenuId, setRoomMenuId] = React.useState<string | null>(null)
   const [directRequests, setDirectRequests] = React.useState<{ incoming: DirectChatRequest[]; outgoing: DirectChatRequest[] }>({ incoming: [], outgoing: [] })
   const [requestLoading, setRequestLoading] = React.useState(false)
   const [groupInvites, setGroupInvites] = React.useState<{ incoming: any[]; outgoing: any[] }>({ incoming: [], outgoing: [] })
@@ -46,11 +74,16 @@ export default function ChatPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = r.ok ? await r.json() : []
-      setRooms(Array.isArray(data) ? data : [])
+      const mapped = (Array.isArray(data) ? data : []).map((room: Room) => ({
+        ...room,
+        is_archived: room.is_archived ?? archivedSet.has(String(room.id)),
+        is_muted: room.is_muted ?? mutedSet.has(String(room.id)),
+      }))
+      setRooms(mapped)
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [token, archivedSet, mutedSet])
 
   React.useEffect(() => {
     if (!token) return
@@ -135,6 +168,95 @@ export default function ChatPage() {
       || (room?.is_group ? t('chatPage.preview.groupChat') : t('chatPage.preview.directChat'))
     )
   }
+
+  const filteredRooms = React.useMemo(() => {
+    return rooms.filter((room) => {
+      const isArchived = !!room.is_archived
+      switch (activeFilter) {
+        case 'archived':
+          return isArchived
+        case 'unread':
+          return !isArchived && (room.unread_count ?? 0) > 0
+        case 'favorites':
+          return !isArchived && !!room.is_favorite
+        case 'groups':
+          return !isArchived && !!room.is_group
+        default:
+          return !isArchived
+      }
+    })
+  }, [rooms, activeFilter])
+
+  React.useEffect(() => {
+    if (!roomMenuId) return undefined
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && target.closest('[data-room-menu]')) return
+      setRoomMenuId(null)
+    }
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setRoomMenuId(null)
+    }
+    document.addEventListener('click', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('click', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [roomMenuId])
+
+  const handleArchiveRoom = React.useCallback((room: Room, archive: boolean) => {
+    const id = String(room.id)
+    if (archive) archiveRoom(id)
+    else unarchiveRoom(id)
+    setArchivedRoomIds(prev => {
+      const next = new Set(prev)
+      if (archive) next.add(id)
+      else next.delete(id)
+      return Array.from(next)
+    })
+    setRooms(prev => prev.map(item => (String(item.id) === id ? { ...item, is_archived: archive } : item)))
+  }, [])
+
+  const handleMuteRoom = React.useCallback((room: Room, mute: boolean) => {
+    const id = String(room.id)
+    setMutedRoomIds(prev => {
+      const next = new Set(prev)
+      if (mute) next.add(id)
+      else next.delete(id)
+      const arr = Array.from(next)
+      persistMutedRooms(arr)
+      return arr
+    })
+    setRooms(prev => prev.map(item => (String(item.id) === id ? { ...item, is_muted: mute } : item)))
+  }, [])
+
+  const handleDeleteRoom = React.useCallback(async (room: Room) => {
+    const id = String(room.id)
+    const displayName = room.name || t('chatPage.rooms.fallbackName')
+    const confirmed = window.confirm(t('chatPage.actions.confirmDelete', { name: displayName }))
+    if (!confirmed) return
+    try {
+      const res = await apiFetch(`/api/chat/rooms/${id}/`, { method: 'DELETE' })
+      if (!res.ok && res.status !== 404) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.detail || t('chatPage.actions.deleteFailed'))
+      }
+      unarchiveRoom(id)
+      setRooms(prev => prev.filter(item => String(item.id) !== id))
+      setArchivedRoomIds(prev => prev.filter(item => item !== id))
+      setMutedRoomIds(prev => {
+        const arr = prev.filter(item => item !== id)
+        persistMutedRooms(arr)
+        return arr
+      })
+      if (currentRoomId && String(currentRoomId) === id) {
+        navigate('/chat')
+      }
+    } catch (error: any) {
+      alert(error?.message || t('chatPage.actions.deleteFailed'))
+    }
+  }, [currentRoomId, navigate, t])
 
   const openDirectModal = React.useCallback(() => {
     setDmUsers([])
@@ -285,7 +407,7 @@ export default function ChatPage() {
         </div>
 
         <div className="rooms-filters">
-          {(['all','unread','favorites','groups'] as const).map(k => (
+          {(['all','unread','favorites','groups','archived'] as const).map(k => (
             <button
               key={k}
               className={`filter-tab ${activeFilter === k ? 'active' : ''}`}
@@ -438,7 +560,14 @@ export default function ChatPage() {
         <ul className="rooms-list">
           {loading && <li className="hint">{t('chatPage.rooms.loading')}</li>}
           {!loading && rooms.length === 0 && <li className="hint">{t('chatPage.rooms.empty')}</li>}
-          {rooms.map(r => {
+          {!loading && rooms.length > 0 && filteredRooms.length === 0 && (
+            <li className="hint">{t('chatPage.rooms.emptyFiltered')}</li>
+          )}
+          {filteredRooms.map(r => {
+            const id = String(r.id)
+            const menuOpen = roomMenuId === id
+            const isArchived = !!r.is_archived
+            const isMuted = !!r.is_muted
             const members = (r?.members || (r as any)?.participants || []) as any[]
             const otherMember = !r.is_group ? members.find((entry: any) => {
               if (entry?.is_self) return false
@@ -457,11 +586,14 @@ export default function ChatPage() {
             const avatarSrc = otherMember?.avatar || (r as any)?.avatar || null
             const unread = Number((r as any)?.unread_count ?? 0)
             const hasUnread = unread > 0
+            const lastActivity = r.last_message?.created_at || (r as any)?.updated_at || r.created_at
+            const archiveLabel = isArchived ? t('chatPage.actions.unarchive') : t('chatPage.actions.archive')
+            const muteLabel = isMuted ? t('chatPage.actions.unmute') : t('chatPage.actions.mute')
 
             return (
               <li
                 key={r.id}
-                className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''} ${hasUnread ? 'unread' : ''}`}
+                className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''} ${hasUnread ? 'unread' : ''} ${isArchived ? 'archived' : ''}`}
                 onClick={() => navigate(`/chat/${r.id}`)}
               >
                 <AvatarBubble
@@ -479,18 +611,74 @@ export default function ChatPage() {
                   <div className="room-row room-header">
                     <span className="room-name">{roomName}</span>
                     <div className="room-meta">
+                      <span className="room-date">{formatDate(lastActivity)}</span>
                       {hasUnread && (
                         <span className="room-unread" aria-label={t('chatPage.rooms.unreadAria', { count: unread })}>
                           {unread}
                         </span>
                       )}
-                      <span className="room-date">{formatDate((r as any)?.updated_at || (r as any)?.created_at)}</span>
+                      {isArchived && <span className="room-badge">{t('chatPage.actions.archivedBadge')}</span>}
+                      <button
+                        type="button"
+                        className="room-menu-btn"
+                        aria-haspopup="menu"
+                        aria-expanded={menuOpen}
+                        aria-label={t('chatPage.actions.openMenu')}
+                        data-room-menu
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          setRoomMenuId(menuOpen ? null : id)
+                        }}
+                      >
+                        ...
+                      </button>
                     </div>
                   </div>
                   <div className="room-row dim">
                     <span className="room-last">{preview(r)}</span>
                   </div>
                 </div>
+                {menuOpen && (
+                  <div className="room-actions-menu" role="menu" data-room-menu>
+                    <button
+                      type="button"
+                      className="room-actions-item"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setRoomMenuId(null)
+                        handleArchiveRoom(r, !isArchived)
+                      }}
+                    >
+                      {archiveLabel}
+                    </button>
+                    <button
+                      type="button"
+                      className="room-actions-item"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setRoomMenuId(null)
+                        handleMuteRoom(r, !isMuted)
+                      }}
+                    >
+                      {muteLabel}
+                    </button>
+                    <button
+                      type="button"
+                      className="room-actions-item danger"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setRoomMenuId(null)
+                        void handleDeleteRoom(r)
+                      }}
+                    >
+                      {t('chatPage.actions.delete')}
+                    </button>
+                  </div>
+                )}
               </li>
             )
           })}

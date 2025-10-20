@@ -100,6 +100,17 @@
       "unableUpdate": "Haiwezekani kusasisha ombi",
       "unableProfile": "Haiwezekani kupakia wasifu"
     },
+    "actions": {
+      "openMenu": "Open room actions",
+      "archive": "Archive chat",
+      "unarchive": "Unarchive chat",
+      "archivedBadge": "Archived",
+      "mute": "Mute notifications",
+      "unmute": "Unmute notifications",
+      "delete": "Delete chat",
+      "confirmDelete": "Delete \"{{name}}\" permanently?",
+      "deleteFailed": "Unable to delete chat right now. Try again later."
+    },
     "rooms": {
     "title": "Vyumba",
     "newGroup": "+ Kundi Jipya",
@@ -107,6 +118,7 @@
       "searchPlaceholder": "Tafuta au anzisha gumzo jipya",
       "loading": "Inapakia…",
       "empty": "Bado hakuna vyumba",
+      "emptyFiltered": "Hakuna gumzo katika kichujio hiki.",
       "fallbackName": "Chumba",
       "groupAria": "Chumba cha {{name}}",
       "profileAria": "Wasifu wa {{name}}",
@@ -139,7 +151,8 @@
       "all": "Vyote",
       "unread": "Havijasomwa",
       "favorites": "Vipendwa",
-      "groups": "Vikundi"
+      "groups": "Vikundi",
+      "archived": "Archived"
     },
     "requests": {
       "directRequests": {
