@@ -75,10 +75,22 @@ class RoleViewSet(viewsets.ModelViewSet):
         permissions = set()
         for role in roles:
             permissions.update(role.permissions)
+        if request.user.is_staff or request.user.is_superuser:
+            permissions.update(
+                [
+                    AdminPermission.MANAGE_USERS,
+                    AdminPermission.MANAGE_ROLES,
+                    AdminPermission.VIEW_AUDIT,
+                    AdminPermission.VIEW_HEALTH,
+                    AdminPermission.VIEW_USERS,
+                ]
+            )
         return Response(
             {
                 "roles": serializer.data,
                 "permissions": sorted(list(permissions)),
+                "is_staff": request.user.is_staff,
+                "is_superuser": request.user.is_superuser,
             }
         )
 

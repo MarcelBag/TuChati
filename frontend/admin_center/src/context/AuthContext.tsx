@@ -19,6 +19,8 @@ export type AuthContextValue = {
   refreshProfile: (overrideToken?: string | null) => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  isStaff: boolean;
+  isSuperuser: boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -29,6 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [isStaff, setIsStaff] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(false);
 
   const setToken = useCallback((value: string | null) => {
     setTokenState(value);
@@ -44,6 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const activeToken = overrideToken ?? token;
       if (!activeToken) {
         setPermissions([]);
+        setIsStaff(false);
+        setIsSuperuser(false);
         return;
       }
       setLoading(true);
@@ -55,11 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (response.status === 401) {
             setToken(null);
             setPermissions([]);
+            setIsStaff(false);
+            setIsSuperuser(false);
           }
           return;
         }
         const data = await response.json();
         setPermissions(data.permissions || []);
+        setIsStaff(Boolean(data.is_staff));
+        setIsSuperuser(Boolean(data.is_superuser));
       } finally {
         setLoading(false);
       }
@@ -88,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Malformed authentication response.");
         }
         setToken(access);
-        await refreshProfile(access);
+      await refreshProfile(access);
       } finally {
         setLoading(false);
       }
@@ -99,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setToken(null);
     setPermissions([]);
+    setIsStaff(false);
+    setIsSuperuser(false);
   }, [setToken]);
 
   useEffect(() => {
@@ -114,8 +126,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile,
       login,
       logout,
+      isStaff,
+      isSuperuser,
     }),
-    [token, loading, permissions, setToken, refreshProfile, login, logout],
+    [
+      token,
+      loading,
+      permissions,
+      setToken,
+      refreshProfile,
+      login,
+      logout,
+      isStaff,
+      isSuperuser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -130,6 +154,7 @@ export function useAuth() {
 }
 
 export function useHasPermission(code: string) {
-  const { permissions } = useAuth();
+  const { permissions, isStaff, isSuperuser } = useAuth();
+  if (isSuperuser || isStaff) return true;
   return permissions.includes(code);
 }
