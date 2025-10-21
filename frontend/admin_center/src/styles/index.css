@@ -16,20 +16,62 @@ button {
 
 :root {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+
+  /* TuChati shared palette */
+  --bg: #0b0d10;
+  --panel: #101826;
+  --card: #0f1724;
+  --text: #e8eefc;
+  --muted: #9fb0d0;
+  --brand: #0b6bff;
+  --brand-2: #5aa1ff;
+  --ring: #21304a;
+  --border: #172234;
+  --radius: 16px;
+  --shadow: 0 14px 38px rgba(0, 0, 0, 0.25);
+
+  /* Admin Center aliases */
+  --bg-root: var(--bg);
+  --bg-surface: color-mix(in srgb, var(--panel) 88%, transparent);
+  --bg-panel: var(--panel);
+  --bg-card: var(--card);
+  --border-strong: color-mix(in srgb, var(--brand) 45%, var(--border) 55%);
+  --border-muted: color-mix(in srgb, var(--ring) 60%, transparent);
+  --text-primary: var(--text);
+  --text-muted: var(--muted);
+  --accent: color-mix(in srgb, var(--brand) 72%, white 8%);
+  --accent-soft: color-mix(in srgb, var(--brand) 20%, transparent);
 }
 
-[data-theme="dark"] {
-  --bg: #0f172a;
-  --text: #f8fafc;
-}
+:root[data-theme="light"],
+:root.light {
+  color-scheme: light;
+  --bg: #f7f9fc;
+  --panel: #ffffff;
+  --card: #f1f5fa;
+  --text: #1a1f29;
+  --muted: #54657e;
+  --brand: #0b6bff;
+  --brand-2: #3d8fff;
+  --ring: #c8d4e6;
+  --border: #d7dee9;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 
-[data-theme="light"] {
-  --bg: #f1f5f9;
-  --text: #0b1120;
+  --bg-root: var(--bg);
+  --bg-surface: color-mix(in srgb, var(--card) 85%, white 15%);
+  --bg-panel: var(--panel);
+  --bg-card: var(--card);
+  --border-strong: color-mix(in srgb, var(--brand) 35%, var(--border) 65%);
+  --border-muted: color-mix(in srgb, var(--ring) 55%, transparent);
+  --text-primary: var(--text);
+  --text-muted: color-mix(in srgb, var(--muted) 85%, black 15%);
+  --accent: color-mix(in srgb, var(--brand) 80%, white 20%);
+  --accent-soft: color-mix(in srgb, var(--brand) 12%, white 88%);
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 70%, var(--panel) 30%));
+  color: var(--text-primary);
   transition: background 0.3s ease, color 0.3s ease;
 }

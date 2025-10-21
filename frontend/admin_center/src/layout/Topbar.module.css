@@ -2,9 +2,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid var(--border-muted);
   padding: 20px 24px;
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--bg-panel);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -18,7 +18,7 @@
 
 .subtitle {
   margin: 4px 0 0;
-  color: rgba(226, 232, 240, 0.65);
+  color: var(--text-muted);
 }
 
 .actions {
@@ -28,9 +28,9 @@
 }
 
 .actions button {
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.65);
-  color: #f8fafc;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  color: var(--text-primary);
   padding: 8px 16px;
   border-radius: 999px;
   cursor: pointer;
@@ -39,8 +39,8 @@
 }
 
 .actions button:hover {
-  border-color: rgba(59, 130, 246, 0.65);
-  background: rgba(37, 99, 235, 0.35);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .profileButton {

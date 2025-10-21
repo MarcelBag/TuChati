@@ -32,7 +32,7 @@ export default function ProfilePanel({ open, onClose }: ProfilePanelProps) {
         onClick={(event) => event.stopPropagation()}
       >
         <header className={styles.header}>
-          <div>
+          <div className={styles.identity}>
             <h3>{user?.name || user?.username || "—"}</h3>
             <p>{user?.email}</p>
           </div>
@@ -41,35 +41,41 @@ export default function ProfilePanel({ open, onClose }: ProfilePanelProps) {
           </button>
         </header>
 
-        <div className={styles.section}>
-          <span className={styles.sectionLabel}>{t("topbar.profile")}</span>
-          <div className={styles.badges}>
-            <span className={styles.badge}>{status}</span>
-            <span className={styles.badge}>
-              {t("profile.permissions", { count: permissions.length })}
-            </span>
+        <div className={styles.scrollArea}>
+          <div className={styles.section}>
+            <span className={styles.sectionLabel}>{t("topbar.profile")}</span>
+            <div className={styles.badges}>
+              <span className={styles.badge}>{status}</span>
+              <span className={styles.badge}>
+                {t("profile.permissions", { count: permissions.length })}
+              </span>
+            </div>
+            {permissions.length > 0 && (
+              <ul className={styles.permissionList}>
+                {permissions.slice(0, 6).map((perm) => (
+                  <li key={perm}>{perm}</li>
+                ))}
+                {permissions.length > 6 && (
+                  <li>+{permissions.length - 6} more…</li>
+                )}
+              </ul>
+            )}
           </div>
-          {permissions.length > 0 && (
-            <ul className={styles.permissionList}>
-              {permissions.slice(0, 6).map((perm) => (
-                <li key={perm}>{perm}</li>
-              ))}
-              {permissions.length > 6 && (
-                <li>+{permissions.length - 6} more…</li>
-              )}
-            </ul>
-          )}
-        </div>
 
-        <div className={styles.section}>
-          <span className={styles.sectionLabel}>{t("topbar.theme")}</span>
-          <button type="button" className={styles.toggle} onClick={toggleTheme}>
-            {theme === "dark" ? t("topbar.light") : t("topbar.dark")}
-          </button>
-        </div>
+          <div className={styles.section}>
+            <span className={styles.sectionLabel}>{t("topbar.theme")}</span>
+            <button
+              type="button"
+              className={styles.toggle}
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? t("topbar.light") : t("topbar.dark")}
+            </button>
+          </div>
 
-        <div className={styles.section}>
-          <LanguageMenu />
+          <div className={styles.section}>
+            <LanguageMenu />
+          </div>
         </div>
 
         <footer className={styles.footer}>
