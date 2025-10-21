@@ -66,6 +66,8 @@ tuchati/
 │ │ ├── services/
 │ │ └── sockets/
 │ └── ...
+│ ├── admin_center/ # React + Vite admin portal (roles, audit, health)
+│ └── web/          # Primary user-facing web client
 ├── mobile/ (planned)
 │ └── React Native project
 ├── docker/
@@ -84,6 +86,22 @@ tuchati/
 |--------------|-----|----------|
 | **Production** | [https://tuchati.tuunganes.com](https://tuchati.tuunganes.com) | Live environment |
 | **Development** | Localhost / dev | Ongoing development |
+
+### 🛠️ Running the Admin Center (new)
+
+The admin portal lives in a dedicated Vite project under `frontend/admin_center`.
+
+```bash
+cd frontend/admin_center
+npm install          # once
+npm run dev          # http://localhost:5183
+
+# builds to frontend/admin_center/dist
+npm run build
+```
+
+The dev server proxies API calls to `localhost:8011` (matching the backend default).
+It expects an existing JWT token (from the main app) stored in `localStorage` under `tuchati_admin_token`.
 
 ---
 

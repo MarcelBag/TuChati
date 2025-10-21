@@ -11,3 +11,4 @@ Pillow>=10.3
 daphne>=4.1
 django-jazzmin>=2.6.0
 django-cors-headers==4.7.0
+django-filter>=24.2

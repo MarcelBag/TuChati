@@ -30,6 +30,7 @@ urlpatterns = [
     # Chat system
     # -------------------------------
     path("api/chat/", include("apps.chat.urls")),  # chat endpoints (rooms & messages)
+    path("api/admin/", include("apps.adminpanel.urls")),
 ]
 
 # -------------------------------

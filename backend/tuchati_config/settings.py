@@ -41,11 +41,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "channels",
+    "django_filters",
 
     # Local apps
     "apps.accounts",
     # Chat System
     "apps.chat",
+    # Admin Center
+    "apps.adminpanel",
 ]
 
 
@@ -219,6 +222,9 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
     ),
 }
 
