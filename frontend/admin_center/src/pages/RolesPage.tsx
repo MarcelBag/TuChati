@@ -9,8 +9,8 @@ export default function RolesPage() {
   const { token, permissions, refreshProfile } = useAuth();
   const canManage = permissions.includes(AdminPermission.MANAGE_ROLES);
 
-  const { data } = useQuery({
-    queryKey: ["admin", "roles"],
+  const { data, error, isError, refetch } = useQuery({
+    queryKey: ["admin", "roles", token],
     enabled: !!token,
     queryFn: async () => {
       const res = await apiClient("/api/admin/roles/", { token });
@@ -27,10 +27,20 @@ export default function RolesPage() {
     <div className={styles.page}>
       <div className={styles.headerRow}>
         <h2>Roles</h2>
-        <button type="button" onClick={() => refreshProfile()}>
-          Refresh
-        </button>
+        <div className={styles.headerActions}>
+          <button type="button" onClick={() => { void refetch(); }}>
+            Reload
+          </button>
+          <button type="button" onClick={() => refreshProfile()}>
+            Refresh
+          </button>
+        </div>
       </div>
+      {isError && (
+        <p className={styles.note}>
+          {(error as Error)?.message || "Unable to load roles."}
+        </p>
+      )}
       <p className={styles.note}>
         {canManage
           ? "Manage role descriptions and ensure each has the correct permissions."

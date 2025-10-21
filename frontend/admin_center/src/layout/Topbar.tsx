@@ -2,7 +2,7 @@ import { useAuth } from "../context/AuthContext";
 import styles from "./Topbar.module.css";
 
 export default function Topbar() {
-  const { permissions, refreshProfile } = useAuth();
+  const { permissions, refreshProfile, logout } = useAuth();
 
   return (
     <header className={styles.topbar}>
@@ -15,6 +15,9 @@ export default function Topbar() {
       <div className={styles.actions}>
         <button type="button" onClick={() => refreshProfile()}>
           Refresh Access
+        </button>
+        <button type="button" onClick={logout}>
+          Logout
         </button>
         <span className={styles.perms}>Permissions: {permissions.length}</span>
       </div>

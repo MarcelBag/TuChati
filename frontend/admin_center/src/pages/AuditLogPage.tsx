@@ -5,8 +5,8 @@ import styles from "./Page.module.css";
 
 export default function AuditLogPage() {
   const { token } = useAuth();
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "audit"],
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin", "audit", token],
     enabled: !!token,
     queryFn: async () => {
       const res = await apiClient("/api/admin/audit-events/", { token });
@@ -21,7 +21,19 @@ export default function AuditLogPage() {
 
   return (
     <div className={styles.page}>
-      <h2>Audit Events</h2>
+      <div className={styles.headerRow}>
+        <h2>Audit Events</h2>
+        <div className={styles.headerActions}>
+          <button type="button" onClick={() => refetch()}>
+            Reload
+          </button>
+        </div>
+      </div>
+      {isError && (
+        <p className={styles.note}>
+          {(error as Error)?.message || "Unable to load audit events."}
+        </p>
+      )}
       {isLoading && <p>Loading…</p>}
       {!isLoading && (
         <div className={styles.timeline}>

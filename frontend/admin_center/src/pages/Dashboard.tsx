@@ -8,14 +8,14 @@ export default function Dashboard() {
   const { token, permissions } = useAuth();
   const canViewHealth = permissions.includes(AdminPermission.VIEW_HEALTH);
 
-  const { data } = useQuery({
-    queryKey: ["admin", "overview"],
+  const { data, error, isError } = useQuery({
+    queryKey: ["admin", "overview", token],
     enabled: !!token,
     queryFn: async () => {
       const res = await apiClient("/api/admin/audit-events/?limit=5", { token });
       if (!res.ok) return { events: [] };
       const payload = await res.json();
-      return { events: payload.results || payload }
+      return { events: payload.results || payload };
     },
   });
 
@@ -23,12 +23,17 @@ export default function Dashboard() {
     <div className={styles.page}>
       <h2>Overview</h2>
       <div className={styles.grid}>
-        <section className={styles.card}>
-          <h3>Recent Audit Events</h3>
-          <ul className={styles.list}>
-            {(data?.events ?? []).slice(0, 5).map((event: any) => (
-              <li key={event.id}>
-                <strong>{event.event_type}</strong>
+      <section className={styles.card}>
+        <h3>Recent Audit Events</h3>
+        {isError && (
+          <p className={styles.note}>
+            {(error as Error)?.message || "Unable to load audit events."}
+          </p>
+        )}
+        <ul className={styles.list}>
+          {(data?.events ?? []).slice(0, 5).map((event: any) => (
+            <li key={event.id}>
+              <strong>{event.event_type}</strong>
                 <span>{new Date(event.created_at).toLocaleString()}</span>
               </li>
             ))}
