@@ -32,8 +32,8 @@ services:
       redis:
         condition: service_started
     volumes:
-      - staticdata:/app/staticfiles
-      - mediadata:/app/media
+      - staticdata:/app/backend/staticfiles
+      - mediadata:/app/backend/media
     expose: ["8000"]
  
 

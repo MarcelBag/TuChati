@@ -14,6 +14,8 @@ services:
     volumes:
       - ../backend:/app/backend
       - ../locale:/app/locale
+      - staticdata:/app/backend/staticfiles
+      - mediadata:/app/backend/media
     ports:
       - "8011:8000"
 
