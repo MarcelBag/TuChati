@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Page.module.css";
 
 export default function AuditLogPage() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "audit", token],
     enabled: !!token,
@@ -22,19 +24,19 @@ export default function AuditLogPage() {
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <h2>Audit Events</h2>
+        <h2>{t("audit.heading")}</h2>
         <div className={styles.headerActions}>
           <button type="button" onClick={() => refetch()}>
-            Reload
+            {t("audit.reload")}
           </button>
         </div>
       </div>
       {isError && (
         <p className={styles.note}>
-          {(error as Error)?.message || "Unable to load audit events."}
+          {(error as Error)?.message || t("audit.error")}
         </p>
       )}
-      {isLoading && <p>Loading…</p>}
+      {isLoading && <p>{t("users.loading")}</p>}
       {!isLoading && (
         <div className={styles.timeline}>
           {events.map((event: any) => (
@@ -44,13 +46,19 @@ export default function AuditLogPage() {
                 <span>{new Date(event.created_at).toLocaleString()}</span>
               </header>
               {event.actor && (
-                <p className={styles.actor}>Actor: {event.actor.name || event.actor.username}</p>
+                <p className={styles.actor}>
+                  {t("audit.actor")}: {event.actor.name || event.actor.username}
+                </p>
               )}
               {event.message && <p>{event.message}</p>}
-              {event.target && <p className={styles.target}>Target: {event.target}</p>}
+              {event.target && (
+                <p className={styles.target}>
+                  {t("audit.target")}: {event.target}
+                </p>
+              )}
             </article>
           ))}
-          {events.length === 0 && <p>No audit events yet.</p>}
+          {events.length === 0 && <p>{t("dashboard.events.none")}</p>}
         </div>
       )}
     </div>

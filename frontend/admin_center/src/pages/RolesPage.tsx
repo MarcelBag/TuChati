@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { AdminPermission } from "../utils/permissions";
@@ -8,6 +9,7 @@ import styles from "./Page.module.css";
 export default function RolesPage() {
   const { token, permissions, refreshProfile } = useAuth();
   const canManage = permissions.includes(AdminPermission.MANAGE_ROLES);
+  const { t } = useTranslation();
 
   const { data, error, isError, refetch } = useQuery({
     queryKey: ["admin", "roles", token],
@@ -26,40 +28,40 @@ export default function RolesPage() {
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <h2>Roles</h2>
+        <h2>{t("roles.heading")}</h2>
         <div className={styles.headerActions}>
           <button type="button" onClick={() => { void refetch(); }}>
-            Reload
+            {t("roles.reload")}
           </button>
           <button type="button" onClick={() => refreshProfile()}>
-            Refresh
+            {t("topbar.refresh")}
           </button>
         </div>
       </div>
       {isError && (
         <p className={styles.note}>
-          {(error as Error)?.message || "Unable to load roles."}
+          {(error as Error)?.message || t("audit.error")}
         </p>
       )}
       <p className={styles.note}>
         {canManage
-          ? "Manage role descriptions and ensure each has the correct permissions."
-          : "You have read-only access. Request the 'manage roles' permission for edits."}
+          ? t("roles.subtitle")
+          : t("roles.subtitleReadOnly")}
       </p>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Permissions</th>
-            <th>Members</th>
+            <th>{t("roles.columns.name")}</th>
+            <th>{t("roles.columns.description")}</th>
+            <th>{t("roles.columns.permissions")}</th>
+            <th>{t("roles.columns.members")}</th>
           </tr>
         </thead>
         <tbody>
           {roles.map((role: any) => (
             <tr key={role.id}>
               <td>{role.name}</td>
-              <td>{role.description || "—"}</td>
+              <td>{role.description || t("roles.noDescription")}</td>
               <td>
                 <ul className={styles.tagList}>
                   {role.permissions.map((perm: string) => (

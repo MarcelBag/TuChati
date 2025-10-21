@@ -1,15 +1,17 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styles from "./Sidebar.module.css";
 
 const links = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/users", label: "Users" },
-  { to: "/roles", label: "Roles" },
-  { to: "/audit", label: "Audit" },
-  { to: "/health", label: "Health" },
+  { to: "/dashboard", label: "nav.dashboard" },
+  { to: "/users", label: "nav.users" },
+  { to: "/roles", label: "nav.roles" },
+  { to: "/audit", label: "nav.audit" },
+  { to: "/health", label: "nav.health" },
 ];
 
 export default function Sidebar() {
+  const { t } = useTranslation();
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
@@ -25,7 +27,7 @@ export default function Sidebar() {
               isActive ? `${styles.link} ${styles.active}` : styles.link
             }
           >
-            {item.label}
+            {t(item.label)}
           </NavLink>
         ))}
       </nav>

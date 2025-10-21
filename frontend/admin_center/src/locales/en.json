@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "audit": "Audit",
+    "health": "Health"
+  },
+  "topbar": {
+    "title": "Control Center",
+    "subtitle": "Monitor TuChati health and permissions",
+    "refresh": "Refresh",
+    "logout": "Log out",
+    "profile": "Profile",
+    "theme": "Theme",
+    "language": "Language",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "profile": {
+    "permissions": "{{count}} permissions"
+  },
+  "dashboard": {
+    "heading": "Control Center",
+    "description": "Snapshot of user activity and admin signals.",
+    "stats": {
+      "users": "Total users",
+      "active": "Active today",
+      "rooms": "Chat rooms",
+      "staffHint": "{{staff}} staff / {{super}} superusers",
+      "rolesHint": "{{count}} admin roles configured",
+      "loginHint": "Users with a recent login"
+    },
+    "events": {
+      "recent": "Recent audit events",
+      "users": "Newest users",
+      "roles": "Top roles",
+      "none": "No audit activity yet.",
+      "noUsers": "No recent signups.",
+      "noRoles": "No roles configured.",
+      "rolesBadge": "{{count}} users"
+    }
+  },
+  "users": {
+    "heading": "Users",
+    "subtitle": "Review staff access and admin center permissions.",
+    "reload": "Reload",
+    "searchPlaceholder": "Search username or email",
+    "empty": "No users found.",
+    "loading": "Loading users…",
+    "unauthorized": "You need the \"view users\" permission to see this section.",
+    "columns": {
+      "user": "User",
+      "status": "Status",
+      "roles": "Roles",
+      "lastLogin": "Last login"
+    },
+    "status": {
+      "superuser": "Superuser",
+      "staff": "Staff",
+      "user": "User"
+    },
+    "noRoles": "No roles"
+  },
+  "roles": {
+    "heading": "Roles",
+    "subtitle": "Manage role descriptions and ensure each has the correct permissions.",
+    "subtitleReadOnly": "You have read-only access. Request the 'manage roles' permission for edits.",
+    "reload": "Reload",
+    "columns": {
+      "name": "Name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "members": "Members"
+    },
+    "noDescription": "No description"
+  },
+  "audit": {
+    "heading": "Audit Events",
+    "reload": "Reload",
+    "empty": "No audit events yet.",
+    "error": "Unable to load audit events.",
+    "actor": "Actor",
+    "target": "Target"
+  },
+  "health": {
+    "heading": "System Health",
+    "requiresPermission": "You need the \"view health\" permission to access this page.",
+    "placeholder": "Health dashboards and live metrics will be displayed here."
+  }
+}

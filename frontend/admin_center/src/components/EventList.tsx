@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import styles from "./EventList.module.css";
 
 export type EventItem = {
@@ -15,13 +16,16 @@ export type EventListProps = {
 };
 
 export default function EventList({ title, items, emptyText }: EventListProps) {
+  const { t } = useTranslation();
   return (
     <section className={styles.section}>
       <header className={styles.header}>
         <h3>{title}</h3>
       </header>
       <div className={styles.list}>
-        {items.length === 0 && <p className={styles.empty}>{emptyText || "Nothing yet."}</p>}
+        {items.length === 0 && (
+          <p className={styles.empty}>{emptyText || t("dashboard.events.none")}</p>
+        )}
         {items.map((item) => (
           <article key={item.id} className={styles.item}>
             <div className={styles.meta}>

@@ -1,9 +1,3 @@
-:root {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #0f172a;
-  color: #f8fafc;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -18,4 +12,24 @@ a {
 
 button {
   font: inherit;
+}
+
+:root {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #f8fafc;
+}
+
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --text: #0b1120;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
 }

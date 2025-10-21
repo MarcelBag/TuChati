@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiClient } from "../api/client";
 import { useAuth, useHasPermission } from "../context/AuthContext";
 import { AdminPermission } from "../utils/permissions";
@@ -18,6 +19,7 @@ type AdminUser = {
 export default function UsersPage() {
   const { token } = useAuth();
   const canView = useHasPermission(AdminPermission.VIEW_USERS);
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -40,30 +42,28 @@ export default function UsersPage() {
     <div className={styles.page}>
       <div className={styles.headerRow}>
         <div>
-          <h2>Users</h2>
-          <p>Review staff access and admin center permissions.</p>
+          <h2>{t("users.heading")}</h2>
+          <p>{t("users.subtitle")}</p>
         </div>
         <button type="button" onClick={() => refetch()}>
-          Reload
+          {t("users.reload")}
         </button>
       </div>
 
       {!canView && (
-        <p className={styles.error}>
-          You need the "view users" permission to see this section.
-        </p>
+        <p className={styles.error}>{t("users.unauthorized")}</p>
       )}
 
       <div className={styles.filters}>
         <input
           type="search"
-          placeholder="Search username or email"
+          placeholder={t("users.searchPlaceholder")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
 
-      {isLoading && canView && <p className={styles.note}>Loading users…</p>}
+      {isLoading && canView && <p className={styles.note}>{t("users.loading")}</p>}
       {error instanceof Error && canView && (
         <p className={styles.error}>{error.message}</p>
       )}
@@ -71,10 +71,10 @@ export default function UsersPage() {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>User</th>
-            <th>Status</th>
-            <th>Roles</th>
-            <th>Last login</th>
+            <th>{t("users.columns.user")}</th>
+            <th>{t("users.columns.status")}</th>
+            <th>{t("users.columns.roles")}</th>
+            <th>{t("users.columns.lastLogin")}</th>
           </tr>
         </thead>
         <tbody>
@@ -87,11 +87,19 @@ export default function UsersPage() {
                 </div>
               </td>
               <td>
-                <span className={styles.tag}>{user.is_superuser ? "Superuser" : user.is_staff ? "Staff" : "User"}</span>
+                <span className={styles.tag}>
+                  {user.is_superuser
+                    ? t("users.status.superuser")
+                    : user.is_staff
+                      ? t("users.status.staff")
+                      : t("users.status.user")}
+                </span>
               </td>
               <td>
                 <div className={styles.roleTags}>
-                  {user.roles.length === 0 && <span className={styles.muted}>None</span>}
+                  {user.roles.length === 0 && (
+                    <span className={styles.muted}>{t("users.noRoles")}</span>
+                  )}
                   {user.roles.map((role) => (
                     <span key={role} className={styles.tag}>
                       {role}
@@ -106,7 +114,7 @@ export default function UsersPage() {
       </table>
 
       {users.length === 0 && !isLoading && canView && (
-        <p className={styles.note}>No users found.</p>
+        <p className={styles.note}>{t("users.empty")}</p>
       )}
     </div>
   );

@@ -85,8 +85,17 @@ class RoleViewSet(viewsets.ModelViewSet):
                     AdminPermission.VIEW_USERS,
                 ]
             )
+        user = request.user
+        user_info = {
+            "id": str(user.id),
+            "username": user.get_username(),
+            "email": getattr(user, "email", ""),
+            "name": getattr(user, "get_full_name", lambda: "")() or user.get_username(),
+            "last_login": user.last_login,
+        }
         return Response(
             {
+                "user": user_info,
                 "roles": serializer.data,
                 "permissions": sorted(list(permissions)),
                 "is_staff": request.user.is_staff,

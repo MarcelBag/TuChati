@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "users": "Utilisateurs",
+    "roles": "Rôles",
+    "audit": "Audit",
+    "health": "Santé"
+  },
+  "topbar": {
+    "title": "Centre de contrôle",
+    "subtitle": "Surveillez la santé et les permissions de TuChati",
+    "refresh": "Actualiser",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "theme": "Thème",
+    "language": "Langue",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
+  "profile": {
+    "permissions": "{{count}} permissions"
+  },
+  "dashboard": {
+    "heading": "Centre de contrôle",
+    "description": "Aperçu de l'activité des utilisateurs et des signaux d'administration.",
+    "stats": {
+      "users": "Utilisateurs totaux",
+      "active": "Actifs aujourd'hui",
+      "rooms": "Salons",
+      "staffHint": "{{staff}} staff / {{super}} superadmins",
+      "rolesHint": "{{count}} rôles configurés",
+      "loginHint": "Utilisateurs récemment connectés"
+    },
+    "events": {
+      "recent": "Événements d'audit récents",
+      "users": "Nouveaux utilisateurs",
+      "roles": "Rôles principaux",
+      "none": "Aucune activité d'audit.",
+      "noUsers": "Aucune inscription récente.",
+      "noRoles": "Aucun rôle configuré.",
+      "rolesBadge": "{{count}} utilisateurs"
+    }
+  },
+  "users": {
+    "heading": "Utilisateurs",
+    "subtitle": "Vérifiez l'accès du staff et les permissions du centre d'administration.",
+    "reload": "Recharger",
+    "searchPlaceholder": "Rechercher un nom d'utilisateur ou un email",
+    "empty": "Aucun utilisateur trouvé.",
+    "loading": "Chargement des utilisateurs…",
+    "unauthorized": "Vous avez besoin de la permission \"view users\" pour voir cette section.",
+    "columns": {
+      "user": "Utilisateur",
+      "status": "Statut",
+      "roles": "Rôles",
+      "lastLogin": "Dernière connexion"
+    },
+    "status": {
+      "superuser": "Superadmin",
+      "staff": "Staff",
+      "user": "Utilisateur"
+    },
+    "noRoles": "Aucun rôle"
+  },
+  "roles": {
+    "heading": "Rôles",
+    "subtitle": "Gérez les descriptions des rôles et leurs permissions.",
+    "subtitleReadOnly": "Accès lecture seule. Demandez la permission 'manage roles' pour modifier.",
+    "reload": "Recharger",
+    "columns": {
+      "name": "Nom",
+      "description": "Description",
+      "permissions": "Permissions",
+      "members": "Membres"
+    },
+    "noDescription": "Pas de description"
+  },
+  "audit": {
+    "heading": "Événements d'audit",
+    "reload": "Recharger",
+    "empty": "Aucun événement d'audit.",
+    "error": "Impossible de charger les événements d'audit.",
+    "actor": "Auteur",
+    "target": "Cible"
+  },
+  "health": {
+    "heading": "Santé du système",
+    "requiresPermission": "Vous avez besoin de la permission 'view health' pour accéder à cette page.",
+    "placeholder": "Les tableaux de bord et métriques seront affichés ici."
+  }
+}

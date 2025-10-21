@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { apiClient } from "../api/client";
 import StatCard from "../components/StatCard";
@@ -7,6 +8,7 @@ import styles from "./Dashboard.module.css";
 
 export default function Dashboard() {
   const { token } = useAuth();
+  const { t } = useTranslation();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "metrics", token],
@@ -30,11 +32,11 @@ export default function Dashboard() {
     <div className={styles.page}>
       <div className={styles.headerRow}>
         <div>
-          <h2>Control Center</h2>
-          <p>Snapshot of user activity and admin signals.</p>
+          <h2>{t("dashboard.heading")}</h2>
+          <p>{t("dashboard.description")}</p>
         </div>
         <span className={styles.timestamp}>
-          {isLoading ? "Refreshing…" : new Date().toLocaleString()}
+          {isLoading ? t("topbar.refresh") : new Date().toLocaleString()}
         </span>
       </div>
 
@@ -42,25 +44,28 @@ export default function Dashboard() {
 
       <div className={styles.statsGrid}>
         <StatCard
-          label="Total users"
+          label={t("dashboard.stats.users")}
           value={stats.total_users ?? "—"}
-          hint={`${stats.staff_users ?? 0} staff / ${stats.superusers ?? 0} superusers`}
+          hint={t("dashboard.stats.staffHint", {
+            staff: stats.staff_users ?? 0,
+            super: stats.superusers ?? 0,
+          })}
         />
         <StatCard
-          label="Active today"
+          label={t("dashboard.stats.active")}
           value={stats.active_today ?? "—"}
-          hint="Users with a recent login"
+          hint={t("dashboard.stats.loginHint")}
         />
         <StatCard
-          label="Chat rooms"
+          label={t("dashboard.stats.rooms")}
           value={stats.total_rooms ?? "—"}
-          hint={`${stats.total_roles ?? 0} admin roles configured`}
+          hint={t("dashboard.stats.rolesHint", { count: stats.total_roles ?? 0 })}
         />
       </div>
 
       <div className={styles.panelGrid}>
         <EventList
-          title="Recent audit events"
+          title={t("dashboard.events.recent")}
           items={recentEvents.map((event: any) => ({
             id: event.id,
             title: event.event_type,
@@ -70,10 +75,10 @@ export default function Dashboard() {
               ? new Date(event.created_at).toLocaleString()
               : undefined,
           }))}
-          emptyText="No audit activity yet."
+          emptyText={t("dashboard.events.none")}
         />
         <EventList
-          title="Newest users"
+          title={t("dashboard.events.users")}
           items={latestUsers.map((user: any) => ({
             id: user.id,
             title: user.username,
@@ -82,16 +87,16 @@ export default function Dashboard() {
               ? new Date(user.date_joined).toLocaleString()
               : undefined,
           }))}
-          emptyText="No recent signups."
+          emptyText={t("dashboard.events.noUsers")}
         />
         <EventList
-          title="Top roles"
+          title={t("dashboard.events.roles")}
           items={topRoles.map((role: any) => ({
             id: role.id,
             title: role.name,
-            badge: `${role.user_count} users`,
+            badge: t("dashboard.events.rolesBadge", { count: role.user_count }),
           }))}
-          emptyText="No roles configured."
+          emptyText={t("dashboard.events.noRoles")}
         />
       </div>
     </div>

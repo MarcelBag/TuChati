@@ -21,6 +21,7 @@ export type AuthContextValue = {
   logout: () => void;
   isStaff: boolean;
   isSuperuser: boolean;
+  user: { id: string; username: string; email: string; name: string } | null;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isStaff, setIsStaff] = useState(false);
   const [isSuperuser, setIsSuperuser] = useState(false);
+  const [user, setUser] = useState<{ id: string; username: string; email: string; name: string } | null>(
+    null,
+  );
 
   const setToken = useCallback((value: string | null) => {
     setTokenState(value);
@@ -50,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissions([]);
         setIsStaff(false);
         setIsSuperuser(false);
+        setUser(null);
         return;
       }
       setLoading(true);
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setPermissions([]);
             setIsStaff(false);
             setIsSuperuser(false);
+            setUser(null);
           }
           return;
         }
@@ -70,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissions(data.permissions || []);
         setIsStaff(Boolean(data.is_staff));
         setIsSuperuser(Boolean(data.is_superuser));
+        setUser(data.user || null);
       } finally {
         setLoading(false);
       }
@@ -111,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPermissions([]);
     setIsStaff(false);
     setIsSuperuser(false);
+    setUser(null);
   }, [setToken]);
 
   useEffect(() => {
@@ -128,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       isStaff,
       isSuperuser,
+      user,
     }),
     [
       token,
@@ -139,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       isStaff,
       isSuperuser,
+      user,
     ],
   );
 

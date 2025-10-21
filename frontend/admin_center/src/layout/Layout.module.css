@@ -1,8 +1,8 @@
 .shell {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 100vh;
-  background: #0f172a;
+  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.25), rgba(15, 23, 42, 0.95) 60%);
   color: #f8fafc;
 }
 
@@ -10,12 +10,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #0b1120;
+  background: rgba(9, 16, 28, 0.82);
+  backdrop-filter: blur(14px);
 }
 
 .content {
   flex: 1;
-  padding: 24px;
+  padding: 32px;
   overflow-y: auto;
 }
 
