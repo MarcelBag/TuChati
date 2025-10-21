@@ -198,6 +198,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5183",
+    "http://127.0.0.1:5183",
     "https://web.tuchati.tuunganes.com",
 ]
 
@@ -206,6 +208,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5183",
+    "http://127.0.0.1:5183",
     "http://localhost:8092",
     "http://127.0.0.1:8092",
     "https://tuchati.tuunganes.com",
