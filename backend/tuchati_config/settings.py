@@ -187,9 +187,6 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"  # uploaded files
 
-# Run this in Docker when needed:
-# docker compose exec ongea_backend python manage.py collectstatic --noinput
-
 
 # -------------------------------------------
 # CORS & CSRF
