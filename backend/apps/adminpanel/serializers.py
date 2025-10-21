@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 from .models import Role, AuditEvent
 
@@ -88,7 +88,25 @@ class AuditEventSerializer(serializers.ModelSerializer):
         return {
             "id": obj.actor_id,
             "username": getattr(obj.actor, "username", None),
-            "name": getattr(obj.actor, "get_full_name", lambda: "")() or getattr(
-                obj.actor, "username", ""
-            ),
+            "name": getattr(obj.actor, "get_full_name", lambda: "")()
+            or getattr(obj.actor, "username", ""),
         }
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    roles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "email",
+            "is_staff",
+            "is_superuser",
+            "last_login",
+            "roles",
+        )
+
+    def get_roles(self, user):
+        return list(user.admin_roles.values_list("name", flat=True))

@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import RolesPage from "./pages/RolesPage";
 import AuditLogPage from "./pages/AuditLogPage";
 import HealthPage from "./pages/HealthPage";
+import UsersPage from "./pages/UsersPage";
 import LoginPage from "./pages/LoginPage";
 import RequireAuth from "./components/RequireAuth";
 import { AuthProvider } from "./context/AuthContext";
@@ -22,6 +23,7 @@ export default function App() {
               <Route path="/roles" element={<RolesPage />} />
               <Route path="/audit" element={<AuditLogPage />} />
               <Route path="/health" element={<HealthPage />} />
+              <Route path="/users" element={<UsersPage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

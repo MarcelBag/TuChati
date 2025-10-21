@@ -1,0 +1,41 @@
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.18), rgba(30, 41, 59, 0.65));
+  border: 1px solid rgba(37, 99, 235, 0.45);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.45);
+  color: #e2e8f0;
+}
+
+.body {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.65);
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

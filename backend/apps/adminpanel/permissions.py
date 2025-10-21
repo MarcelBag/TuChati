@@ -12,24 +12,29 @@ class AdminPermission:
     MANAGE_ROLES = "admin_center.manage_roles"
     VIEW_AUDIT = "admin_center.view_audit"
     VIEW_HEALTH = "admin_center.view_health"
+    VIEW_USERS = "admin_center.view_users"
 
     DEFAULT_OWNER = [
         MANAGE_USERS,
         MANAGE_ROLES,
         VIEW_AUDIT,
         VIEW_HEALTH,
+        VIEW_USERS,
     ]
     DEFAULT_OPERATIONS = [
         MANAGE_USERS,
         VIEW_AUDIT,
         VIEW_HEALTH,
+        VIEW_USERS,
     ]
     DEFAULT_MODERATOR = [
         MANAGE_USERS,
         VIEW_AUDIT,
+        VIEW_USERS,
     ]
     DEFAULT_SUPPORT = [
         VIEW_AUDIT,
+        VIEW_USERS,
     ]
 
 

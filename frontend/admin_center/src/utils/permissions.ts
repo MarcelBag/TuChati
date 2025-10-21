@@ -3,4 +3,5 @@ export const AdminPermission = {
   MANAGE_ROLES: "admin_center.manage_roles",
   VIEW_AUDIT: "admin_center.view_audit",
   VIEW_HEALTH: "admin_center.view_health",
+  VIEW_USERS: "admin_center.view_users",
 } as const;

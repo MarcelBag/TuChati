@@ -3,9 +3,10 @@ import styles from "./Sidebar.module.css";
 
 const links = [
   { to: "/dashboard", label: "Dashboard" },
+  { to: "/users", label: "Users" },
   { to: "/roles", label: "Roles" },
   { to: "/audit", label: "Audit" },
-  { to: "/health", label: "Health" }
+  { to: "/health", label: "Health" },
 ];
 
 export default function Sidebar() {
