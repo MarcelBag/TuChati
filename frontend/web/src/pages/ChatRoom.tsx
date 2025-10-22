@@ -495,7 +495,8 @@ export default function ChatRoom() {
   // --- mergeMessage must come BEFORE any callbacks that depend on it ---
   const mergeMessage = React.useCallback((payload: any) => {
     if (!payload) return false
-    const normalized = { ...payload }
+    const base = normalizeMsg(payload)
+    const normalized = base ? { ...base } : { ...payload }
     if (!!normalized.sender_id && normalized.sender_id === (user?.id as any)) {
       normalized.is_me = true
     }
@@ -587,7 +588,7 @@ export default function ChatRoom() {
     }
 
     return changed
-  }, [computeStatus, myId, profileFavoritesLoaded, removeMessagesLocal, user?.id])
+  }, [computeStatus, myId, normalizeMsg, profileFavoritesLoaded, removeMessagesLocal, user?.id])
 
   const handlePinToggle = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
