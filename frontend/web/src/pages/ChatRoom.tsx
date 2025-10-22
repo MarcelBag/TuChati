@@ -28,6 +28,22 @@ import { deleteMessage, deleteMessages, fetchMessageInfo, fetchUserProfile, fetc
 import { useTranslation } from 'react-i18next'
 import StarredMessageList, { type StarredMessage } from '../components/Chat/StarredMessageList'
 
+type AttachmentKind = 'image' | 'video' | 'audio' | 'pdf' | 'other'
+
+type PendingAttachment = {
+  id: string
+  file: File
+  name: string
+  kind: AttachmentKind
+  previewUrl: string | null
+  size: number
+}
+
+type AttachmentViewerState =
+  | { type: 'image'; src: string; name?: string }
+  | { type: 'video'; src: string; name?: string }
+  | { type: 'pdf'; src: string; name?: string }
+
 function formatDayLabel(t: TFunction, d: Date) {
   const now = new Date()
   const one = 24 * 60 * 60 * 1000
@@ -104,6 +120,28 @@ function resolveTimezoneLabel(t: TFunction, timezone?: string | null) {
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let index = 0
+  let size = value
+  while (size >= 1024 && index < units.length - 1) {
+    size /= 1024
+    index += 1
+  }
+  return `${size.toFixed(index === 0 ? 0 : 1)} ${units[index]}`
+}
+
+function detectAttachmentKind(file: File): AttachmentKind {
+  const type = (file.type || '').toLowerCase()
+  const ext = (file.name || '').split('.').pop()?.toLowerCase() ?? ''
+  if (type.startsWith('image/')) return 'image'
+  if (type.startsWith('video/')) return 'video'
+  if (type.startsWith('audio/')) return 'audio'
+  if (type === 'application/pdf' || ext === 'pdf') return 'pdf'
+  return 'other'
+}
 
 const AUDIO_MIME_CANDIDATES = [
   { mime: 'audio/mp4;codecs=mp4a.40.2', ext: 'm4a' },
@@ -238,8 +276,69 @@ export default function ChatRoom() {
   const audioRef = React.useRef<HTMLInputElement>(null)
   const gifRef = React.useRef<HTMLInputElement>(null)
   const vcardRef = React.useRef<HTMLInputElement>(null)
+  const [pendingUploads, setPendingUploads] = React.useState<PendingAttachment[]>([])
+  const [editAttachmentId, setEditAttachmentId] = React.useState<string | null>(null)
+  const [attachmentViewer, setAttachmentViewer] = React.useState<AttachmentViewerState | null>(null)
   const dragCounterRef = React.useRef(0)
   const [dragActive, setDragActive] = React.useState(false)
+
+  const makeAttachmentId = React.useCallback(
+    () => `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    [],
+  )
+
+  const revokePreview = React.useCallback((url: string | null) => {
+    if (url) {
+      try { URL.revokeObjectURL(url) } catch { /* ignore */ }
+    }
+  }, [])
+
+  const createPendingAttachment = React.useCallback((file: File): PendingAttachment => {
+    const kind = detectAttachmentKind(file)
+    const previewUrl = kind === 'image' || kind === 'video' ? URL.createObjectURL(file) : null
+    return {
+      id: makeAttachmentId(),
+      file,
+      name: file.name,
+      kind,
+      previewUrl,
+      size: file.size,
+    }
+  }, [makeAttachmentId])
+
+  const queuePendingFiles = React.useCallback((files: File[]) => {
+    if (!files || files.length === 0) return
+    setPendingUploads(prev => {
+      const next: PendingAttachment[] = []
+      files.forEach((file) => {
+        next.push(createPendingAttachment(file))
+      })
+      return [...prev, ...next]
+    })
+  }, [createPendingAttachment])
+
+  const removePendingAttachment = React.useCallback((id: string) => {
+    setPendingUploads(prev => {
+      const next: PendingAttachment[] = []
+      prev.forEach((att) => {
+        if (att.id === id) {
+          revokePreview(att.previewUrl)
+        } else {
+          next.push(att)
+        }
+      })
+      return next
+    })
+  }, [revokePreview])
+
+  const updatePendingAttachment = React.useCallback((id: string, updater: (attachment: PendingAttachment) => PendingAttachment) => {
+    setPendingUploads(prev => prev.map(att => {
+      if (att.id !== id) return att
+      revokePreview(att.previewUrl)
+      return updater(att)
+    }))
+  }, [revokePreview])
+
 
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
@@ -1061,45 +1160,102 @@ export default function ChatRoom() {
 
   // send text
   const mkClientId = () => `cid-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  const onSend = () => {
+  const onSend = async () => {
+    if (uploading) return
     const text = draft.trim()
-    if (!text && !composerContext) return
-    const _client_id = mkClientId()
-    const optimistic: any = {
-      id: _client_id,
-      _client_id,
-      sender_id: user?.id,
-      sender_name: (user as any)?.name || (user as any)?.username || 'Me',
-      text,
-      created_at: new Date().toISOString(),
-      is_me: true,
-      reactions: {},
-      pinned: false,
-      starred: false,
-      note: '',
-    }
-    if (composerContext?.type === 'reply') {
-      optimistic.reply_to = composerContext.message
-    }
-    if (composerContext?.type === 'forward') {
-      optimistic.forwarded_from = composerContext.message
-    }
-    if (text) {
-      setMessages(prev => [...prev, optimistic])
+    if (pendingUploads.length === 0) {
+      if (!text && !composerContext) return
+      const _client_id = mkClientId()
+      const optimistic: any = {
+        id: _client_id,
+        _client_id,
+        sender_id: user?.id,
+        sender_name: (user as any)?.name || (user as any)?.username || 'Me',
+        text,
+        created_at: new Date().toISOString(),
+        is_me: true,
+        reactions: {},
+        pinned: false,
+        starred: false,
+        note: '',
+      }
+      if (composerContext?.type === 'reply') {
+        optimistic.reply_to = composerContext.message
+      }
+      if (composerContext?.type === 'forward') {
+        optimistic.forwarded_from = composerContext.message
+      }
+      if (text) {
+        setMessages(prev => [...prev, optimistic])
+      }
+
+      const payload: any = { content: text, _client_id }
+      if (composerContext?.type === 'reply' && composerContext.message?.id) {
+        payload.reply_to_id = composerContext.message.id
+      }
+      if (composerContext?.type === 'forward' && composerContext.message?.id) {
+        payload.forwarded_from_id = composerContext.message.id
+      }
+
+      sendMessage(payload)
+      playSend()
+      setDraft('')
+      setComposerContext(null)
+      return
     }
 
-    const payload: any = { content: text, _client_id }
-    if (composerContext?.type === 'reply' && composerContext.message?.id) {
-      payload.reply_to_id = composerContext.message.id
-    }
-    if (composerContext?.type === 'forward' && composerContext.message?.id) {
-      payload.forwarded_from_id = composerContext.message.id
+    const attachmentsSnapshot = pendingUploads.slice()
+    if (attachmentsSnapshot.length === 0 && !text && !composerContext) return
+    setUploading(true)
+    const contextSnapshot = composerContext
+    let successCount = 0
+    let textSent = false
+    try {
+      for (let index = 0; index < attachmentsSnapshot.length; index += 1) {
+        const attachment = attachmentsSnapshot[index]
+        const fd = new FormData()
+        const field = attachment.kind === 'audio' ? 'audio' : 'attachment'
+        fd.append(field, attachment.file, attachment.name)
+        if (index === 0) {
+          if (text) fd.append('content', text)
+          if (contextSnapshot?.type === 'reply' && contextSnapshot.message?.id) {
+            fd.append('reply_to_id', contextSnapshot.message.id)
+          }
+          if (contextSnapshot?.type === 'forward' && contextSnapshot.message?.id) {
+            fd.append('forwarded_from_id', contextSnapshot.message.id)
+          }
+        }
+        const ok = await postFD(fd, { skipUploadState: true })
+        if (!ok) {
+          break
+        }
+        if (index === 0 && text) {
+          textSent = true
+        }
+        successCount += 1
+      }
+    } finally {
+      setUploading(false)
     }
 
-    sendMessage(payload)
-    playSend()
-    setDraft('')
-    setComposerContext(null)
+    if (successCount > 0) {
+      const sentList = attachmentsSnapshot.slice(0, successCount)
+      setPendingUploads(prev => {
+        const sentIds = new Set(sentList.map(att => att.id))
+        return prev.filter(att => !sentIds.has(att.id))
+      })
+      sentList.forEach(att => revokePreview(att.previewUrl))
+      if (successCount === attachmentsSnapshot.length) {
+        if (textSent || !text) {
+          setDraft('')
+        } else if (!text && !composerContext) {
+          setDraft('')
+        }
+        setComposerContext(null)
+      } else if (textSent) {
+        setDraft('')
+      }
+    }
   }
 
   // reactions (optimistic update + WS notify)
@@ -1323,26 +1479,30 @@ export default function ChatRoom() {
   }, [closeForwardModal, forwardMessageTarget, forwardSelected, isServerId, mergeMessage, normalizeMsg, roomId, t])
 
   // uploads
-  const postFD = async (fd: FormData) => {
-    if (!token || !roomId) return
+  const postFD = async (fd: FormData, options: { skipUploadState?: boolean } = {}) => {
+    if (!token || !roomId) return false
     const audio = fd.get('audio')
     if (audio instanceof File && audio.size > MAX_UPLOAD_BYTES) {
       alert(t('chatRoom.alerts.audioTooLarge'))
-      return
+      return true
     }
     const attachment = fd.get('attachment')
     if (attachment instanceof File && attachment.size > MAX_UPLOAD_BYTES) {
       alert(t('chatRoom.alerts.attachmentTooLarge'))
-      return
+      return true
     }
-    setUploading(true)
+    if (!options.skipUploadState) setUploading(true)
+    let success = false
     try {
       const r = await apiFetch(`/api/chat/rooms/${roomId}/messages/`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
       })
       if (r.ok) {
         const m = normalizeMsg(await r.json())
-        if (m) mergeMessage(m)
+        if (m) {
+          mergeMessage(m)
+          success = true
+        }
       } else {
         let message = t('chatRoom.alerts.uploadFailed')
         try {
@@ -1351,41 +1511,50 @@ export default function ChatRoom() {
         } catch {}
         alert(message)
       }
-    } finally { setUploading(false) }
+    } finally {
+      if (!options.skipUploadState) setUploading(false)
+    }
+    return success
   }
   const handleQuickFile = React.useCallback(
-    async (file?: File | null) => {
+    (file?: File | null) => {
       if (!file) return false
-      const type = (file.type || '').toLowerCase()
-      const ext = (file.name || '').split('.').pop()?.toLowerCase() ?? ''
-      const isImage = type.startsWith('image/')
-      const isVideo = type.startsWith('video/')
-      const isAudio = type.startsWith('audio/')
-      const isPdf = type === 'application/pdf' || ext === 'pdf'
-
-      if (!(isImage || isVideo || isAudio || isPdf)) {
+      const kind = detectAttachmentKind(file)
+      if (kind === 'other') {
         return false
       }
-      if (isAudio && file.size > MAX_UPLOAD_BYTES) {
+      if (kind === 'audio' && file.size > MAX_UPLOAD_BYTES) {
         alert(t('chatRoom.alerts.audioTooLarge'))
         return true
       }
-      if (!isAudio && file.size > MAX_UPLOAD_BYTES) {
+      if (kind !== 'audio' && file.size > MAX_UPLOAD_BYTES) {
         alert(t('chatRoom.alerts.attachmentTooLarge'))
         return true
       }
-
-      const fd = new FormData()
-      if (isAudio) fd.append('audio', file)
-      else fd.append('attachment', file)
-      await postFD(fd)
+      queuePendingFiles([file])
       return true
     },
-    [postFD, t],
+    [queuePendingFiles, t],
   )
 
-  const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
-  const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
+  const onDocPicked = (e: any) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!handleQuickFile(file)) {
+        alert(t('chatRoom.alerts.dropUnsupported'))
+      }
+    }
+    e.target.value = ''
+  }
+  const onMediaPicked = (e: any) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!handleQuickFile(file)) {
+        alert(t('chatRoom.alerts.dropUnsupported'))
+      }
+    }
+    e.target.value = ''
+  }
   const onGifPicked = async (e: any) => {
     const f = e.target.files?.[0]
     if (!f) return
@@ -1394,7 +1563,10 @@ export default function ChatRoom() {
       e.target.value = ''
       return
     }
-    const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = ''
+    if (!handleQuickFile(f)) {
+      alert(t('chatRoom.alerts.dropUnsupported'))
+    }
+    e.target.value = ''
   }
   const onAudioPicked = async (e: any) => {
     const f = e.target.files?.[0]
@@ -1404,7 +1576,8 @@ export default function ChatRoom() {
       e.target.value = ''
       return
     }
-    const fd = new FormData(); fd.append('audio', f); await postFD(fd); e.target.value = ''
+    handleQuickFile(f)
+    e.target.value = ''
   }
   const pickContact = async () => {
     // @ts-ignore
@@ -1576,16 +1749,13 @@ export default function ChatRoom() {
       setShowAttach(false)
       const files = Array.from(event.dataTransfer.files || [])
       if (!files.length) return
-      void (async () => {
-        let handledAny = false
-        for (const file of files) {
-          const handled = await handleQuickFile(file)
-          if (handled) handledAny = true
-        }
-        if (!handledAny) {
-          alert(t('chatRoom.alerts.dropUnsupported'))
-        }
-      })()
+      let handledAny = false
+      files.forEach((file) => {
+        if (handleQuickFile(file)) handledAny = true
+      })
+      if (!handledAny) {
+        alert(t('chatRoom.alerts.dropUnsupported'))
+      }
       event.dataTransfer.clearData()
     },
     [handleQuickFile, setShowAttach, t],
@@ -1596,16 +1766,13 @@ export default function ChatRoom() {
       const files = Array.from(event.clipboardData?.files ?? [])
       if (!files.length) return
       event.preventDefault()
-      void (async () => {
-        let handledAny = false
-        for (const file of files) {
-          const handled = await handleQuickFile(file)
-          if (handled) handledAny = true
-        }
-        if (!handledAny) {
-          alert(t('chatRoom.alerts.dropUnsupported'))
-        }
-      })()
+      let handledAny = false
+      files.forEach((file) => {
+        if (handleQuickFile(file)) handledAny = true
+      })
+      if (!handledAny) {
+        alert(t('chatRoom.alerts.dropUnsupported'))
+      }
     },
     [handleQuickFile, t],
   )
@@ -2044,6 +2211,55 @@ export default function ChatRoom() {
           <input ref={vcardRef} type="file" accept=".vcf,text/vcard" hidden />
         </div>
 
+        {pendingUploads.length > 0 && (
+          <div className="pending-attachments">
+            {pendingUploads.map((attachment) => (
+              <div key={attachment.id} className={`pending-attachment pending-${attachment.kind}`}>
+                <button
+                  type="button"
+                  className="pending-thumb"
+                  onClick={() => setEditAttachmentId(attachment.id)}
+                  disabled={uploading}
+                  aria-label={t('chatRoom.composer.pending.previewAria', { name: attachment.name })}
+                >
+                  {attachment.previewUrl && attachment.kind === 'image' && (
+                    <img src={attachment.previewUrl} alt="" />
+                  )}
+                  {attachment.previewUrl && attachment.kind === 'video' && (
+                    <video src={attachment.previewUrl} muted />
+                  )}
+                  {!attachment.previewUrl && (
+                    <span className="pending-icon">
+                      {attachment.kind === 'audio' ? '🎧' : attachment.kind === 'pdf' ? '📄' : '📎'}
+                    </span>
+                  )}
+                </button>
+                <div className="pending-meta">
+                  <span className="pending-name">{attachment.name}</span>
+                  <span className="pending-size">{formatBytes(attachment.size)}</span>
+                </div>
+                <div className="pending-actions">
+                  <button
+                    type="button"
+                    onClick={() => setEditAttachmentId(attachment.id)}
+                    disabled={uploading}
+                  >
+                    {t('chatRoom.composer.pending.edit')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePendingAttachment(attachment.id)}
+                    disabled={uploading}
+                    className="pending-remove"
+                  >
+                    {t('chatRoom.composer.pending.remove')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {composerContext && (
           <div className="composer-context">
             <div className="context-body">
@@ -2057,14 +2273,14 @@ export default function ChatRoom() {
           value={draft}
           onChange={e => { setDraft(e.target.value); try { sendTyping?.(true) } catch {} }}
           onBlur={() => { try { sendTyping?.(false) } catch {} }}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() } }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void onSend() } }}
           onPaste={handleComposerPaste}
           placeholder={uploading ? t('chatRoom.composer.uploading') : (isRecording ? t('chatRoom.composer.recording') : t('chatRoom.composer.placeholder'))}
           disabled={uploading}
         />
 
         {draft.trim().length > 0 ? (
-          <button className="send" onClick={onSend}>➤</button>
+          <button className="send" onClick={() => { void onSend() }}>➤</button>
         ) : (
           <button className={`send mic ${isRecording ? 'recording' : ''}`} onClick={isRecording ? stopRecording : startRecording}>
             {isRecording ? '■' : '🎙️'}
