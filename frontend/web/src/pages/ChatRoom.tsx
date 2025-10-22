@@ -238,6 +238,8 @@ export default function ChatRoom() {
   const audioRef = React.useRef<HTMLInputElement>(null)
   const gifRef = React.useRef<HTMLInputElement>(null)
   const vcardRef = React.useRef<HTMLInputElement>(null)
+  const dragCounterRef = React.useRef(0)
+  const [dragActive, setDragActive] = React.useState(false)
 
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
   const audioChunksRef = React.useRef<Blob[]>([])
@@ -588,7 +590,7 @@ export default function ChatRoom() {
     }
 
     return changed
-  }, [computeStatus, myId, normalizeMsg, profileFavoritesLoaded, removeMessagesLocal, user?.id])
+  }, [computeStatus, isGroup, myId, normalizeMsg, profileFavoritesLoaded, removeMessagesLocal, user?.id])
 
   const handlePinToggle = React.useCallback(async (message: any) => {
     if (!roomId || !message?.id) return
@@ -1351,6 +1353,37 @@ export default function ChatRoom() {
       }
     } finally { setUploading(false) }
   }
+  const handleQuickFile = React.useCallback(
+    async (file?: File | null) => {
+      if (!file) return false
+      const type = (file.type || '').toLowerCase()
+      const ext = (file.name || '').split('.').pop()?.toLowerCase() ?? ''
+      const isImage = type.startsWith('image/')
+      const isVideo = type.startsWith('video/')
+      const isAudio = type.startsWith('audio/')
+      const isPdf = type === 'application/pdf' || ext === 'pdf'
+
+      if (!(isImage || isVideo || isAudio || isPdf)) {
+        return false
+      }
+      if (isAudio && file.size > MAX_UPLOAD_BYTES) {
+        alert(t('chatRoom.alerts.audioTooLarge'))
+        return true
+      }
+      if (!isAudio && file.size > MAX_UPLOAD_BYTES) {
+        alert(t('chatRoom.alerts.attachmentTooLarge'))
+        return true
+      }
+
+      const fd = new FormData()
+      if (isAudio) fd.append('audio', file)
+      else fd.append('attachment', file)
+      await postFD(fd)
+      return true
+    },
+    [postFD, t],
+  )
+
   const onDocPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
   const onMediaPicked = async (e: any) => { const f = e.target.files?.[0]; if (!f) return; const fd = new FormData(); fd.append('attachment', f); await postFD(fd); e.target.value = '' }
   const onGifPicked = async (e: any) => {
@@ -1507,6 +1540,75 @@ export default function ChatRoom() {
       sourceStreamRef.current = null
     }
   }
+
+  const handleDragEnter = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer || !Array.from(event.dataTransfer.types || []).includes('Files')) return
+    event.preventDefault()
+    event.stopPropagation()
+    dragCounterRef.current += 1
+    setDragActive(true)
+  }, [])
+
+  const handleDragOver = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer || !Array.from(event.dataTransfer.types || []).includes('Files')) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'copy'
+  }, [])
+
+  const handleDragLeave = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    if (!event.dataTransfer || !Array.from(event.dataTransfer.types || []).includes('Files')) return
+    event.preventDefault()
+    event.stopPropagation()
+    dragCounterRef.current = Math.max(0, dragCounterRef.current - 1)
+    if (dragCounterRef.current === 0) {
+      setDragActive(false)
+    }
+  }, [])
+
+  const handleDrop = React.useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      if (!event.dataTransfer) return
+      event.preventDefault()
+      event.stopPropagation()
+      dragCounterRef.current = 0
+      setDragActive(false)
+      setShowAttach(false)
+      const files = Array.from(event.dataTransfer.files || [])
+      if (!files.length) return
+      void (async () => {
+        let handledAny = false
+        for (const file of files) {
+          const handled = await handleQuickFile(file)
+          if (handled) handledAny = true
+        }
+        if (!handledAny) {
+          alert(t('chatRoom.alerts.dropUnsupported'))
+        }
+      })()
+      event.dataTransfer.clearData()
+    },
+    [handleQuickFile, setShowAttach, t],
+  )
+
+  const handleComposerPaste = React.useCallback(
+    (event: React.ClipboardEvent<HTMLInputElement>) => {
+      const files = Array.from(event.clipboardData?.files ?? [])
+      if (!files.length) return
+      event.preventDefault()
+      void (async () => {
+        let handledAny = false
+        for (const file of files) {
+          const handled = await handleQuickFile(file)
+          if (handled) handledAny = true
+        }
+        if (!handledAny) {
+          alert(t('chatRoom.alerts.dropUnsupported'))
+        }
+      })()
+    },
+    [handleQuickFile, t],
+  )
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return
     mediaRecorderRef.current.stop()
@@ -1906,7 +2008,13 @@ export default function ChatRoom() {
         })}
       </div>
 
-      <footer className="composer">
+      <footer
+        className={`composer${dragActive ? ' drop-active' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="composer-left">
           <button className="icon-btn" onClick={() => setShowAttach(s => !s)}>＋</button>
           {showAttach && (
@@ -1950,6 +2058,7 @@ export default function ChatRoom() {
           onChange={e => { setDraft(e.target.value); try { sendTyping?.(true) } catch {} }}
           onBlur={() => { try { sendTyping?.(false) } catch {} }}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend() } }}
+          onPaste={handleComposerPaste}
           placeholder={uploading ? t('chatRoom.composer.uploading') : (isRecording ? t('chatRoom.composer.recording') : t('chatRoom.composer.placeholder'))}
           disabled={uploading}
         />
@@ -1960,6 +2069,10 @@ export default function ChatRoom() {
           <button className={`send mic ${isRecording ? 'recording' : ''}`} onClick={isRecording ? stopRecording : startRecording}>
             {isRecording ? '■' : '🎙️'}
           </button>
+        )}
+
+        {dragActive && (
+          <div className="composer-drop-hint">{t('chatRoom.composer.dropHint')}</div>
         )}
       </footer>
 

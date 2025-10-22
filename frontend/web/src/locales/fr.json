@@ -314,7 +314,8 @@
       "uploadFailed": "Échec du téléversement.",
       "gifOnly": "Veuillez sélectionner un fichier GIF",
       "audioUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur.",
-      "audioRecordingTooLarge": "L'audio dépasse 3 Mo. Enregistrez un clip plus court."
+      "audioRecordingTooLarge": "L'audio dépasse 3 Mo. Enregistrez un clip plus court.",
+      "dropUnsupported": "Type de fichier non pris en charge. Déposez une image, une vidéo, un audio ou un PDF."
     },
     "attachments": {
       "openFile": "Ouvrir {{filename}}",
@@ -352,7 +353,8 @@
       "uploading": "Téléversement…",
       "recording": "Enregistrement…",
       "placeholder": "Saisir un message",
-      "recordingAria": "Enregistrement audio"
+      "recordingAria": "Enregistrement audio",
+      "dropHint": "Déposez des fichiers pour les envoyer"
     }
   },
   "profileModal": {

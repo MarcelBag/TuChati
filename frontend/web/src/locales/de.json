@@ -314,7 +314,8 @@
       "uploadFailed": "Upload fehlgeschlagen.",
       "gifOnly": "Bitte wähle eine GIF-Datei aus",
       "audioUnsupported": "Audioaufnahme wird von diesem Browser nicht unterstützt.",
-      "audioRecordingTooLarge": "Audio ist größer als 3 MB. Bitte kürzer aufnehmen."
+      "audioRecordingTooLarge": "Audio ist größer als 3 MB. Bitte kürzer aufnehmen.",
+      "dropUnsupported": "Dateityp wird nicht unterstützt. Bitte ein Bild, Video, Audio oder PDF ablegen."
     },
     "attachments": {
       "openFile": "{{filename}} öffnen",
@@ -352,7 +353,8 @@
       "uploading": "Wird hochgeladen…",
       "recording": "Wird aufgenommen…",
       "placeholder": "Nachricht eingeben",
-      "recordingAria": "Audioaufnahme läuft"
+      "recordingAria": "Audioaufnahme läuft",
+      "dropHint": "Dateien hier ablegen, um zu senden"
     }
   },
   "profileModal": {

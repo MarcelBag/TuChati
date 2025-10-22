@@ -314,7 +314,8 @@
       "uploadFailed": "Upakiaji umeshindikana.",
       "gifOnly": "Tafadhali chagua faili ya GIF",
       "audioUnsupported": "Kurekodi sauti hakutumiki kwenye kivinjari hiki.",
-      "audioRecordingTooLarge": "Sauti ni kubwa kuliko 3 MB. Rekodi kipande kifupi."
+      "audioRecordingTooLarge": "Sauti ni kubwa kuliko 3 MB. Rekodi kipande kifupi.",
+      "dropUnsupported": "Aina ya faili haiungwa mkono. Tafadhali buruta picha, video, sauti au PDF."
     },
     "attachments": {
       "openFile": "Fungua {{filename}}",
@@ -352,7 +353,8 @@
       "uploading": "Inapakia…",
       "recording": "Inarekodi…",
       "placeholder": "Andika ujumbe",
-      "recordingAria": "Inarekodi sauti"
+      "recordingAria": "Inarekodi sauti",
+      "dropHint": "Buruta faili hapa kutuma"
     }
   },
   "profileModal": {

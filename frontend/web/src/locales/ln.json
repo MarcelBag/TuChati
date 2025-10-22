@@ -281,7 +281,8 @@
       "uploadFailed": "Kotinda esimbaki te.",
       "gifOnly": "Svp pona fichier GIF",
       "audioUnsupported": "Enregistrement ya audio esalemi te na navigateur oyo.",
-      "audioRecordingTooLarge": "Audio eleki 3 MB. Rekoda mokuse koleka."
+      "audioRecordingTooLarge": "Audio eleki 3 MB. Rekoda mokuse koleka.",
+      "dropUnsupported": "Lolenge ya dosye ezwami te. Bwaka foto, vidéo, audio to PDF."
     },
     "attachments": {
       "openFile": "Fungola {{filename}}",
@@ -319,7 +320,8 @@
       "uploading": "Ezali kotinda…",
       "recording": "Ezali kokoma son…",
       "placeholder": "Koma sango",
-      "recordingAria": "Enregistrement ya audio"
+      "recordingAria": "Enregistrement ya audio",
+      "dropHint": "Bwaka bafisi awa mpo na kotinda"
     }
   }
 }

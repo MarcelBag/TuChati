@@ -307,7 +307,8 @@
       "uploadFailed": "Upload failed.",
       "gifOnly": "Please select a GIF file",
       "audioUnsupported": "Audio recording is not supported in this browser.",
-      "audioRecordingTooLarge": "Audio is larger than 3 MB. Please record a shorter clip."
+      "audioRecordingTooLarge": "Audio is larger than 3 MB. Please record a shorter clip.",
+      "dropUnsupported": "Unsupported file. Drop an image, video, audio, or PDF."
     },
     "attachments": {
       "openFile": "Open {{filename}}",
@@ -345,7 +346,8 @@
       "uploading": "Uploading…",
       "recording": "Recording…",
       "placeholder": "Type a message",
-      "recordingAria": "Recording audio"
+      "recordingAria": "Recording audio",
+      "dropHint": "Drop files to send"
     }
   },
   "profileModal": {
