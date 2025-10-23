@@ -25,8 +25,7 @@ ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h]
 # -------------------------------------------
 INSTALLED_APPS = [
     # we will add it to requirement modern Django admin interface (install via pip install django-jazzmin)
-    "jazzmin",  # must come BEFORE 'django.contrib.admin'
-
+    "jazzmin",
     # Core Django + Daphne for ASGI
     "daphne",
     "django.contrib.admin",
