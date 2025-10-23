@@ -51,10 +51,9 @@ INSTALLED_APPS = [
     "apps.adminpanel",
 ]
 
-
 # -------------------------------------------
 # TEMPLATE CONFIGURATION
-# Enables Django admin + your future templates
+# Enabling Django admin + custom templates but we will move this to React later
 # -------------------------------------------
 TEMPLATES = [
     {
