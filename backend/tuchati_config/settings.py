@@ -74,7 +74,6 @@ TEMPLATES = [
     },
 ]
 
-
 # -------------------------------------------
 # MIDDLEWARE CONFIG
 # -------------------------------------------
@@ -88,7 +87,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 
 # -------------------------------------------
 # URLS, WSGI & ASGI
