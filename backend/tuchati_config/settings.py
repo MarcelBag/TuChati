@@ -57,7 +57,7 @@ INSTALLED_APPS = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        # You can place global templates in backend/templates/
+        # templates goingw with twofa for email 2FA
         "DIRS": [
             BASE_DIR / "templates",
             BASE_DIR / "apps" / "accounts" / "twofa" / "templates",
