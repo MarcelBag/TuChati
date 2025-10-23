@@ -144,7 +144,6 @@ def _bool_env(name: str, default: str = "0") -> bool:
     # fall back to Python truthiness for unexpected values
     return bool(value)
 
-
 EMAIL_USE_TLS = _bool_env("EMAIL_USE_TLS", "0")
 EMAIL_USE_SSL = _bool_env("EMAIL_USE_SSL", "0")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
@@ -157,15 +156,13 @@ DEFAULT_FROM_EMAIL = os.getenv(
 )
 
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
-    # Django will raise if both enabled; normalise here to avoid config mistakes
+    # Django will raise if both enabled; normalizing here to avoid config mistakes
     EMAIL_USE_SSL = False
 
 # Brand theming for notifications / emails
 APP_BRAND_NAME = os.getenv("APP_BRAND_NAME", "TuChati")
 APP_BRAND_URL = os.getenv("APP_BRAND_URL", "https://tuchati.tuunganes.com")
 APP_SUPPORT_EMAIL = os.getenv("APP_SUPPORT_EMAIL", EMAIL_HOST_USER or DEFAULT_FROM_EMAIL)
-
-
 # -------------------------------------------
 # STATIC & MEDIA FILES
 # -------------------------------------------
