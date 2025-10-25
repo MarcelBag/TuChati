@@ -202,7 +202,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://tuchati.tuunganes.com",
     "https://web.tuchati.tuunganes.com",
 ]
-
 # -------------------------------------------
 # DJANGO REST FRAMEWORK CONFIG
 # -------------------------------------------
