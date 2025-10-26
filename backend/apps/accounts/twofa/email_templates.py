@@ -80,7 +80,6 @@ def render_welcome_email(username: str) -> Tuple[str, str]:
     html = render_to_string("twofa/welcome_email.html", context)
     return plain.strip(), html
 
-
 __all__ = [
     "render_verification_email",
     "render_welcome_email",
