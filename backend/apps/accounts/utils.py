@@ -76,7 +76,7 @@ def record_device_session(user, request=None, token: Optional[str] = None) -> Tu
                     f"IP address: {ip_address or 'Unknown'}\n\n"
                     "If this wasn’t you, please reset your password immediately.\n\n"
                     "If you didn’t request this, you can safely ignore this email.\n"
-                    "— Your TuChati team"
+                    "Your TuChati team"
                 )
                 send_mail('New TuChati login', message, DEFAULT_FROM, [email], fail_silently=True)
             except Exception:
