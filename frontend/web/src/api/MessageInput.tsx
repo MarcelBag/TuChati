@@ -11,7 +11,6 @@ export default function MessageInput({ onSend }: { onSend: (msg: string) => void
     onSend(text)
     setText('')
   }
-
   return (
     <form className="message-input-bar" onSubmit={handleSubmit}>
       <input
