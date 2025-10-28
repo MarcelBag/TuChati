@@ -1,3 +1,4 @@
+/* frontend/web/src/components/Chat/MessageInfoModal.tsx */
 import React from 'react'
 import './Reactions.css'
 
