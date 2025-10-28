@@ -1,3 +1,4 @@
+/* frontend/web/src/components/Chat/ForwardMessageModal.tsx */
 import React from 'react'
 import { createPortal } from 'react-dom'
 import './Reactions.css'
