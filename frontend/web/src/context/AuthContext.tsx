@@ -162,7 +162,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     []
   )
-
   // --- LOGOUT ---
   const logout = useMemo(
     () => () => {
