@@ -1,3 +1,4 @@
+/* frontend/web/src/context/PreferencesContext.tsx */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 export type MediaPreference = 'stream' | 'manual'
