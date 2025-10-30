@@ -1,3 +1,4 @@
+/* frontend/web/src/hooks/useChatNotifications.ts */
 import { useCallback } from 'react'
 import { usePreferences } from '../context/PreferencesContext'
 
