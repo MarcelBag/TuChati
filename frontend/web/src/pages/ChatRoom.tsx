@@ -186,6 +186,7 @@ export default function ChatRoom() {
   const [profileFavoritesLoading, setProfileFavoritesLoading] = React.useState(false)
   const [profileFavoritesError, setProfileFavoritesError] = React.useState<string | null>(null)
   const [clockTick, setClockTick] = React.useState(() => Date.now())
+  const [isMobile, setIsMobile] = React.useState(false)
 
   const locale = React.useMemo(() => (
     i18n?.language || (typeof navigator !== 'undefined' ? navigator.language : 'en')
@@ -200,6 +201,16 @@ export default function ChatRoom() {
     if (typeof window === 'undefined') return undefined
     const id = window.setInterval(() => setClockTick(Date.now()), 60000)
     return () => window.clearInterval(id)
+  }, [])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
   const [forwardSubmitting, setForwardSubmitting] = React.useState(false)
   const [inviteOpen, setInviteOpen] = React.useState(false)
@@ -388,6 +399,18 @@ export default function ChatRoom() {
   const isAdmin =
     !!room?.is_admin ||
     (Array.isArray(room?.admin_ids) && room.admin_ids.includes(user?.id as any))
+  const directProfileOpen = directProfile.open
+  const infoPanelOpen = isGroup ? showInfo : directProfileOpen
+
+  React.useEffect(() => {
+    if (!isMobile || !infoPanelOpen) return undefined
+    if (typeof document === 'undefined') return undefined
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [infoPanelOpen, isMobile])
 
   React.useEffect(() => {
     setDirectProfile({ open: false, loading: false, data: null, error: null })
@@ -2458,6 +2481,18 @@ export default function ChatRoom() {
             )}
           </div>
         </aside>
+      )}
+
+      {isMobile && infoPanelOpen && (
+        <button
+          type="button"
+          className="room-info-backdrop"
+          aria-label={t('chatRoom.profile.closePanel', { defaultValue: 'Close details panel' })}
+          onClick={() => {
+            if (isGroup) setShowInfo(false)
+            else setDirectProfile(prev => ({ ...prev, open: false }))
+          }}
+        />
       )}
 
       <MessageMenu
