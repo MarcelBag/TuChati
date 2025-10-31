@@ -402,6 +402,7 @@ export default function ChatPage() {
   const hasDirectRequests = directRequests.incoming.length > 0 || directRequests.outgoing.length > 0
   const hasGroupInvites = groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0
   const showRequestsPanel = requestLoading || groupInvitesLoading || hasDirectRequests || hasGroupInvites
+  const shouldShowMobileTrigger = isMobile && !showMobileRooms
 
   return (
     <div
@@ -745,7 +746,7 @@ export default function ChatPage() {
 
       {/* Messages area fills the rest */}
       <section className={`chat-pane ${hasRoomOpen ? 'has-room' : 'empty'}`}>
-        {isMobile && hasRoomOpen && (
+        {shouldShowMobileTrigger && (
           <button
             type="button"
             className="chat-mobile-trigger"
