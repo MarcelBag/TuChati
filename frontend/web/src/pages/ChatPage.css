@@ -418,6 +418,37 @@ html.light .room-item.archived { background: rgba(148, 163, 184, 0.08); }
   outline-offset: 2px;
 }
 
+.chat-shell.is-mobile.no-room-open .rooms {
+  position: relative;
+  transform: none;
+  pointer-events: auto;
+  height: auto;
+  max-height: none;
+  width: 100%;
+  max-width: 100%;
+  box-shadow: none;
+  border-right: none;
+}
+
+.chat-shell.is-mobile.no-room-open .rooms-hd {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.chat-shell.is-mobile.no-room-open .rooms-list {
+  max-height: none;
+}
+
+.chat-shell.is-mobile.no-room-open .chat-pane {
+  display: none;
+}
+
+.chat-shell.is-mobile.no-room-open .rooms-backdrop,
+.chat-shell.is-mobile.no-room-open.show-rooms .rooms-backdrop {
+  display: none;
+}
+
 .chat-mobile-trigger {
   display: none;
 }

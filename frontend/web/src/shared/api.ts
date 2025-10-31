@@ -54,7 +54,8 @@ async function refreshOnce() {
 }
 
 // === /me cooldown to prevent stampede ===
-let meCooldownUntil = 0        // epoch ms until which new /me calls are blocked
+// epoch ms until which new /me calls are blocked
+let meCooldownUntil = 0
 let meInFlight: Promise<Response> | null = null
 
 function isMeUrl(url: string) {

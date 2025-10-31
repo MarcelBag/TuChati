@@ -83,10 +83,10 @@ export default function ChatPage() {
       setShowMobileRooms(false)
       return
     }
-    if (!hasRoomOpen) {
-      setShowMobileRooms(true)
+    if (!hasRoomOpen && showMobileRooms) {
+      setShowMobileRooms(false)
     }
-  }, [isMobile, hasRoomOpen])
+  }, [isMobile, hasRoomOpen, showMobileRooms])
 
   const loadRooms = React.useCallback(async () => {
     if (!token) return
@@ -402,7 +402,7 @@ export default function ChatPage() {
   const hasDirectRequests = directRequests.incoming.length > 0 || directRequests.outgoing.length > 0
   const hasGroupInvites = groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0
   const showRequestsPanel = requestLoading || groupInvitesLoading || hasDirectRequests || hasGroupInvites
-  const shouldShowMobileTrigger = isMobile && !showMobileRooms
+  const shouldShowMobileTrigger = isMobile && hasRoomOpen && !showMobileRooms
 
   return (
     <div
