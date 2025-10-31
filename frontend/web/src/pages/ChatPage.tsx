@@ -40,6 +40,8 @@ export default function ChatPage() {
   const { t } = useTranslation()
   const [rooms, setRooms] = React.useState<Room[]>([])
   const [loading, setLoading] = React.useState(true)
+  const [isMobile, setIsMobile] = React.useState(false)
+  const [showMobileRooms, setShowMobileRooms] = React.useState(false)
   const [archivedRoomIds, setArchivedRoomIds] = React.useState<string[]>(() => getArchivedRoomIds())
   const [mutedRoomIds, setMutedRoomIds] = React.useState<string[]>(() => readMutedRooms())
   const archivedSet = React.useMemo(() => new Set(archivedRoomIds.map(String)), [archivedRoomIds])
@@ -65,6 +67,26 @@ export default function ChatPage() {
   const match = useMatch('/chat/:roomId')
   const hasRoomOpen = !!match
   const currentRoomId = match?.params.roomId
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  React.useEffect(() => {
+    if (!isMobile) {
+      setShowMobileRooms(false)
+      return
+    }
+    if (!hasRoomOpen) {
+      setShowMobileRooms(true)
+    }
+  }, [isMobile, hasRoomOpen])
 
   const loadRooms = React.useCallback(async () => {
     if (!token) return
@@ -370,17 +392,44 @@ export default function ChatPage() {
     setProfileViewer({ open: false, loading: false, profile: null, target: null, error: null })
   }, [])
 
+  const handleRoomSelect = React.useCallback((roomId: string | number) => {
+    navigate(`/chat/${roomId}`)
+    if (isMobile) {
+      setShowMobileRooms(false)
+    }
+  }, [navigate, isMobile])
+
   const hasDirectRequests = directRequests.incoming.length > 0 || directRequests.outgoing.length > 0
   const hasGroupInvites = groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0
   const showRequestsPanel = requestLoading || groupInvitesLoading || hasDirectRequests || hasGroupInvites
 
   return (
-    <div className="chat-shell">
+    <div
+      className={[
+        'chat-shell',
+        isMobile ? 'is-mobile' : '',
+        showMobileRooms ? 'show-rooms' : '',
+        hasRoomOpen ? 'has-room-open' : 'no-room-open',
+      ].filter(Boolean).join(' ')}
+    >
       {/* Rooms (always visible on desktop) */}
-      <aside className="rooms">
+      <aside
+        className="rooms"
+        aria-hidden={isMobile && !showMobileRooms ? true : undefined}
+      >
         <header className="rooms-hd">
           <h2>{t('chatPage.rooms.title')}</h2>
           <div className="rooms-actions">
+            {isMobile && (
+              <button
+                type="button"
+                className="rooms-mobile-close"
+                onClick={() => setShowMobileRooms(false)}
+                aria-label={t('chatPage.mobile.closeRooms', { defaultValue: 'Close rooms list' })}
+              >
+                X
+              </button>
+            )}
             <button
               className="btn small"
               type="button"
@@ -594,7 +643,7 @@ export default function ChatPage() {
               <li
                 key={r.id}
                 className={`room-item ${currentRoomId === String(r.id) ? 'active' : ''} ${hasUnread ? 'unread' : ''} ${isArchived ? 'archived' : ''}`}
-                onClick={() => navigate(`/chat/${r.id}`)}
+                onClick={() => handleRoomSelect(r.id)}
               >
                 <AvatarBubble
                   src={avatarSrc}
@@ -685,8 +734,27 @@ export default function ChatPage() {
         </ul>
       </aside>
 
+      {isMobile && showMobileRooms && (
+        <button
+          type="button"
+          className="rooms-backdrop"
+          aria-label={t('chatPage.mobile.closeRooms', { defaultValue: 'Close rooms list' })}
+          onClick={() => setShowMobileRooms(false)}
+        />
+      )}
+
       {/* Messages area fills the rest */}
       <section className={`chat-pane ${hasRoomOpen ? 'has-room' : 'empty'}`}>
+        {isMobile && hasRoomOpen && (
+          <button
+            type="button"
+            className="chat-mobile-trigger"
+            onClick={() => setShowMobileRooms(true)}
+            aria-label={t('chatPage.mobile.openRooms', { defaultValue: 'Show rooms list' })}
+          >
+            Menu
+          </button>
+        )}
         {hasRoomOpen ? (
           <Outlet context={{ updateRoomUnread }} />
         ) : (

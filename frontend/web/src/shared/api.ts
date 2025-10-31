@@ -3,7 +3,7 @@
 let accessToken: string | null = null
 let refreshToken: string | null = null
 
-// === Base URLs from env (no trailing slash) ===
+// === Base URLs from env ===
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 
 // Build absolute URL from relative input
@@ -17,7 +17,6 @@ export function resolveUrl(input?: string | null): string | null {
   if (!input) return null
   return makeUrl(input)
 }
-
 // Token helpers
 export function setTokens(a: string | null, r: string | null) {
   accessToken = a; refreshToken = r

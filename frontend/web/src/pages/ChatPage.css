@@ -349,10 +349,111 @@ html.light .room-item.archived { background: rgba(148, 163, 184, 0.08); }
 @media (max-width: 1024px) {
   .chat-shell { grid-template-columns: 360px 1fr; }
 }
-@media (max-width: 768px) {
-  .chat-shell { grid-template-columns: 100%; }
-  .rooms { display: none; }
-  .chat-pane.has-room ~ .rooms { display: none; }
+
+.chat-shell.is-mobile {
+  grid-template-columns: 100%;
+  position: relative;
+}
+
+.chat-shell.is-mobile .rooms {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  transform: translateX(-100%);
+  transition: transform 0.28s ease;
+  z-index: 40;
+  border-right: none;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  height: 100vh;
+  pointer-events: none;
+}
+
+.chat-shell.is-mobile.show-rooms .rooms {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.chat-shell.is-mobile .rooms-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.rooms-mobile-close {
+  display: none;
+}
+
+.chat-shell.is-mobile .rooms-mobile-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--subtle);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+}
+
+.chat-shell.is-mobile .rooms-mobile-close:hover {
+  background: var(--hover);
+}
+
+.rooms-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: none;
+  padding: 0;
+  margin: 0;
+  z-index: 30;
+  cursor: pointer;
+}
+
+.rooms-backdrop:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.chat-mobile-trigger {
+  display: none;
+}
+
+.chat-shell.is-mobile .chat-mobile-trigger {
+  display: inline-flex;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  min-width: 72px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0 18px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  z-index: 35;
+}
+
+.chat-shell.is-mobile .chat-mobile-trigger:hover {
+  background: var(--hover);
+}
+
+.chat-shell.is-mobile .chat-mobile-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.chat-shell.is-mobile.show-rooms .chat-mobile-trigger {
+  display: none;
 }
 
 /* ========= NEW: kebab menu / actions ========= */
