@@ -83,10 +83,10 @@ export default function ChatPage() {
       setShowMobileRooms(false)
       return
     }
-    if (!hasRoomOpen && showMobileRooms) {
+    if (!hasRoomOpen) {
       setShowMobileRooms(false)
     }
-  }, [isMobile, hasRoomOpen, showMobileRooms])
+  }, [isMobile, hasRoomOpen])
 
   const loadRooms = React.useCallback(async () => {
     if (!token) return
@@ -402,6 +402,8 @@ export default function ChatPage() {
   const hasDirectRequests = directRequests.incoming.length > 0 || directRequests.outgoing.length > 0
   const hasGroupInvites = groupInvites.incoming.length > 0 || groupInvites.outgoing.length > 0
   const showRequestsPanel = requestLoading || groupInvitesLoading || hasDirectRequests || hasGroupInvites
+  const mobileRoomsOnly = isMobile && !hasRoomOpen
+  const roomsVisible = !isMobile || showMobileRooms || mobileRoomsOnly
   const shouldShowMobileTrigger = isMobile && hasRoomOpen && !showMobileRooms
 
   return (
@@ -411,17 +413,18 @@ export default function ChatPage() {
         isMobile ? 'is-mobile' : '',
         showMobileRooms ? 'show-rooms' : '',
         hasRoomOpen ? 'has-room-open' : 'no-room-open',
+        mobileRoomsOnly ? 'mobile-rooms-only' : '',
       ].filter(Boolean).join(' ')}
     >
       {/* Rooms (always visible on desktop) */}
       <aside
-        className="rooms"
-        aria-hidden={isMobile && !showMobileRooms ? true : undefined}
+        className={`rooms ${roomsVisible ? 'visible' : ''}`}
+        aria-hidden={isMobile && !roomsVisible ? true : undefined}
       >
         <header className="rooms-hd">
           <h2>{t('chatPage.rooms.title')}</h2>
           <div className="rooms-actions">
-            {isMobile && (
+            {isMobile && !mobileRoomsOnly && (
               <button
                 type="button"
                 className="rooms-mobile-close"
@@ -735,7 +738,7 @@ export default function ChatPage() {
         </ul>
       </aside>
 
-      {isMobile && showMobileRooms && (
+      {isMobile && showMobileRooms && !mobileRoomsOnly && (
         <button
           type="button"
           className="rooms-backdrop"
@@ -745,26 +748,28 @@ export default function ChatPage() {
       )}
 
       {/* Messages area fills the rest */}
-      <section className={`chat-pane ${hasRoomOpen ? 'has-room' : 'empty'}`}>
-        {shouldShowMobileTrigger && (
-          <button
-            type="button"
-            className="chat-mobile-trigger"
-            onClick={() => setShowMobileRooms(true)}
-            aria-label={t('chatPage.mobile.openRooms', { defaultValue: 'Show rooms list' })}
-          >
-            Menu
-          </button>
-        )}
-        {hasRoomOpen ? (
-          <Outlet context={{ updateRoomUnread }} />
-        ) : (
-          <div className="empty-inner">
-            <h3>{t('chatPage.empty.title')}</h3>
-            <p>{t('chatPage.empty.subtitle')}</p>
-          </div>
-        )}
-      </section>
+      {!mobileRoomsOnly && (
+        <section className={`chat-pane ${hasRoomOpen ? 'has-room' : 'empty'}`}>
+          {shouldShowMobileTrigger && (
+            <button
+              type="button"
+              className="chat-mobile-trigger"
+              onClick={() => setShowMobileRooms(true)}
+              aria-label={t('chatPage.mobile.openRooms', { defaultValue: 'Show rooms list' })}
+            >
+              Menu
+            </button>
+          )}
+          {hasRoomOpen ? (
+            <Outlet context={{ updateRoomUnread }} />
+          ) : (
+            <div className="empty-inner">
+              <h3>{t('chatPage.empty.title')}</h3>
+              <p>{t('chatPage.empty.subtitle')}</p>
+            </div>
+          )}
+        </section>
+      )}
 
       <DirectMessageModal
         open={dmOpen}
